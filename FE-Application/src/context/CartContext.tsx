@@ -5,27 +5,31 @@ import type { Cart } from '../types/cart';
 
 /**
  * Provider quản lý trạng thái giỏ hàng toàn cục.
- * Đã tối ưu hóa Single-Flight Request: Dù 10 component gọi cùng lúc, chỉ 1 API duy nhất được thực thi.
+ * Sửa lỗi: Loại bỏ vòng lặp (Infinite loop) bằng cách ổn định hóa callback và logic dependency.
  */
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [cart, setCart] = useState<Cart | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
-    // Biến lưu trữ kết quả của yêu cầu đang chạy
+    // Sử dụng refs để quản lý trạng thái truy vấn mà không kích hoạt render lại
     const fetchingPromise = useRef<Promise<Cart> | null>(null);
+    const lastTokenRef = useRef<string | null>(localStorage.getItem('token'));
+    // Lưu vết trạng thái force load
     const isFirstLoad = useRef<boolean>(true);
 
     const refreshCart = useCallback(async (force: boolean = false) => {
         const token = localStorage.getItem('token');
+
         if (!token) {
             setCart(null);
             return;
         }
 
-        // Nếu đã có dữ liệu và không ép buộc, và không phải lần đầu, thì không làm gì
-        if (cart && !force && !isFirstLoad.current) return;
+        // Nếu đã có dữ liệu, không ép buộc load và không phải lần đầu thì bỏ qua
+        // Lưu ý: Không đưa 'cart' vào dependency của useCallback để tránh vòng lặp
+        if (!force && !isFirstLoad.current) return;
 
-        // Nếu đang có một yêu cầu khác đang chạy, hãy đợi yêu cầu đó thay vì tạo mới
+        // Chống trùng lặp yêu cầu (Single Flight)
         if (fetchingPromise.current) {
             await fetchingPromise.current;
             return;
@@ -33,23 +37,42 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         try {
             setLoading(true);
-            // Tạo một yêu cầu mới và lưu vào promise để các component khác dùng chung
             fetchingPromise.current = cartApiService.getCart();
             const data = await fetchingPromise.current;
-
             setCart(data);
             isFirstLoad.current = false;
         } catch (error) {
             console.error('Lỗi tải giỏ hàng:', error);
+            if (error instanceof Error && error.message.includes('401')) {
+                setCart(null);
+            }
         } finally {
             setLoading(false);
-            fetchingPromise.current = null; // Giải phóng sau khi xong
+            fetchingPromise.current = null;
         }
-    }, [cart]);
+    }, []); // Dependency mảng rỗng để hàm ổn định 100%, không bao giờ thay đổi
 
-    // Chỉ tự động tải lần đầu tiên khi App khởi chạy
+    // Effect 1: Khởi tạo giỏ hàng khi App load hoặc Token thay đổi thực sự
     useEffect(() => {
+        // Hàm định kỳ kiểm tra thay đổi Token (vì Token không nằm trong React State chính)
+        const checkTokenChange = setInterval(() => {
+            const currentToken = localStorage.getItem('token');
+            if (currentToken !== lastTokenRef.current) {
+                lastTokenRef.current = currentToken;
+                isFirstLoad.current = true; // Cho phép tải lại khi đổi account
+
+                if (!currentToken) {
+                    setCart(null);
+                } else {
+                    refreshCart(true);
+                }
+            }
+        }, 800);
+
+        // Chạy lần đầu tiên ngay lập tức
         refreshCart();
+
+        return () => clearInterval(checkTokenChange);
     }, [refreshCart]);
 
     const cartCount = cart?.items.reduce((total, item) => total + item.quantity, 0) || 0;

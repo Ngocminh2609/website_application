@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Form, Typography } from 'antd';
+import { Form, Typography, Divider } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import BaseButton from '../../components/common/BaseButton';
 import BaseInput from '../../components/common/BaseInput';
 import { authApi } from '../../api/authApi';
 import { notification } from '../../utils/notification';
-import type { LoginRequest } from '../../types/auth';
+import type { LoginRequest, AuthResponse } from '../../types/auth';
 
 const { Title, Text } = Typography;
 
@@ -15,39 +16,60 @@ interface LoginPageProps {
 }
 
 /**
- * Trang Đăng nhập sử dụng Custom Notification từ FE.
+ * Trang Đăng nhập tích hợp xác thực truyền thống và Google OAuth 2.0.
+ * Đã xử lý các lỗi TypeScript 'any' để đảm bảo Type-safety.
  */
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const [loading, setLoading] = useState<boolean>(false);
     const navigate = useNavigate();
 
+    // Xử lý đăng nhập truyền thống
     const onFinish = async (values: LoginRequest) => {
         setLoading(true);
         try {
             const response = await authApi.login(values);
-            if (response.token) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('user', JSON.stringify(response.user));
-
-                // Sử dụng thông báo nghiệp vụ đã được định nghĩa chung (DRY)
-                notification.auth.loginSuccess();
-
-                onLoginSuccess();
-                navigate('/');
-            }
+            handleAuthResponse(response);
         } catch {
-            // Loại bỏ biến error không sử dụng để tránh lỗi lints
             notification.auth.loginError();
         } finally {
             setLoading(false);
         }
     };
 
+    // Xử lý sau khi Google cấp Token
+    const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+        if (!credentialResponse.credential) {
+            notification.error('Không tìm thấy thông tin xác thực từ Google.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await authApi.googleLogin(credentialResponse.credential);
+            handleAuthResponse(response);
+        } catch {
+            notification.error('Đăng nhập Google thất bại. Vui lòng thử lại.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Hàm dùng chung để lưu Session với Type định nghĩa rõ ràng
+    const handleAuthResponse = (response: AuthResponse) => {
+        if (response.token) {
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            notification.auth.loginSuccess();
+            onLoginSuccess();
+            navigate('/');
+        }
+    };
+
     return (
-        <div style={{ maxWidth: '400px', margin: '100px auto', padding: '40px', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', backdropFilter: 'blur(10px)' }}>
+        <div style={{ maxWidth: '400px', margin: '140px auto', padding: '40px', background: 'var(--glass-bg)', borderRadius: '24px', border: '1px solid var(--glass-border)', backdropFilter: 'blur(15px)' }} className="animate-fade-up">
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                <Title level={2} style={{ color: '#fff', margin: 0 }}>Chào Mừng Trở Lại</Title>
-                <Text style={{ color: '#94a3b8' }}>Vui lòng đăng nhập để tiếp tục</Text>
+                <Title level={2} style={{ color: '#fff', margin: 0, fontWeight: 700 }}>CHÀO MỪNG TRỞ LẠI</Title>
+                <Text style={{ color: 'var(--text-muted)' }}>Vui lòng đăng nhập để tiếp tục</Text>
             </div>
 
             <Form<LoginRequest> name="login" onFinish={onFinish} layout="vertical" size="large">
@@ -55,7 +77,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     name="username"
                     rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
                 >
-                    <BaseInput prefix={<UserOutlined style={{ color: '#6366f1' }} />} placeholder="Tên đăng nhập" />
+                    <BaseInput prefix={<UserOutlined style={{ color: 'var(--primary-color)' }} />} placeholder="Tên đăng nhập" />
                 </Form.Item>
 
                 <Form.Item
@@ -63,20 +85,36 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
                 >
                     <BaseInput.Password
-                        prefix={<LockOutlined style={{ color: '#6366f1' }} />}
+                        prefix={<LockOutlined style={{ color: 'var(--primary-color)' }} />}
                         placeholder="Mật khẩu"
                     />
                 </Form.Item>
 
                 <Form.Item>
-                    <BaseButton type="primary" htmlType="submit" loading={loading} style={{ width: '100%', height: '50px' }}>
-                        Đăng Nhập
+                    <BaseButton type="primary" htmlType="submit" loading={loading} style={{ width: '100%', height: '52px', borderRadius: '12px', fontWeight: 600 }}>
+                        ĐĂNG NHẬP
                     </BaseButton>
                 </Form.Item>
 
+                <Divider style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                    <Text style={{ color: 'var(--text-muted)', fontSize: '12px' }}>HOẶC TIẾP TỤC VỚI</Text>
+                </Divider>
+
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+                    <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => notification.error('Lỗi kết nối với Google')}
+                        useOneTap
+                        theme="filled_blue"
+                        shape="pill"
+                        text="signin_with"
+                        width="320"
+                    />
+                </div>
+
                 <div style={{ textAlign: 'center' }}>
-                    <Text style={{ color: '#94a3b8' }}>Chưa có tài khoản? </Text>
-                    <span onClick={() => navigate('/register')} style={{ color: '#6366f1', cursor: 'pointer' }}>Đăng ký ngay</span>
+                    <Text style={{ color: 'var(--text-muted)' }}>Chưa có tài khoản? </Text>
+                    <span onClick={() => navigate('/register')} style={{ color: 'var(--primary-color)', cursor: 'pointer', fontWeight: 600 }}>Tạo tài khoản mới</span>
                 </div>
             </Form>
         </div>

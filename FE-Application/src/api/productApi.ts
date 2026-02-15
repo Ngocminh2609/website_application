@@ -14,6 +14,15 @@ export const productApi = {
     // Tìm kiếm sản phẩm theo từ khóa
     searchProducts: (query: string) => apiClient.fetch<Product[]>(`/products/search?query=${query}`),
 
+    // Lấy sản phẩm bán chạy
+    getBestSellers: () => apiClient.fetch<Product[]>('/products/best-sellers'),
+
+    // Lấy sản phẩm Flash Sale
+    getFlashSales: () => apiClient.fetch<Product[]>('/products/flash-sales'),
+
+    // Lấy sản phẩm theo Hãng
+    getProductsByBrand: (brand: string) => apiClient.fetch<Product[]>(`/products/brand/${brand}`),
+
     // Tạo sản phẩm mới (Yêu cầu quyền ADMIN)
     createProduct: (data: ProductRequest) => apiClient.fetch<Product>('/products', {
         method: 'POST',

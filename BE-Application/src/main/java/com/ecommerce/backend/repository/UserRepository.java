@@ -10,6 +10,9 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     // Tìm kiếm người dùng theo tên đăng nhập để phục vụ quá trình xác thực
     Optional<User> findByUsername(String username);
+
+    // Tìm kiếm người dùng theo email để phục vụ Google Login
+    Optional<User> findByEmail(String email);
     
     // Kiểm tra sự tồn tại của email để tránh đăng ký trùng lặp
     boolean existsByEmail(String email);

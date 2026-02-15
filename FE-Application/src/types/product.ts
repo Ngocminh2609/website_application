@@ -10,6 +10,12 @@ export interface Product {
     price: number;
     stockQuantity: number;
     imageUrl: string;
+    brand?: string;
+    isBestSeller?: boolean;
+    originalPrice?: number;
+    discountPrice?: number;
+    rating?: number;
+    reviewCount?: number;
     category?: Category;
     createdAt?: string;
     updatedAt?: string;

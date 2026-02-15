@@ -9,6 +9,7 @@
   --glass-border: rgba(255, 255, 255, 0.08);
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
 
   /* Responsive Spacing Tokens - Optimized for Large Screens */
   --container-padding: 80px;
@@ -144,5 +145,48 @@ body {
 @media (min-width: 769px) {
   .mobile-only {
     display: none !important;
+  }
+}
+
+/* Mega Shop Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.category-item-hover:hover {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+}
+
+.primary-gradient {
+  background: var(--primary-gradient) !important;
+}
+
+.premium-hover:hover {
+  z-index: 10;
+}
+
+.product-image:hover {
+  transform: scale(1.1);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

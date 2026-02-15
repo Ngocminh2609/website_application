@@ -46,11 +46,30 @@ public class ProductService {
             product.setPrice(productDetails.getPrice());
             product.setStockQuantity(productDetails.getStockQuantity());
             product.setImageUrl(productDetails.getImageUrl());
+            product.setBrand(productDetails.getBrand());
+            product.setBestSeller(productDetails.isBestSeller());
+            product.setOriginalPrice(productDetails.getOriginalPrice());
+            product.setDiscountPrice(productDetails.getDiscountPrice());
+            product.setRating(productDetails.getRating());
+            product.setReviewCount(productDetails.getReviewCount());
+
             if (productDetails.getCategory() != null) {
                 product.setCategory(productDetails.getCategory());
             }
             return productRepository.save(product);
         }).orElseThrow(() -> new RuntimeException("Product not found with id " + id));
+    }
+
+    public List<Product> getProductsByBrand(String brand) {
+        return productRepository.findByBrand(brand);
+    }
+
+    public List<Product> getBestSellers() {
+        return productRepository.findByIsBestSellerTrue();
+    }
+
+    public List<Product> getFlashSales() {
+        return productRepository.findByDiscountPriceNotNull();
     }
 
     public void deleteProduct(Long id) {

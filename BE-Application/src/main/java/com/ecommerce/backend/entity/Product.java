@@ -45,6 +45,24 @@ public class Product {
     // URL hình ảnh để hiển thị ở phía Frontend
     private String imageUrl;
 
+    // Hãng sản xuất (Apple, Samsung,...)
+    private String brand;
+
+    // Sản phẩm bán chạy
+    private boolean isBestSeller = false;
+
+    // Giá gốc (để hiển thị gạch ngang khi giảm giá)
+    private BigDecimal originalPrice;
+
+    // Giá Flash Sale (nếu có)
+    private BigDecimal discountPrice;
+
+    // Đánh giá sản phẩm (0-5 sao)
+    private Double rating = 5.0;
+
+    // Số lượng lượt đánh giá
+    private Integer reviewCount = 0;
+
     // Quan hệ nhiều sản phẩm thuộc về một danh mục
     // FetchType.LAZY giúp tối ưu hiệu năng khi không cần tải dữ liệu danh mục ngay lập tức
     // @JsonIgnoreProperties("products") chặn không cho Jackson lấy lại danh sách sản phẩm từ Category, tránh loop

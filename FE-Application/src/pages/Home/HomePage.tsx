@@ -1,90 +1,278 @@
-import React, { useEffect } from 'react';
-import { Layout, Typography, Row, Col, Empty, Spin } from 'antd';
-import ProductCard from '../../components/common/ProductCard';
-import BaseButton from '../../components/common/BaseButton';
+import React, { useEffect, useState } from 'react';
+import { Typography, Row, Col, Space, Divider, Spin } from 'antd';
+import { ThunderboltFilled, ArrowRightOutlined, StarFilled } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../types/product';
+import ProductCard from '../../components/common/ProductCard';
+import BaseButton from '../../components/common/BaseButton';
 
-const { Content } = Layout;
-const { Title, Paragraph } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 /**
- * Trang Chủ tối ưu hóa không gian.
- * Hiển thị trải rộng trên màn hình lớn và thu gọn thông minh trên di động.
+ * Trang chủ Tech Nova - Phiên bản nâng cấp tối ưu tương phản và thân thiện người dùng.
+ * Chỉnh sửa: Chữ màu trắng/sáng trên nền tối, loại bỏ các thành phần gây rối mắt.
  */
 const HomePage: React.FC = () => {
-    const { products, loading, fetchProducts } = useProducts();
+    const navigate = useNavigate();
+    const {
+        flashSales,
+        bestSellers,
+        categories,
+        loading: productLoading,
+        initializeHomeData,
+        fetchProductsByBrand
+    } = useProducts();
+    const [brandsData, setBrandsData] = useState<{ name: string, products: Product[] }[]>([]);
+    const [loadingBrands, setLoadingBrands] = useState<boolean>(true);
 
     useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
+        const fetchHomeData = async () => {
+            try {
+                setLoadingBrands(true);
+                // Khởi tạo các danh sách chính (Flash Sale, Best Seller, Categories) từ Context để tránh gọi trùng
+                await initializeHomeData();
+
+                // Sử dụng hàm từ context để đảm bảo cơ chế Single Flight (không gọi trùng lặp Apple/Samsung)
+                const [apple, samsung] = await Promise.all([
+                    fetchProductsByBrand('Apple'),
+                    fetchProductsByBrand('Samsung')
+                ]);
+
+                setBrandsData([
+                    { name: 'Apple Ecosystem', products: apple.slice(0, 4) },
+                    { name: 'Samsung Galaxy', products: samsung.slice(0, 4) }
+                ]);
+
+            } catch (error) {
+                console.error("Lỗi khi tải trang chủ:", error);
+            } finally {
+                setLoadingBrands(false);
+            }
+        };
+
+        fetchHomeData();
+    }, [initializeHomeData, fetchProductsByBrand]);
+
+    if (productLoading || loadingBrands) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-dark)' }}>
+                <Spin size="large" tip={<Text style={{ color: '#fff' }}>Đang khởi tạo không gian mua sắm...</Text>} />
+            </div>
+        );
+    }
 
     return (
-        <Content className="main-content">
-            {/* Hero Section - Tận dụng chiều rộng màn hình lớn */}
-            <section style={{
-                textAlign: 'center',
-                marginBottom: 'var(--section-margin)',
-                width: '100%',
-                margin: '0 auto var(--section-margin) auto'
-            }} className="animate-fade-up">
-                <Title className="hero-title" style={{ margin: 0 }}>
-                    Định Nghĩa Lại<br />Trải Nghiệm Công Nghệ
-                </Title>
-                <Paragraph style={{
-                    fontSize: 'clamp(1.1rem, 2vw, 1.5rem)',
-                    color: 'var(--text-muted)',
-                    margin: '32px auto 48px auto',
-                    maxWidth: '1200px', // Nới lỏng độ rộng đoạn văn để cân đối với tiêu đề lớn
-                    padding: '0 20px',
-                    lineHeight: 1.6
-                }}>
-                    Khám phá bộ sưu tập thiết bị cao cấp nhất được tuyển chọn theo tiêu chuẩn quốc tế,
-                    mang đến sự kết hợp hoàn hảo giữa hiệu năng đỉnh cao và thiết kế nghệ thuật.
-                </Paragraph>
-                <BaseButton type="primary" size="large" style={{
-                    fontSize: '1.2rem',
-                    padding: '15px 50px',
-                    height: 'auto',
-                    borderRadius: '50px'
-                }}>
-                    Bắt đầu mua sắm
-                </BaseButton>
+        <div className="animate-fade-in" style={{ color: '#fff' }}>
+            {/* HERO SECTION - Tối ưu chữ sáng trên nền tối */}
+            <section className="hero-section" style={{
+                minHeight: '85vh',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '120px 0',
+                background: 'radial-gradient(circle at 70% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%)'
+            }}>
+                <div className="main-content">
+                    <Row gutter={[48, 48]} align="middle">
+                        <Col xs={24} lg={14}>
+                            <Title className="hero-title" style={{ color: '#ffffff', marginBottom: '24px', textShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                                TRẢI NGHIỆM <br />
+                                <span style={{ color: 'var(--primary-color)' }}>CÔNG NGHỆ </span>
+                                ĐỈNH CAO
+                            </Title>
+                            <Paragraph style={{ color: '#e2e8f0', fontSize: '1.25rem', marginBottom: '48px', lineHeight: 1.8, maxWidth: '600px' }}>
+                                Chào mừng bạn đến với Tech Nova. Nơi cung cấp những thiết bị điện tử chính hãng,
+                                bảo hành chuẩn quốc tế và trải nghiệm mua sắm không giới hạn.
+                            </Paragraph>
+                            <Space size="large">
+                                <BaseButton
+                                    type="primary"
+                                    size="large"
+                                    onClick={() => navigate('/products')}
+                                    style={{ height: '64px', padding: '0 48px', fontSize: '1.1rem', borderRadius: '16px', fontWeight: 700 }}
+                                >
+                                    Khám Phá Sản Phẩm
+                                </BaseButton>
+                                <BaseButton
+                                    size="large"
+                                    ghost
+                                    style={{ height: '64px', padding: '0 48px', fontSize: '1.1rem', borderRadius: '16px', borderColor: '#fff', color: '#fff' }}
+                                >
+                                    Xem Ưu Đãi
+                                </BaseButton>
+                            </Space>
+
+                            <div style={{ marginTop: '60px', display: 'flex', gap: '40px' }}>
+                                <div>
+                                    <Title level={3} style={{ color: '#fff', margin: 0 }}>50k+</Title>
+                                    <Text style={{ color: 'var(--text-muted)' }}>Khách hàng tin dùng</Text>
+                                </div>
+                                <Divider type="vertical" style={{ height: '40px', borderColor: 'rgba(255,255,255,0.1)' }} />
+                                <div>
+                                    <Title level={3} style={{ color: '#fff', margin: 0 }}>200+</Title>
+                                    <Text style={{ color: 'var(--text-muted)' }}>Thương hiệu quốc tế</Text>
+                                </div>
+                            </div>
+                        </Col>
+                        <Col xs={0} lg={10}>
+                            {/* Chỗ này có thể thêm hình ảnh Decor hoặc Graphic abstract để thêm phần sinh động */}
+                        </Col>
+                    </Row>
+                </div>
             </section>
 
-            {/* Product List Section */}
-            <section>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '50px',
-                    flexWrap: 'wrap',
-                    gap: '20px'
-                }}>
-                    <Title level={2} style={{ color: '#fff', margin: 0 }}>
-                        Sản Phẩm Nổi Bật
-                    </Title>
-                    <div style={{ height: '2px', flex: 1, background: 'linear-gradient(90deg, var(--primary-color), transparent)', marginLeft: '30px' }} className="desktop-only" />
+            <div className="main-content">
+                {/* CATEGORY NAV - Nền rõ ràng, chữ nổi */}
+                <div style={{ marginBottom: '100px', textAlign: 'center' }}>
+                    <Text style={{ color: 'var(--primary-color)', textTransform: 'uppercase', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '3px', marginBottom: '20px', display: 'block' }}>
+                        DANH MỤC PHỔ BIẾN
+                    </Text>
+                    <div style={{ display: 'flex', overflowX: 'auto', gap: '24px', padding: '10px 0 30px' }} className="no-scrollbar">
+                        {categories.map(cat => (
+                            <div
+                                key={cat.id}
+                                onClick={() => navigate(`/products?category=${cat.id}`)}
+                                style={{
+                                    padding: '18px 40px',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '20px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    whiteSpace: 'nowrap'
+                                }}
+                                className="category-item-hover"
+                            >
+                                <Text style={{ color: '#ffffff', fontWeight: 600, fontSize: '1.05rem' }}>{cat.name}</Text>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
-                {loading ? (
-                    <div style={{ textAlign: 'center', padding: '100px' }}>
-                        <Spin size="large" tip="Đang tải dữ liệu..." />
+                {/* FLASH SALE - Chữ sáng, nền nhấn đỏ */}
+                {flashSales.length > 0 && (
+                    <section style={{ marginBottom: '120px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '50px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <div style={{ background: '#ef4444', padding: '10px', borderRadius: '12px', display: 'flex', alignItems: 'center' }}>
+                                    <ThunderboltFilled style={{ color: '#fff', fontSize: '24px' }} />
+                                </div>
+                                <div>
+                                    <Title level={2} style={{ color: '#ffffff', margin: 0 }}>Flash Sale Giờ Vàng</Title>
+                                    <Text style={{ color: '#ef4444', fontWeight: 600 }}>Kết thúc trong: 05:20:15</Text>
+                                </div>
+                            </div>
+                            <BaseButton type="link" onClick={() => navigate('/products')} style={{ color: 'var(--primary-color)', fontSize: '1rem' }}>
+                                Xem tất cả <ArrowRightOutlined />
+                            </BaseButton>
+                        </div>
+                        <Row gutter={[32, 32]}>
+                            {flashSales.slice(0, 4).map(product => (
+                                <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
+                                    <ProductCard product={product} />
+                                </Col>
+                            ))}
+                        </Row>
+                    </section>
+                )}
+
+                {/* BEST SELLER - Banner tối nhưng chữ phải phản quang */}
+                <section style={{
+                    marginBottom: '120px',
+                    padding: '80px 60px',
+                    borderRadius: '48px',
+                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                }}>
+                    <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+                        <Space style={{ marginBottom: '15px' }}>
+                            <StarFilled style={{ color: '#fcd34d' }} />
+                            <Text style={{ color: '#fcd34d', fontWeight: 600, letterSpacing: '2px' }}>TOP RATED</Text>
+                            <StarFilled style={{ color: '#fcd34d' }} />
+                        </Space>
+                        <Title level={2} style={{ color: '#ffffff', fontSize: '3rem', fontWeight: 800, margin: 0 }}>Được Ưa Chuộng Nhất</Title>
+                        <Text style={{ color: '#94a3b8', fontSize: '1.2rem', marginTop: '10px', display: 'block' }}>Những lựa chọn hàng đầu từ hàng triệu game thủ và người yêu công nghệ.</Text>
                     </div>
-                ) : products.length > 0 ? (
                     <Row gutter={[32, 32]}>
-                        {products.map((product: Product) => (
-                            <Col xs={24} sm={12} md={8} lg={6} xl={6} xxl={4} key={product.id}>
-                                <ProductCard product={product} />
+                        {bestSellers.slice(0, 6).map(product => (
+                            <Col xs={24} sm={12} md={8} lg={6} xxl={4} key={product.id}>
+                                <div className="premium-hover">
+                                    <ProductCard product={product} />
+                                </div>
                             </Col>
                         ))}
                     </Row>
-                ) : (
-                    <Empty description="Chưa có sản phẩm nào trong kho." />
-                )}
-            </section>
-        </Content>
+                </section>
+
+                {/* BRANDS - Sidebar Layout */}
+                {brandsData.map((brand, bIdx) => (
+                    <section key={bIdx} style={{ marginBottom: '100px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '48px' }}>
+                            <Title level={2} style={{ color: '#ffffff', margin: 0, whiteSpace: 'nowrap' }}>{brand.name}</Title>
+                            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%)' }}></div>
+                            <BaseButton onClick={() => navigate(`/products?brand=${brand.name}`)} ghost style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}>
+                                Xem Chi Tiết
+                            </BaseButton>
+                        </div>
+                        <Row gutter={[32, 32]}>
+                            {brand.products.map(product => (
+                                <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
+                                    <ProductCard product={product} />
+                                </Col>
+                            ))}
+                        </Row>
+                    </section>
+                ))}
+
+                {/* CTN SECTION - Nâng cao chuyển đổi */}
+                <section style={{
+                    marginTop: '150px',
+                    padding: '100px 40px',
+                    background: 'var(--primary-gradient)',
+                    borderRadius: '48px',
+                    textAlign: 'center',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
+                    <div style={{ position: 'relative', zIndex: 2 }}>
+                        <Title style={{ color: '#ffffff', fontSize: '3.5rem', fontWeight: 900, marginBottom: '24px' }}>HÀNH TRÌNH MỚI BẮT ĐẦU</Title>
+                        <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: '1.4rem', display: 'block', marginBottom: '48px', maxWidth: '800px', margin: '0 auto 48px' }}>
+                            Đừng bỏ lỡ những cập nhật công nghệ mới nhất. Trở thành thành viên của cộng đồng Tech Nova ngay hôm nay.
+                        </Text>
+                        <div style={{ display: 'flex', maxWidth: '650px', margin: '0 auto', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <div style={{
+                                flex: 1,
+                                minWidth: '300px',
+                                height: '64px',
+                                background: 'rgba(255,255,255,0.1)',
+                                borderRadius: '18px',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                padding: '0 24px'
+                            }}>
+                                <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Địa chỉ email của bạn...</Text>
+                            </div>
+                            <BaseButton style={{
+                                height: '64px',
+                                padding: '0 48px',
+                                borderRadius: '18px',
+                                background: '#ffffff',
+                                color: 'var(--primary-color)',
+                                fontWeight: 800,
+                                border: 'none',
+                                fontSize: '1.1rem'
+                            }}>
+                                ĐĂNG KÝ NGAY
+                            </BaseButton>
+                        </div>
+                    </div>
+                    {/* Abstract Circle Decor */}
+                    <div style={{ position: 'absolute', top: '-100px', left: '-100px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', filter: 'blur(50px)' }}></div>
+                </section>
+            </div>
+        </div>
     );
 };
 

@@ -1,6 +1,7 @@
 package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.dto.AuthResponse;
+import com.ecommerce.backend.dto.GoogleLoginRequest;
 import com.ecommerce.backend.dto.LoginRequest;
 import com.ecommerce.backend.dto.RegisterRequest;
 import com.ecommerce.backend.service.AuthService;
@@ -22,20 +23,21 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        // Trả về phản hồi chứa JWT thực tế sau khi đăng ký
         return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        // Trả về phản hồi chứa JWT thực tế sau khi kiểm tra thông tin đăng nhập
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(authService.googleLogin(request));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
-        // Với Stateless JWT, phía Server chỉ cần xác nhận yêu cầu.
-        // Frontend sẽ tự hủy bỏ Token trong LocalStorage.
         return ResponseEntity.ok("Đã đăng xuất thành công!");
     }
 }

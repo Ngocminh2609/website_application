@@ -22,4 +22,10 @@ export const authApi = {
     logout: () => apiClient.fetch<string>('/auth/logout', {
         method: 'POST',
     }),
+
+    // Đăng nhập bằng Google
+    googleLogin: (token: string) => apiClient.fetch<AuthResponse>('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+    }),
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Layout, Menu, Space, Dropdown, Avatar, Badge, Drawer } from 'antd';
 import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined } from '@ant-design/icons';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import BaseButton from '../common/BaseButton';
 import type { User } from '../../types/auth';
 import type { MenuProps } from 'antd';
@@ -20,13 +20,13 @@ interface NavbarProps {
  */
 const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { cartCount } = useCart();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const menuItems: MenuProps['items'] = [
         { key: '/', label: <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Trang Chủ</Link> },
         { key: '/products', label: <Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>Sản Phẩm</Link> },
-        { key: '/categories', label: <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)}>Danh Mục</Link> },
     ];
 
     const userMenuItems: MenuProps['items'] = [
@@ -82,6 +82,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                 theme="dark"
                 mode="horizontal"
                 items={menuItems}
+                selectedKeys={[location.pathname]}
                 className="desktop-only"
                 style={{
                     flex: 1,
@@ -136,6 +137,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                     mode="inline"
                     theme="dark"
                     items={menuItems}
+                    selectedKeys={[location.pathname]}
                     style={{ background: 'transparent', borderRight: 'none' }}
                 />
             </Drawer>

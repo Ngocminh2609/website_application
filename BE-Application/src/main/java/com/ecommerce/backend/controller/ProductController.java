@@ -25,11 +25,27 @@ public class ProductController {
         return productService.getAllProducts();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        return productService.getProductById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    // --- CÁC ENDPOINT CỤ THỂ PHẢI ĐƯỢC ĐỊNH NGHĨA TRƯỚC {ID} ---
+
+    @GetMapping("/best-sellers")
+    public List<Product> getBestSellers() {
+        return productService.getBestSellers();
+    }
+
+    @GetMapping("/flash-sales")
+    public List<Product> getFlashSales() {
+        return productService.getFlashSales();
+    }
+
+    @GetMapping("/search")
+    public List<Product> searchProducts(@RequestParam String query) {
+        // Tìm kiếm sản phẩm theo từ khóa để tăng trải nghiệm người dùng
+        return productService.searchProducts(query);
+    }
+
+    @GetMapping("/brand/{brand}")
+    public List<Product> getProductsByBrand(@PathVariable String brand) {
+        return productService.getProductsByBrand(brand);
     }
 
     @GetMapping("/category/{categoryId}")
@@ -38,10 +54,13 @@ public class ProductController {
         return productService.getProductsByCategory(categoryId);
     }
 
-    @GetMapping("/search")
-    public List<Product> searchProducts(@RequestParam String query) {
-        // Tìm kiếm sản phẩm theo từ khóa để tăng trải nghiệm người dùng
-        return productService.searchProducts(query);
+    // --- CÁC ENDPOINT DÙNG BIẾN CHUNG {ID} ĐỂ CUỐI CÙNG ---
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productService.getProductById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping

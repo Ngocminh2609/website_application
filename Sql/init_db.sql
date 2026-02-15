@@ -4,21 +4,19 @@
 -- ==========================================================
 
 -- Tạo cơ sở dữ liệu nếu chưa tồn tại
--- Việc kiểm tra giúp tránh lỗi khi chạy script nhiều lần trên cùng một server
 CREATE DATABASE IF NOT EXISTS ecommerce_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE ecommerce_db;
 
 -- 1. Bảng Danh mục (Categories)
--- Lưu trữ các nhóm sản phẩm (Ví dụ: Laptop, Điện thoại, Đồng hồ)
 CREATE TABLE IF NOT EXISTS categories (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL COMMENT 'Tên danh mục sản phẩm',
     description TEXT COMMENT 'Mô tả chi tiết về danh mục',
-    INDEX (name) -- Index tên để tối ưu tìm kiếm và sắp xếp theo danh mục
+    INDEX (name)
 ) ENGINE=InnoDB;
 
 -- 2. Bảng Sản phẩm (Products)
--- Lưu trữ thông tin chi tiết về từng mặt hàng
+-- Cập nhật: Thêm các cột brand, is_best_seller, price_original, discount_price, rating, review_count
 CREATE TABLE IF NOT EXISTS products (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -27,56 +25,35 @@ CREATE TABLE IF NOT EXISTS products (
     stock_quantity INT NOT NULL DEFAULT 0,
     image_url VARCHAR(500),
     category_id BIGINT,
+    brand VARCHAR(255) DEFAULT NULL,
+    is_best_seller TINYINT(1) DEFAULT 0,
+    original_price DECIMAL(19, 2) DEFAULT NULL,
+    discount_price DECIMAL(19, 2) DEFAULT NULL,
+    rating DOUBLE DEFAULT 5.0,
+    review_count INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    -- Ràng buộc khóa ngoại: Đảm bảo tính toàn vẹn dữ liệu
-    -- ON DELETE CASCADE: Khi xóa danh mục, các sản phẩm thuộc danh mục đó cũng sẽ bị xóa
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
-    
-    INDEX (name), -- Hỗ trợ tìm kiếm theo tên sản phẩm nhanh hơn
-    INDEX (category_id) -- Tối ưu việc lọc sản phẩm theo danh mục
+    INDEX (name),
+    INDEX (category_id),
+    INDEX (brand)
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------
--- Table `users`
--- -----------------------------------------------------
+-- 3. Bảng Người dùng (Users)
 CREATE TABLE IF NOT EXISTS `users` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(50) NOT NULL UNIQUE,
   `password` VARCHAR(255) NOT NULL,
   `email` VARCHAR(100) NOT NULL UNIQUE,
   `full_name` VARCHAR(100) NULL,
-  `role` VARCHAR(20) DEFAULT 'USER', -- USER, ADMIN
+  `role` VARCHAR(20) DEFAULT 'USER',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE = InnoDB;
 
--- ==========================================================
--- Dữ liệu mẫu (Seed Data) cho mục đích demo và kiểm thử
--- ==========================================================
-
--- Dữ liệu mẫu cho người dùng (Mật khẩu: password123 đã được mã hóa BCrypt)
-INSERT INTO `users` (`username`, `password`, `email`, `full_name`, `role`) VALUES
-('admin', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'admin@technova.com', 'Hệ Thống Admin', 'ADMIN'),
-('user1', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'user1@gmail.com', 'Nguyễn Văn A', 'USER');
-
--- Chèn danh mục
-INSERT INTO categories (name, description) VALUES 
-('Laptop', 'Các dòng máy tính xách tay cao cấp, mỏng nhẹ'),
-('SmartPhone', 'Điện thoại thông minh trải nghiệm AI'),
-('SmartWatch', 'Đồng hồ thông minh theo dõi sức khỏe');
-
--- Chèn sản phẩm mẫu  
--- Lấy ID từ các danh mục vừa tạo (Giả định ID lần lượt là 1, 2, 3)
-INSERT INTO products (name, description, price, stock_quantity, image_url, category_id) VALUES 
-('UltraBook Pro X1', 'Laptop thế hệ mới với hiệu năng vượt trội và thiết kế siêu mỏng.', 2500.00, 50, 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853', 1),
-('SmartPhone S24 Nebula', 'Trải nghiệm màn hình vô cực và camera AI thông minh bậc nhất.', 1200.00, 100, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9', 2),
-('Quantum Watch Series 5', 'Đồng hồ thông minh theo dõi sức khỏe và phong cách sống thượng lưu.', 450.00, 200, 'https://images.unsplash.com/photo-1523275335684-37898b6baf30', 3);
--- -----------------------------------------------------
--- Table `carts` & `cart_items`
--- -----------------------------------------------------
+-- 4. Bảng Giỏ hàng (Carts)
 CREATE TABLE IF NOT EXISTS `carts` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT NOT NULL UNIQUE,
@@ -84,8 +61,9 @@ CREATE TABLE IF NOT EXISTS `carts` (
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE = InnoDB;
 
+-- 5. Bảng Chi tiết giỏ hàng (Cart Items)
 CREATE TABLE IF NOT EXISTS `cart_items` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `cart_id` BIGINT NOT NULL,
@@ -94,4 +72,32 @@ CREATE TABLE IF NOT EXISTS `cart_items` (
   PRIMARY KEY (`id`),
   FOREIGN KEY (`cart_id`) REFERENCES `carts`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE = InnoDB;
+
+-- ==========================================================
+-- Dữ liệu mẫu (Seed Data)
+-- ==========================================================
+
+-- Dữ liệu người dùng (Mật khẩu: password123)
+INSERT INTO `users` (`username`, `password`, `email`, `full_name`, `role`) VALUES
+('admin', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'admin@technova.com', 'Hệ Thống Admin', 'ADMIN'),
+('user1', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'user1@gmail.com', 'Nguyễn Văn A', 'USER')
+ON DUPLICATE KEY UPDATE username=VALUES(username);
+
+-- Danh mục sản phẩm
+INSERT INTO categories (id, name, description) VALUES 
+(1, 'Laptop', 'Các dòng máy tính xách tay cao cấp, mỏng nhẹ'),
+(2, 'SmartPhone', 'Điện thoại thông minh trải nghiệm AI'),
+(3, 'SmartWatch', 'Đồng hồ thông minh theo dõi sức khỏe')
+ON DUPLICATE KEY UPDATE name=VALUES(name);
+
+-- Sản phẩm phong phú (Định dạng VND)
+INSERT INTO products (name, description, price, stock_quantity, image_url, category_id, brand, is_best_seller, original_price, discount_price, rating, review_count)
+VALUES 
+('iPhone 15 Pro Max', 'Chip A17 Pro mạnh mẽ, khung viền Titan siêu bền.', 32000000.00, 50, 'https://vcdn-sohoa.vnecdn.net/2023/09/13/iphone-15-pro-max-titan-xanh-7561-1694559815.jpg', 2, 'Apple', 1, 35000000.00, 31990000.00, 4.9, 1250),
+('MacBook Air M2 13"', 'Thiết kế mỏng nhẹ không tưởng, pin lên đến 18 giờ.', 24500000.00, 30, 'https://vcdn-sohoa.vnecdn.net/2022/06/07/MacBook-Air-M1-M2-5203-1654559132.jpg', 1, 'Apple', 1, 28000000.00, 23990000.00, 4.8, 850),
+('Apple Watch Series 9', 'Cảm biến nhịp tim, đo nồng độ oxy trong máu.', 9500000.00, 100, 'https://vcdn-sohoa.vnecdn.net/2023/09/13/apple-watch-s9-vne-1-1694555800.jpg', 3, 'Apple', 0, 10500000.00, 9200000.00, 4.7, 420),
+('Samsung Galaxy S24 Ultra', 'Bút S Pen huyền thoại, chip Snapdragon 8 Gen 3 for Galaxy.', 28900000.00, 45, 'https://vcdn-sohoa.vnecdn.net/2024/01/18/S24-Ultra-vne-1-1705531405.jpg', 2, 'Samsung', 1, 33500000.00, 28500000.00, 4.9, 980),
+('Galaxy Watch6 Classic', 'Vòng xoay bezel sành điệu, theo dõi giấc ngủ nâng cao.', 7200000.00, 60, 'https://vcdn-sohoa.vnecdn.net/2023/07/26/watch-6-classic-1-1690377484.jpg', 3, 'Samsung', 0, 8500000.00, 6990000.00, 4.6, 310),
+('Dell XPS 13 Plus', 'Màn hình 3.5K OLED rực rỡ, bàn phím vô cực.', 42000000.00, 15, 'https://vcdn-sohoa.vnecdn.net/2022/07/16/dell-xps-13-plus-1-1657936307.jpg', 1, 'Dell', 0, 46000000.00, 41000000.00, 4.8, 150),
+('ROG Zephyrus G14', 'Màn hình 120Hz, sức mạnh gaming trong thân xác văn phòng.', 38000000.00, 20, 'https://vcdn-sohoa.vnecdn.net/2023/02/03/Zephyrus-G14-vne-1-1675394236.jpg', 1, 'Asus', 1, 41500000.00, 37500000.00, 4.9, 540);
