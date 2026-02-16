@@ -53,6 +53,8 @@ public class User implements UserDetails {
 
     private String fullName;
 
+    private String avatarUrl;
+
     private String role; // Mặc định là 'USER'
 
     @CreatedDate

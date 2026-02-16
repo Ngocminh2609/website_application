@@ -41,6 +41,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         }
     };
 
+    const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        const target = e.target as HTMLImageElement;
+
+        // Bản đồ ảnh dự phòng theo danh mục (Sử dụng link Unsplash uy tín)
+        const replacements: Record<string, string> = {
+            'laptop': 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&q=80&w=800',
+            'smartphone': 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=800',
+            'smartwatch': 'https://images.unsplash.com/photo-1508685096489-77a5ad2ba8e4?auto=format&fit=crop&q=80&w=800',
+            'default': 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800'
+        };
+
+        const categoryName = product.category?.name?.toLowerCase() || 'default';
+        target.src = replacements[categoryName] || replacements['default'];
+    };
+
     return (
         <Card
             hoverable
@@ -68,6 +83,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     <img
                         alt={product.name}
                         src={product.imageUrl}
+                        onError={handleImgError}
                         className="product-image"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
                     />

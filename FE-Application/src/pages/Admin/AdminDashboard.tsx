@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Row, Col, Card, Table, Space, Tag, Modal, Form, Input, InputNumber, Select } from 'antd';
+import { Layout, Typography, Row, Col, Card, Table, Space, Tag, Modal, Form, Input, InputNumber, Select, Upload } from 'antd';
+import type { UploadFile } from 'antd';
 import {
     TeamOutlined,
     ShoppingOutlined,
     DollarOutlined,
     EditOutlined,
     DeleteOutlined,
-    PlusOutlined
+    PlusOutlined,
+    UploadOutlined
 } from '@ant-design/icons';
 import { productApi } from '../../api/productApi';
 import { categoryApi } from '../../api/categoryApi';
+import { fileApi } from '../../api/fileApi';
 import type { Product, ProductRequest } from '../../types/product';
 import type { Category } from '../../types/category';
 import BaseButton from '../../components/common/BaseButton';
@@ -27,6 +30,8 @@ const AdminDashboard: React.FC = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [form] = Form.useForm<ProductRequest>();
 
     useEffect(() => {
@@ -51,19 +56,53 @@ const AdminDashboard: React.FC = () => {
     }, []);
 
     const handleAddProduct = () => {
+        setEditingId(null);
         form.resetFields();
+        setFileList([]);
+        setIsModalVisible(true);
+    };
+
+    const handleEdit = (product: Product) => {
+        setEditingId(product.id);
+        form.setFieldsValue({
+            name: product.name,
+            price: product.price,
+            stockQuantity: product.stockQuantity,
+            categoryId: product.category?.id || 0,
+            imageUrl: product.imageUrl,
+            description: product.description
+        });
+        setFileList([]); // Reset file list when starting edit
         setIsModalVisible(true);
     };
 
     const onFinish = async (values: ProductRequest) => {
         try {
-            await productApi.createProduct(values);
-            notification.success('Thêm sản phẩm thành công!');
+            setLoading(true);
+            let imageUrl = values.imageUrl;
+
+            // Nếu có tệp tin mới được chọn, tải lên MinIO
+            if (fileList.length > 0 && fileList[0].originFileObj) {
+                const uploadRes = await fileApi.uploadImage(fileList[0].originFileObj as File, 'product');
+                imageUrl = uploadRes.url;
+            }
+
+            if (editingId) {
+                await productApi.updateProduct(editingId, { ...values, imageUrl });
+                notification.success('Cập nhật sản phẩm thành công!');
+            } else {
+                await productApi.createProduct({ ...values, imageUrl });
+                notification.success('Thêm sản phẩm thành công!');
+            }
+
             setIsModalVisible(false);
             const productData = await productApi.getAllProducts();
             setProducts(productData);
-        } catch {
-            notification.error('Không thể thực hiện yêu cầu này');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Không thể thực hiện yêu cầu này';
+            notification.error(message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -93,6 +132,9 @@ const AdminDashboard: React.FC = () => {
                     <img
                         src={record.imageUrl}
                         alt={record.name}
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=200';
+                        }}
                         style={{ width: 45, height: 45, borderRadius: 8, objectFit: 'cover' }}
                     />
                     <div>
@@ -126,7 +168,12 @@ const AdminDashboard: React.FC = () => {
             align: 'right',
             render: (_, record: Product) => (
                 <Space size="small">
-                    <BaseButton type="text" icon={<EditOutlined />} style={{ color: 'var(--primary-color)' }} />
+                    <BaseButton
+                        type="text"
+                        icon={<EditOutlined />}
+                        style={{ color: 'var(--primary-color)' }}
+                        onClick={() => handleEdit(record)}
+                    />
                     <BaseButton
                         type="text"
                         icon={<DeleteOutlined />}
@@ -186,7 +233,7 @@ const AdminDashboard: React.FC = () => {
 
             <Card
                 className="glass-effect"
-                title={<span style={{ color: '#fff', fontSize: '1.25rem' }}>Danh sách sản phẩm trong kho</span>}
+                title={<span style={{ color: '#fff', fontSize: '1.25rem' }}>{editingId ? 'Chỉnh sửa sản phẩm' : 'Danh sách sản phẩm trong kho'}</span>}
                 styles={{ header: { borderBottom: '1px solid rgba(255,255,255,0.1)' }, body: { padding: '0' } }}
             >
                 <Table
@@ -200,7 +247,7 @@ const AdminDashboard: React.FC = () => {
             </Card>
 
             <Modal
-                title={<Title level={4} style={{ margin: 0 }}>Thông tin sản phẩm</Title>}
+                title={<Title level={4} style={{ margin: 0 }}>{editingId ? 'Cập nhật thông tin sản phẩm' : 'Thêm sản phẩm mới'}</Title>}
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
                 onOk={() => form.submit()}
@@ -231,8 +278,25 @@ const AdminDashboard: React.FC = () => {
                             options={categories.map(c => ({ label: c.name, value: c.id }))}
                         />
                     </Form.Item>
-                    <Form.Item name="imageUrl" label="Đường dẫn hình ảnh" rules={[{ required: true, message: 'Nhập link ảnh' }]}>
-                        <Input size="large" placeholder="https://image-url.com/asset.jpg" />
+                    <Form.Item label="Hình ảnh sản phẩm">
+                        <Upload
+                            beforeUpload={() => false}
+                            listType="picture-card"
+                            maxCount={1}
+                            fileList={fileList}
+                            onChange={({ fileList }) => setFileList(fileList)}
+                        >
+                            {fileList.length >= 1 ? null : (
+                                <div>
+                                    <UploadOutlined />
+                                    <div style={{ marginTop: 8 }}>Tải ảnh</div>
+                                </div>
+                            )}
+                        </Upload>
+                        <Text type="secondary">Hoặc nhập URL thủ công bên dưới</Text>
+                    </Form.Item>
+                    <Form.Item name="imageUrl" label="Đường dẫn hình ảnh">
+                        <Input size="large" placeholder="https://image-url.com/asset.jpg" disabled={fileList.length > 0} />
                     </Form.Item>
                     <Form.Item name="description" label="Mô tả sản phẩm">
                         <Input.TextArea rows={4} placeholder="Nhập mô tả chi tiết về tính năng, cấu hình..." />

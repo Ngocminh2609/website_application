@@ -1,6 +1,9 @@
 package com.ecommerce.backend.service;
 
+import com.ecommerce.backend.dto.ProductRequest;
+import com.ecommerce.backend.entity.Category;
 import com.ecommerce.backend.entity.Product;
+import com.ecommerce.backend.repository.CategoryRepository;
 import com.ecommerce.backend.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,10 +15,12 @@ import java.util.Optional;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
     @Autowired
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     public List<Product> getAllProducts() {
@@ -34,30 +39,33 @@ public class ProductService {
         return productRepository.findByNameContainingIgnoreCase(query);
     }
 
-    public Product saveProduct(Product product) {
+    public Product saveProduct(ProductRequest request) {
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + request.getCategoryId()));
+
+        Product product = new Product();
+        mapRequestToEntity(request, product, category);
         return productRepository.save(product);
     }
 
-    public Product updateProduct(Long id, Product productDetails) {
-        // Áp dụng tính đóng gói bằng cách cập nhật từng trường cụ thể của Entity hiện có
+    public Product updateProduct(Long id, ProductRequest request) {
         return productRepository.findById(id).map(product -> {
-            product.setName(productDetails.getName());
-            product.setDescription(productDetails.getDescription());
-            product.setPrice(productDetails.getPrice());
-            product.setStockQuantity(productDetails.getStockQuantity());
-            product.setImageUrl(productDetails.getImageUrl());
-            product.setBrand(productDetails.getBrand());
-            product.setBestSeller(productDetails.isBestSeller());
-            product.setOriginalPrice(productDetails.getOriginalPrice());
-            product.setDiscountPrice(productDetails.getDiscountPrice());
-            product.setRating(productDetails.getRating());
-            product.setReviewCount(productDetails.getReviewCount());
+            Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found with id: " + request.getCategoryId()));
 
-            if (productDetails.getCategory() != null) {
-                product.setCategory(productDetails.getCategory());
-            }
+            mapRequestToEntity(request, product, category);
             return productRepository.save(product);
         }).orElseThrow(() -> new RuntimeException("Product not found with id " + id));
+    }
+
+    private void mapRequestToEntity(ProductRequest request, Product product, Category category) {
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStockQuantity(request.getStockQuantity());
+        product.setImageUrl(request.getImageUrl());
+        product.setBrand(request.getBrand());
+        product.setCategory(category);
     }
 
     public List<Product> getProductsByBrand(String brand) {

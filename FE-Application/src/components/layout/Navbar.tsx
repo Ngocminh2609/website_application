@@ -106,7 +106,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                 {user ? (
                     <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
                         <Space style={{ cursor: 'pointer' }}>
-                            <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#6366f1' }} />
+                            <Avatar
+                                src={user.avatarUrl}
+                                icon={!user.avatarUrl && <UserOutlined />}
+                                style={{ backgroundColor: '#6366f1' }}
+                            />
                             <span className="desktop-only" style={{ color: '#fff', fontWeight: 500 }}>
                                 {user.fullName || user.username}
                             </span>

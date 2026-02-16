@@ -28,6 +28,9 @@ public class Category {
     @Column(nullable = false)
     private String name;
 
+    // Ảnh đại diện cho danh mục
+    private String imageUrl;
+
     // Mô tả thêm về danh mục sản phẩm
     private String description;
 

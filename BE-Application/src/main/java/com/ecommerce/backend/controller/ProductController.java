@@ -1,5 +1,6 @@
 package com.ecommerce.backend.controller;
 
+import com.ecommerce.backend.dto.ProductRequest;
 import com.ecommerce.backend.entity.Product;
 import com.ecommerce.backend.service.ProductService;
 import jakarta.validation.Valid;
@@ -64,14 +65,14 @@ public class ProductController {
     }
 
     @PostMapping
-    public Product createProduct(@Valid @RequestBody Product product) {
-        return productService.saveProduct(product);
+    public Product createProduct(@Valid @RequestBody ProductRequest productRequest) {
+        return productService.saveProduct(productRequest);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody Product productDetails) {
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest productRequest) {
         try {
-            return ResponseEntity.ok(productService.updateProduct(id, productDetails));
+            return ResponseEntity.ok(productService.updateProduct(id, productRequest));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

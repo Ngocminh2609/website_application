@@ -24,20 +24,24 @@ const ProductsPage: React.FC = () => {
 
     // Trạng thái bộ lọc - Khởi tạo từ URL nếu có
     const [selectedBrands, setSelectedBrands] = useState<string[]>(
-        searchParams.get('brand') ? [searchParams.get('brand')!] : []
+        searchParams.getAll('brand')
     );
     const [selectedCategories, setSelectedCategories] = useState<number[]>(
-        searchParams.get('category') ? [parseInt(searchParams.get('category')!)] : []
+        searchParams.getAll('category').map(id => parseInt(id))
     );
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000]);
 
     useEffect(() => {
-        // Cập nhật URL khi bộ lọc thay đổi (Tùy chọn: giúp người dùng lưu được link lọc)
-        const params: Record<string, string> = {};
-        if (selectedBrands.length === 1) params.brand = selectedBrands[0];
-        if (selectedCategories.length === 1) params.category = selectedCategories[0].toString();
-        setSearchParams(params, { replace: true });
-    }, [selectedBrands, selectedCategories, setSearchParams]);
+        // Cập nhật URL khi bộ lọc thay đổi
+        const params = new URLSearchParams();
+        selectedBrands.forEach(brand => params.append('brand', brand));
+        selectedCategories.forEach(catId => params.append('category', catId.toString()));
+
+        // Chỉ cập nhật nếu searchParams hiện tại khác với params mới để tránh loop
+        if (params.toString() !== searchParams.toString()) {
+            setSearchParams(params, { replace: true });
+        }
+    }, [searchParams, selectedBrands, selectedCategories, setSearchParams]);
 
     useEffect(() => {
         const loadInitialData = async () => {

@@ -13,9 +13,14 @@ export const apiClient = {
         const token = localStorage.getItem('token');
 
         const headers: HeadersInit = {
-            'Content-Type': 'application/json',
             ...options?.headers,
         };
+
+        // Chỉ đặt Content-Type là JSON nếu body KHÔNG phải là FormData
+        // Khi dùng FormData, trình duyệt sẽ tự động thiết lập Content-Type kèm theo boundary
+        if (!(options?.body instanceof FormData)) {
+            (headers as Record<string, string>)['Content-Type'] = 'application/json';
+        }
 
         // Nếu có token, tự động gắn vào Header theo chuẩn Bearer
         if (token) {

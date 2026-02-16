@@ -23,7 +23,7 @@ const HomePage: React.FC = () => {
         initializeHomeData,
         fetchProductsByBrand
     } = useProducts();
-    const [brandsData, setBrandsData] = useState<{ name: string, products: Product[] }[]>([]);
+    const [brandsData, setBrandsData] = useState<{ id: string, name: string, products: Product[] }[]>([]);
     const [loadingBrands, setLoadingBrands] = useState<boolean>(true);
 
     useEffect(() => {
@@ -40,8 +40,8 @@ const HomePage: React.FC = () => {
                 ]);
 
                 setBrandsData([
-                    { name: 'Apple Ecosystem', products: apple.slice(0, 4) },
-                    { name: 'Samsung Galaxy', products: samsung.slice(0, 4) }
+                    { id: 'Apple', name: 'Apple Ecosystem', products: apple.slice(0, 4) },
+                    { id: 'Samsung', name: 'Samsung Galaxy', products: samsung.slice(0, 4) }
                 ]);
 
             } catch (error) {
@@ -211,7 +211,7 @@ const HomePage: React.FC = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '48px' }}>
                             <Title level={2} style={{ color: '#ffffff', margin: 0, whiteSpace: 'nowrap' }}>{brand.name}</Title>
                             <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%)' }}></div>
-                            <BaseButton onClick={() => navigate(`/products?brand=${brand.name}`)} ghost style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}>
+                            <BaseButton onClick={() => navigate(`/products?brand=${brand.id}`)} ghost style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}>
                                 Xem Chi Tiết
                             </BaseButton>
                         </div>
