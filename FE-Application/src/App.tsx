@@ -17,6 +17,9 @@ import { notification } from './utils/notification';
 import { CartProvider } from './context/CartContext';
 import { ProductProvider } from './context/ProductContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import ChatWidget from './components/common/ChatWidget';
+import { NotificationProvider } from './context/NotificationContext';
+import { AdminChatProvider } from './context/AdminChatContext';
 
 // Thay thế bằng Client ID của bạn từ Google Cloud Console
 const GOOGLE_CLIENT_ID = "1051116450325-qneacpielnd6acgajc3kftfpk9nkjkqj.apps.googleusercontent.com";
@@ -29,6 +32,11 @@ const App: React.FC = () => {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
+
+  const getNotificationUserId = () => {
+    if (user?.role === 'ADMIN') return 'admin';
+    return user ? `user-${user.id}` : null;
+  };
 
   const handleLoginSuccess = () => {
     const savedUser = localStorage.getItem('user');
@@ -57,40 +65,45 @@ const App: React.FC = () => {
     >
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <AntdApp>
-          <ProductProvider>
-            <CartProvider>
+          <NotificationProvider userId={getNotificationUserId()}>
+            <AdminChatProvider isAdmin={user?.role === 'ADMIN'}>
               <Router>
-                <Layout style={{ minHeight: '100vh', background: 'transparent' }}>
-                  <Navbar user={user} onLogout={handleLogout} />
+                <ProductProvider>
+                  <CartProvider>
+                    <Layout style={{ minHeight: '100vh', background: 'transparent' }}>
+                      <Navbar user={user} onLogout={handleLogout} />
 
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/products" element={<ProductsPage />} />
-                    <Route path="/product/:id" element={<ProductDetailPage />} />
-                    <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/cart" element={user ? <CartPage /> : <Navigate to="/login" />} />
-                    <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
-                    <Route path="/payment-success" element={<PaymentSuccessPage />} />
+                      <Routes>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/products" element={<ProductsPage />} />
+                        <Route path="/product/:id" element={<ProductDetailPage />} />
+                        <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
+                        <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/cart" element={user ? <CartPage /> : <Navigate to="/login" />} />
+                        <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
+                        <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
-                    {/* Route bảo vệ cho Admin */}
-                    <Route
-                      path="/admin"
-                      element={
-                        user?.role === 'ADMIN' ? (
-                          <AdminDashboard />
-                        ) : (
-                          <Navigate to="/" replace />
-                        )
-                      }
-                    />
-                  </Routes>
+                        {/* Route bảo vệ cho Admin */}
+                        <Route
+                          path="/admin"
+                          element={
+                            user?.role === 'ADMIN' ? (
+                              <AdminDashboard />
+                            ) : (
+                              <Navigate to="/" replace />
+                            )
+                          }
+                        />
+                      </Routes>
 
-                  <Footer />
-                </Layout>
+                      <Footer />
+                      <ChatWidget key={user ? String(user.id) : 'guest'} user={user} />
+                    </Layout>
+                  </CartProvider>
+                </ProductProvider>
               </Router>
-            </CartProvider>
-          </ProductProvider>
+            </AdminChatProvider>
+          </NotificationProvider>
         </AntdApp>
       </GoogleOAuthProvider>
     </ConfigProvider>

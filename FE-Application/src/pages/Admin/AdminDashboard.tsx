@@ -14,8 +14,11 @@ import {
     HistoryOutlined,
     CheckCircleOutlined,
     ClockCircleOutlined,
-    CarOutlined
+    CarOutlined,
+    MessageOutlined,
+    BarChartOutlined
 } from '@ant-design/icons';
+import AdminChat from './AdminChat';
 import { productApi } from '../../api/productApi';
 import { categoryApi } from '../../api/categoryApi';
 import { fileApi } from '../../api/fileApi';
@@ -26,7 +29,6 @@ import BaseButton from '../../components/common/BaseButton';
 import { notification } from '../../utils/notification';
 import type { ColumnsType } from 'antd/es/table';
 import StatisticsTab from './StatisticsTab';
-import { BarChartOutlined } from '@ant-design/icons';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -402,6 +404,11 @@ const AdminDashboard: React.FC = () => {
                             key: 'statistics',
                             label: <span style={{ fontSize: 16 }}><BarChartOutlined /> Báo cáo & Thống kê</span>,
                             children: <StatisticsTab />
+                        },
+                        {
+                            key: 'chat',
+                            label: <span style={{ fontSize: 16 }}><MessageOutlined /> Chat Tư Vấn</span>,
+                            children: <AdminChat />
                         }
                     ]}
                 />

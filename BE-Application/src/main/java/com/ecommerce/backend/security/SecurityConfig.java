@@ -47,6 +47,9 @@ public class SecurityConfig {
                         
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         
+                        // Cho phép WebSocket
+                        .requestMatchers("/ws-chat/**").permitAll()
+                        
                         // Các yêu cầu khác yêu cầu đăng nhập cơ bản
                         .anyRequest().authenticated()
                 )

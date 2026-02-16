@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Layout, Menu, Space, Dropdown, Avatar, Badge, Drawer, Select } from 'antd';
-import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined, ShoppingOutlined, SearchOutlined, FireOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined, ShoppingOutlined, SearchOutlined, FireOutlined, BellOutlined } from '@ant-design/icons';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import BaseButton from '../common/BaseButton';
 import type { User } from '../../types/auth';
@@ -9,6 +9,7 @@ import { useCart } from '../../hooks/useCart';
 import { productApi } from '../../api/productApi';
 import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../types/product';
+import { useNotifications } from '../../context/NotificationContext';
 
 const { Header } = Layout;
 
@@ -26,6 +27,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
     const location = useLocation();
     const { cartCount } = useCart();
     const { bestSellers } = useProducts();
+    const { unreadCount } = useNotifications();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // State cho tìm kiếm và gợi ý
@@ -177,11 +179,18 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
 
             <Space size="large">
                 {user && (
-                    <div onClick={() => navigate('/cart')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                        <Badge count={cartCount} size="small" offset={[5, 0]} color="#6366f1">
-                            <ShoppingCartOutlined style={{ fontSize: '22px', color: '#fff' }} />
-                        </Badge>
-                    </div>
+                    <>
+                        <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            <Badge count={unreadCount} size="small" offset={[5, 0]} color="#ff4d4f">
+                                <BellOutlined style={{ fontSize: '22px', color: '#fff' }} />
+                            </Badge>
+                        </div>
+                        <div onClick={() => navigate('/cart')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            <Badge count={cartCount} size="small" offset={[5, 0]} color="#6366f1">
+                                <ShoppingCartOutlined style={{ fontSize: '22px', color: '#fff' }} />
+                            </Badge>
+                        </div>
+                    </>
                 )}
 
                 {user ? (

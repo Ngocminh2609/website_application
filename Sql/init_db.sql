@@ -124,6 +124,19 @@ CREATE TABLE IF NOT EXISTS `payment_transactions` (
     FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
+-- 9. Bảng Thông báo (Notifications)
+CREATE TABLE IF NOT EXISTS `notifications` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `recipient_id` VARCHAR(100) NOT NULL COMMENT 'ID người nhận: user-{id} hoặc admin',
+    `message` TEXT NOT NULL COMMENT 'Nội dung thông báo',
+    `type` VARCHAR(20) NOT NULL DEFAULT 'MESSAGE' COMMENT 'MESSAGE, ORDER, SYSTEM',
+    `is_read` TINYINT(1) DEFAULT 0 COMMENT '0: Chưa đọc, 1: Đã đọc',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    INDEX (`recipient_id`),
+    INDEX (`is_read`)
+) ENGINE = InnoDB;
+
 -- III. CHÈN DỮ LIỆU MẪU (DML - INSERT)
 
 -- 1. Dữ liệu người dùng (Mật khẩu: password123)
