@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Layout, Menu, Space, Dropdown, Avatar, Badge, Drawer } from 'antd';
-import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined, ShoppingOutlined } from '@ant-design/icons';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import BaseButton from '../common/BaseButton';
 import type { User } from '../../types/auth';
@@ -34,6 +34,12 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             key: 'profile',
             label: 'Hồ sơ cá nhân',
             icon: <UserOutlined />,
+        },
+        {
+            key: 'orders',
+            label: 'Đơn hàng của tôi',
+            icon: <ShoppingOutlined />,
+            onClick: () => navigate('/orders'),
         },
         ...(user?.role === 'ADMIN' ? [
             {

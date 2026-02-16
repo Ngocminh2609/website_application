@@ -9,6 +9,8 @@ import RegisterPage from './pages/Auth/RegisterPage';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import CartPage from './pages/Cart/CartPage';
 import ProductsPage from './pages/Product/ProductsPage';
+import PaymentSuccessPage from './pages/Payment/PaymentSuccessPage';
+import OrdersPage from './pages/Order/OrdersPage';
 import type { User } from './types/auth';
 import { notification } from './utils/notification';
 import { CartProvider } from './context/CartContext';
@@ -66,6 +68,8 @@ const App: React.FC = () => {
                     <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/cart" element={user ? <CartPage /> : <Navigate to="/login" />} />
+                    <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
+                    <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
                     {/* Route bảo vệ cho Admin */}
                     <Route

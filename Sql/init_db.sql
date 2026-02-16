@@ -3,9 +3,11 @@
 -- FE: TypeScript | BE: Spring Boot | DB: MySQL
 -- ==========================================================
 
--- Tạo cơ sở dữ liệu nếu chưa tồn tại
+-- I. KHỞI TẠO CƠ SỞ DỮ LIỆU
 CREATE DATABASE IF NOT EXISTS ecommerce_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE ecommerce_db;
+
+-- II. ĐỊNH NGHĨA CẤU TRÚC BẢNG (DDL - CREATE)
 
 -- 1. Bảng Danh mục (Categories)
 CREATE TABLE IF NOT EXISTS categories (
@@ -17,7 +19,6 @@ CREATE TABLE IF NOT EXISTS categories (
 ) ENGINE=InnoDB;
 
 -- 2. Bảng Sản phẩm (Products)
--- Cập nhật: Thêm các cột brand, is_best_seller, price_original, discount_price, rating, review_count
 CREATE TABLE IF NOT EXISTS products (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -76,24 +77,67 @@ CREATE TABLE IF NOT EXISTS `cart_items` (
   FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
--- ==========================================================
--- Dữ liệu mẫu (Seed Data)
--- ==========================================================
+-- 6. Bảng Đơn hàng (Orders)
+CREATE TABLE IF NOT EXISTS `orders` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `total_amount` DECIMAL(19, 2) NOT NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, PAID, FAILED, SHIPPING, DELIVERED, CANCELLED',
+    `payment_method` VARCHAR(50) DEFAULT 'VNPAY',
+    `shipping_address` TEXT,
+    `phone_number` VARCHAR(20),
+    `order_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE = InnoDB;
 
--- Dữ liệu người dùng (Mật khẩu: password123)
+-- 7. Bảng Chi tiết đơn hàng (Order Items)
+CREATE TABLE IF NOT EXISTS `order_items` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `order_id` BIGINT NOT NULL,
+    `product_id` BIGINT NOT NULL,
+    `quantity` INT NOT NULL,
+    `price` DECIMAL(19, 2) NOT NULL COMMENT 'Giá tại thời điểm mua',
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+-- 8. Bảng Ghi nhận giao dịch (Payment Transactions)
+CREATE TABLE IF NOT EXISTS `payment_transactions` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `order_id` BIGINT NOT NULL,
+    `vnp_txn_ref` VARCHAR(50),
+    `vnp_transaction_no` VARCHAR(50),
+    `vnp_response_code` VARCHAR(10),
+    `vnp_amount` DECIMAL(19, 2),
+    `vnp_bank_code` VARCHAR(20),
+    `vnp_pay_date` VARCHAR(20),
+    `vnp_transaction_status` VARCHAR(10),
+    `secure_hash` VARCHAR(255),
+    `raw_data` TEXT COMMENT 'Toàn bộ dữ liệu JSON từ VNPay',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+-- III. CHÈN DỮ LIỆU MẪU (DML - INSERT)
+
+-- 1. Dữ liệu người dùng (Mật khẩu: password123)
 INSERT INTO `users` (`username`, `password`, `email`, `full_name`, `role`) VALUES
 ('admin', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'admin@technova.com', 'Hệ Thống Admin', 'ADMIN'),
 ('user1', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'user1@gmail.com', 'Nguyễn Văn A', 'USER')
 ON DUPLICATE KEY UPDATE username=VALUES(username);
 
--- Danh mục sản phẩm (image_url mặc định để trống cho mẫu)
+-- 2. Danh mục sản phẩm
 INSERT INTO categories (id, name, image_url, description) VALUES 
 (1, 'Laptop', '', 'Các dòng máy tính xách tay cao cấp, mỏng nhẹ'),
 (2, 'SmartPhone', '', 'Điện thoại thông minh trải nghiệm AI'),
 (3, 'SmartWatch', '', 'Đồng hồ thông minh theo dõi sức khỏe')
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
--- Sản phẩm phong phú (Sử dụng link chuẩn từ CDN chính thức)
+-- 3. Sản phẩm mẫu
 INSERT INTO products (name, description, price, stock_quantity, image_url, category_id, brand, is_best_seller, original_price, discount_price, rating, review_count)
 VALUES 
 ('iPhone 15 Pro Max', 'Chip A17 Pro mạnh mẽ, khung viền Titan siêu bền.', 32000000.00, 50, 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=1200&hei=630&fmt=jpeg&qlt=95&.v=1692845692711', 2, 'Apple', 1, 35000000.00, 31990000.00, 4.9, 1250),

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Row, Col, Card, Table, Space, Tag, Modal, Form, Input, InputNumber, Select, Upload } from 'antd';
+import { Layout, Typography, Row, Col, Card, Table, Space, Tag, Modal, Form, Input, InputNumber, Select, Upload, Tabs, Tooltip } from 'antd';
 import type { UploadFile } from 'antd';
 import {
     TeamOutlined,
@@ -8,11 +8,18 @@ import {
     EditOutlined,
     DeleteOutlined,
     PlusOutlined,
-    UploadOutlined
+    UploadOutlined,
+    TruckOutlined,
+    StopOutlined,
+    HistoryOutlined,
+    CheckCircleOutlined,
+    ClockCircleOutlined,
+    CarOutlined
 } from '@ant-design/icons';
 import { productApi } from '../../api/productApi';
 import { categoryApi } from '../../api/categoryApi';
 import { fileApi } from '../../api/fileApi';
+import { orderApi, type Order } from '../../api/orderApi';
 import type { Product, ProductRequest } from '../../types/product';
 import type { Category } from '../../types/category';
 import BaseButton from '../../components/common/BaseButton';
@@ -23,36 +30,40 @@ const { Content } = Layout;
 const { Title, Text } = Typography;
 
 /**
- * Trang Quản trị viên (Admin Dashboard) tối ưu không gian rộng.
+ * Trang Quản trị viên (Admin Dashboard) đa năng.
+ * Tích hợp quản lý sản phẩm và quản lý đơn hàng tập trung.
  */
 const AdminDashboard: React.FC = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [form] = Form.useForm<ProductRequest>();
 
-    useEffect(() => {
-        const loadData = async () => {
-            setLoading(true);
-            try {
-                const [productData, categoryData] = await Promise.all([
-                    productApi.getAllProducts(),
-                    categoryApi.getAllCategories()
-                ]);
-                setProducts(productData);
-                setCategories(categoryData);
-            } catch (error) {
-                console.error('Lỗi tải dữ liệu quản trị:', error);
-                notification.error('Lỗi tải dữ liệu quản trị');
-            } finally {
-                setLoading(false);
-            }
-        };
+    const loadCoreData = async () => {
+        setLoading(true);
+        try {
+            const [productData, categoryData, orderData] = await Promise.all([
+                productApi.getAllProducts(),
+                categoryApi.getAllCategories(),
+                orderApi.getAllOrders()
+            ]);
+            setProducts(productData);
+            setCategories(categoryData);
+            setOrders(orderData);
+        } catch (error) {
+            console.error('Lỗi tải dữ liệu quản trị:', error);
+            notification.error('Lỗi tải dữ liệu quản trị');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        loadData();
+    useEffect(() => {
+        loadCoreData();
     }, []);
 
     const handleAddProduct = () => {
@@ -72,7 +83,7 @@ const AdminDashboard: React.FC = () => {
             imageUrl: product.imageUrl,
             description: product.description
         });
-        setFileList([]); // Reset file list when starting edit
+        setFileList([]);
         setIsModalVisible(true);
     };
 
@@ -81,7 +92,6 @@ const AdminDashboard: React.FC = () => {
             setLoading(true);
             let imageUrl = values.imageUrl;
 
-            // Nếu có tệp tin mới được chọn, tải lên MinIO
             if (fileList.length > 0 && fileList[0].originFileObj) {
                 const uploadRes = await fileApi.uploadImage(fileList[0].originFileObj as File, 'product');
                 imageUrl = uploadRes.url;
@@ -123,7 +133,54 @@ const AdminDashboard: React.FC = () => {
         });
     };
 
-    const columns: ColumnsType<Product> = [
+    const handleStatusUpdate = async (orderId: number, status: string, message: string) => {
+        try {
+            setLoading(true);
+            await orderApi.updateOrderStatus(orderId, status);
+            notification.success(message);
+            const orderData = await orderApi.getAllOrders();
+            setOrders(orderData);
+        } catch (error: unknown) {
+            notification.error(error instanceof Error ? error.message : 'Lỗi cập nhật đơn hàng');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteOrder = async (orderId: number) => {
+        Modal.confirm({
+            title: 'Xóa vĩnh viễn đơn hàng',
+            content: 'Bạn có chắc chắn muốn xóa đơn hàng này khỏi hệ thống? Hành động này không thể hoàn tác.',
+            okType: 'danger',
+            onOk: async () => {
+                try {
+                    setLoading(true);
+                    await orderApi.deleteOrder(orderId);
+                    notification.success('Đã xóa đơn hàng');
+                    const orderData = await orderApi.getAllOrders();
+                    setOrders(orderData);
+                } catch (error: unknown) {
+                    notification.error(error instanceof Error ? error.message : 'Lỗi khi xóa đơn hàng');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        });
+    };
+
+    const getStatusTag = (status: string) => {
+        switch (status) {
+            case 'PENDING': return <Tag icon={<ClockCircleOutlined />} color="warning">Chờ thanh toán</Tag>;
+            case 'PAID': return <Tag icon={<CheckCircleOutlined />} color="processing">Đã thanh toán</Tag>;
+            case 'SHIPPING': return <Tag icon={<CarOutlined />} color="blue">Đang giao hàng</Tag>;
+            case 'DELIVERED': return <Tag icon={<CheckCircleOutlined />} color="success">Đã giao hàng</Tag>;
+            case 'FAILED': return <Tag icon={<StopOutlined />} color="error">Lỗi giao dịch</Tag>;
+            case 'CANCELLED': return <Tag icon={<StopOutlined />} color="default">Đã hủy</Tag>;
+            default: return <Tag>{status}</Tag>;
+        }
+    };
+
+    const productColumns: ColumnsType<Product> = [
         {
             title: 'Sản phẩm',
             key: 'product',
@@ -139,8 +196,7 @@ const AdminDashboard: React.FC = () => {
                     />
                     <div>
                         <Text strong style={{ display: 'block', fontSize: '15px' }}>{record.name}</Text>
-                        <Text type="secondary" style={{ fontSize: '12px' }} className="desktop-only">{record.description?.substring(0, 50)}...</Text>
-                        <Tag color="blue" className="mobile-only" style={{ marginTop: '4px' }}>${record.price}</Tag>
+                        <Tag color="cyan">{record.category?.name || 'Chưa phân loại'}</Tag>
                     </div>
                 </Space>
             ),
@@ -149,100 +205,198 @@ const AdminDashboard: React.FC = () => {
             title: 'Giá tiền',
             dataIndex: 'price',
             key: 'price',
-            className: 'desktop-only',
-            render: (price: number) => <Text style={{ color: 'var(--primary-color)', fontWeight: 600, fontSize: '16px' }}>${price}</Text>,
+            render: (price: number) => <Text strong>{price.toLocaleString('vi-VN')}đ</Text>,
         },
         {
-            title: 'Trạng thái kho',
+            title: 'Tồn kho',
             dataIndex: 'stockQuantity',
             key: 'stockQuantity',
             render: (qty: number) => (
-                <Tag color={qty < 10 ? 'volcano' : 'cyan'} style={{ padding: '2px 10px', borderRadius: '4px' }}>
-                    {qty < 10 ? `Sắp hết (${qty})` : `Còn hàng (${qty})`}
+                <Tag color={qty < 10 ? 'volcano' : 'green'}>
+                    {qty} chiếc
                 </Tag>
             ),
         },
         {
-            title: 'Hành động',
+            title: 'Thao tác',
             key: 'action',
             align: 'right',
             render: (_, record: Product) => (
                 <Space size="small">
-                    <BaseButton
-                        type="text"
-                        icon={<EditOutlined />}
-                        style={{ color: 'var(--primary-color)' }}
-                        onClick={() => handleEdit(record)}
-                    />
-                    <BaseButton
-                        type="text"
-                        icon={<DeleteOutlined />}
-                        danger
-                        onClick={() => handleDelete(record.id)}
-                    />
+                    <Tooltip title="Chỉnh sửa">
+                        <BaseButton type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+                    </Tooltip>
+                    <Tooltip title="Xóa">
+                        <BaseButton type="text" icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.id)} />
+                    </Tooltip>
                 </Space>
             ),
         },
     ];
+
+    const orderColumns: ColumnsType<Order> = [
+        {
+            title: 'Mã đơn',
+            dataIndex: 'id',
+            key: 'id',
+            render: (id: number) => <Text strong>#{id}</Text>,
+        },
+        {
+            title: 'Khách hàng / Liên hệ',
+            key: 'contact',
+            render: (_, record: Order) => (
+                <Space direction="vertical" size={0}>
+                    <Text strong>{record.shippingAddress}</Text>
+                    <Text type="secondary" style={{ fontSize: '12px' }}><TeamOutlined /> {record.phoneNumber}</Text>
+                </Space>
+            ),
+        },
+        {
+            title: 'Tổng tiền',
+            dataIndex: 'totalAmount',
+            key: 'totalAmount',
+            render: (amt: number) => <Text strong style={{ color: '#ee636e' }}>{amt.toLocaleString('vi-VN')}đ</Text>,
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'status',
+            key: 'status',
+            render: (status: string) => getStatusTag(status),
+        },
+        {
+            title: 'Thao tác',
+            key: 'action',
+            align: 'right',
+            render: (_, record: Order) => (
+                <Space size="small">
+                    {record.status === 'PAID' && (
+                        <Tooltip title="Bắt đầu giao hàng">
+                            <BaseButton
+                                type="primary"
+                                size="small"
+                                icon={<TruckOutlined />}
+                                onClick={() => handleStatusUpdate(record.id, 'SHIPPING', 'Đã chuyển trạng thái sang Đang giao hàng')}
+                            />
+                        </Tooltip>
+                    )}
+                    {record.status === 'SHIPPING' && (
+                        <Tooltip title="Xác nhận đã giao">
+                            <BaseButton
+                                type="primary"
+                                size="small"
+                                icon={<CheckCircleOutlined />}
+                                style={{ background: '#52c41a', border: 'none' }}
+                                onClick={() => handleStatusUpdate(record.id, 'DELIVERED', 'Đơn hàng đã hoàn thành')}
+                            />
+                        </Tooltip>
+                    )}
+                    {(record.status === 'PENDING' || record.status === 'PAID') && (
+                        <Tooltip title="Hủy đơn này">
+                            <BaseButton
+                                type="text"
+                                icon={<StopOutlined />}
+                                danger
+                                onClick={() => handleStatusUpdate(record.id, 'CANCELLED', 'Đã hủy đơn hàng')}
+                            />
+                        </Tooltip>
+                    )}
+                    <Tooltip title="Xóa vĩnh viễn">
+                        <BaseButton type="text" icon={<DeleteOutlined />} danger onClick={() => handleDeleteOrder(record.id)} />
+                    </Tooltip>
+                </Space>
+            ),
+        },
+    ];
+
+    const calculateTotalRevenue = () => {
+        return orders
+            .filter(o => o.status === 'PAID' || o.status === 'DELIVERED' || o.status === 'SHIPPING')
+            .reduce((sum, o) => sum + o.totalAmount, 0);
+    };
 
     return (
         <Content className="main-content">
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'flex-end',
-                marginBottom: '50px',
+                alignItems: 'center',
+                marginBottom: '40px',
                 flexWrap: 'wrap',
                 gap: '20px'
             }}>
                 <div>
-                    <Title level={1} style={{ color: '#fff', margin: 0, fontSize: '2.5rem' }}>Quản Trị Hệ Thống</Title>
-                    <Text style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Bảng điều khiển quản lý hàng hóa và kinh doanh tập trung</Text>
+                    <Title level={1} style={{ color: '#fff', margin: 0 }}>Quản Trị Hệ Thống</Title>
+                    <Text style={{ color: 'var(--text-muted)' }}>Cửa hàng của bạn đang có {orders.length} đơn hàng cần theo dõi</Text>
                 </div>
-                <BaseButton type="primary" size="large" icon={<PlusOutlined />} onClick={handleAddProduct} style={{ height: '45px', padding: '0 30px' }}>
-                    Thêm sản phẩm mới
-                </BaseButton>
             </div>
 
-            <Row gutter={[32, 32]} style={{ marginBottom: '50px' }}>
-                <Col xs={24} sm={12} lg={8}>
-                    <Card className="glass-effect" styles={{ body: { padding: '30px' } }}>
-                        <Space direction="vertical" size="middle">
-                            <Text style={{ color: 'var(--text-muted)', fontSize: '1rem' }}><ShoppingOutlined /> Tổng sản phẩm</Text>
-                            <Title level={1} style={{ margin: 0, color: '#fff', fontSize: '3rem' }}>{products.length}</Title>
+            <Row gutter={[24, 24]} style={{ marginBottom: '40px' }}>
+                <Col xs={24} sm={8}>
+                    <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
+                        <Space direction="vertical" size="small">
+                            <Text style={{ color: 'var(--text-muted)' }}><ShoppingOutlined /> Kho hàng</Text>
+                            <Title level={2} style={{ margin: 0, color: '#fff' }}>{products.length} <Text style={{ fontSize: 14 }}>Sản phẩm</Text></Title>
                         </Space>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={8}>
-                    <Card className="glass-effect" styles={{ body: { padding: '30px' } }}>
-                        <Space direction="vertical" size="middle">
-                            <Text style={{ color: 'var(--text-muted)', fontSize: '1rem' }}><TeamOutlined /> Khách hàng</Text>
-                            <Title level={1} style={{ margin: 0, color: '#fff', fontSize: '3rem' }}>1,284</Title>
+                <Col xs={24} sm={8}>
+                    <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
+                        <Space direction="vertical" size="small">
+                            <Text style={{ color: 'var(--text-muted)' }}><HistoryOutlined /> Đơn hàng</Text>
+                            <Title level={2} style={{ margin: 0, color: '#fff' }}>{orders.length} <Text style={{ fontSize: 14 }}>Yêu cầu</Text></Title>
                         </Space>
                     </Card>
                 </Col>
-                <Col xs={24} sm={24} lg={8}>
-                    <Card className="glass-effect" styles={{ body: { padding: '30px' } }}>
-                        <Space direction="vertical" size="middle">
-                            <Text style={{ color: 'var(--text-muted)', fontSize: '1rem' }}><DollarOutlined /> Doanh thu dự kiến</Text>
-                            <Title level={1} style={{ margin: 0, color: 'var(--primary-color)', fontSize: '3rem' }}>$42,850</Title>
+                <Col xs={24} sm={8}>
+                    <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
+                        <Space direction="vertical" size="small">
+                            <Text style={{ color: 'var(--text-muted)' }}><DollarOutlined /> Doanh thu thực</Text>
+                            <Title level={2} style={{ margin: 0, color: 'var(--primary-color)' }}>{calculateTotalRevenue().toLocaleString('vi-VN')}đ</Title>
                         </Space>
                     </Card>
                 </Col>
             </Row>
 
-            <Card
-                className="glass-effect"
-                title={<span style={{ color: '#fff', fontSize: '1.25rem' }}>{editingId ? 'Chỉnh sửa sản phẩm' : 'Danh sách sản phẩm trong kho'}</span>}
-                styles={{ header: { borderBottom: '1px solid rgba(255,255,255,0.1)' }, body: { padding: '0' } }}
-            >
-                <Table
-                    columns={columns}
-                    dataSource={products}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={{ pageSize: 10, position: ['bottomRight'], showSizeChanger: true }}
-                    scroll={{ x: 800 }}
+            <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
+                <Tabs
+                    defaultActiveKey="products"
+                    items={[
+                        {
+                            key: 'products',
+                            label: <span style={{ fontSize: 16 }}><ShoppingOutlined /> Danh sách sản phẩm</span>,
+                            children: (
+                                <div>
+                                    <div style={{ textAlign: 'right', marginBottom: 20 }}>
+                                        <BaseButton type="primary" icon={<PlusOutlined />} onClick={handleAddProduct}>
+                                            Thêm sản phẩm mới
+                                        </BaseButton>
+                                    </div>
+                                    <Table
+                                        columns={productColumns}
+                                        dataSource={products}
+                                        rowKey="id"
+                                        loading={loading}
+                                        pagination={{ pageSize: 8 }}
+                                        scroll={{ x: 800 }}
+                                    />
+                                </div>
+                            )
+                        },
+                        {
+                            key: 'orders',
+                            label: <span style={{ fontSize: 16 }}><HistoryOutlined /> Quản lý đơn hàng</span>,
+                            children: (
+                                <Table
+                                    columns={orderColumns}
+                                    dataSource={orders}
+                                    rowKey="id"
+                                    loading={loading}
+                                    pagination={{ pageSize: 8 }}
+                                    scroll={{ x: 800 }}
+                                />
+                            )
+                        }
+                    ]}
                 />
             </Card>
 
@@ -257,49 +411,31 @@ const AdminDashboard: React.FC = () => {
             >
                 <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: '20px' }}>
                     <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}>
-                        <Input size="large" placeholder="Ví dụ: iPhone 15 Pro Max" />
+                        <Input size="large" />
                     </Form.Item>
                     <Row gutter={24}>
                         <Col span={12}>
-                            <Form.Item name="price" label="Giá bán ($)" rules={[{ required: true, message: 'Nhập giá' }]}>
-                                <InputNumber size="large" style={{ width: '100%' }} formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                            <Form.Item name="price" label="Giá bán (đ)" rules={[{ required: true, message: 'Nhập giá' }]}>
+                                <InputNumber size="large" style={{ width: '100%' }} />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
-                            <Form.Item name="stockQuantity" label="Số lượng tồn kho" rules={[{ required: true, message: 'Nhập số lượng' }]}>
+                            <Form.Item name="stockQuantity" label="Tồn kho" rules={[{ required: true, message: 'Nhập số lượng' }]}>
                                 <InputNumber size="large" style={{ width: '100%' }} />
                             </Form.Item>
                         </Col>
                     </Row>
-                    <Form.Item name="categoryId" label="Danh mục sản phẩm" rules={[{ required: true, message: 'Chọn danh mục' }]}>
-                        <Select
-                            size="large"
-                            placeholder="Chọn danh mục"
-                            options={categories.map(c => ({ label: c.name, value: c.id }))}
-                        />
+                    <Form.Item name="categoryId" label="Danh mục" rules={[{ required: true, message: 'Chọn danh mục' }]}>
+                        <Select size="large" options={categories.map(c => ({ label: c.name, value: c.id }))} />
                     </Form.Item>
-                    <Form.Item label="Hình ảnh sản phẩm">
-                        <Upload
-                            beforeUpload={() => false}
-                            listType="picture-card"
-                            maxCount={1}
-                            fileList={fileList}
-                            onChange={({ fileList }) => setFileList(fileList)}
-                        >
-                            {fileList.length >= 1 ? null : (
-                                <div>
-                                    <UploadOutlined />
-                                    <div style={{ marginTop: 8 }}>Tải ảnh</div>
-                                </div>
-                            )}
+                    <Form.Item label="Hình ảnh">
+                        <Upload beforeUpload={() => false} listType="picture-card" maxCount={1} fileList={fileList} onChange={({ fileList }) => setFileList(fileList)}>
+                            {fileList.length >= 1 ? null : <div><UploadOutlined /><div style={{ marginTop: 8 }}>Tải ảnh</div></div>}
                         </Upload>
-                        <Text type="secondary">Hoặc nhập URL thủ công bên dưới</Text>
+                        <Input name="imageUrl" placeholder="Hoặc dán URL ảnh tại đây" style={{ marginTop: 10 }} disabled={fileList.length > 0} />
                     </Form.Item>
-                    <Form.Item name="imageUrl" label="Đường dẫn hình ảnh">
-                        <Input size="large" placeholder="https://image-url.com/asset.jpg" disabled={fileList.length > 0} />
-                    </Form.Item>
-                    <Form.Item name="description" label="Mô tả sản phẩm">
-                        <Input.TextArea rows={4} placeholder="Nhập mô tả chi tiết về tính năng, cấu hình..." />
+                    <Form.Item name="description" label="Mô tả">
+                        <Input.TextArea rows={3} />
                     </Form.Item>
                 </Form>
             </Modal>
