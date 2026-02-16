@@ -123,7 +123,7 @@ const CartPage: React.FC = () => {
             ),
         },
         {
-            title: '',
+            title: 'Thao tác',
             key: 'action',
             render: (_, record) => (
                 <BaseButton
@@ -192,7 +192,7 @@ const CartPage: React.FC = () => {
                                     Thanh Toán VNPay
                                 </BaseButton>
                                 <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                                    <img src="https://sandbox.vnpayment.vn/apis/assets/images/vnpay-logo-inh01.png" alt="VNPay" style={{ height: 25, opacity: 0.8 }} />
+                                    <img src="http://localhost:9000/product-images/vnpay-logo.png" alt="VNPay" style={{ height: 30, opacity: 1 }} />
                                 </div>
                             </Space>
                         </Card>

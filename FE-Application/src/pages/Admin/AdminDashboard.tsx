@@ -25,6 +25,8 @@ import type { Category } from '../../types/category';
 import BaseButton from '../../components/common/BaseButton';
 import { notification } from '../../utils/notification';
 import type { ColumnsType } from 'antd/es/table';
+import StatisticsTab from './StatisticsTab';
+import { BarChartOutlined } from '@ant-design/icons';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -395,6 +397,11 @@ const AdminDashboard: React.FC = () => {
                                     scroll={{ x: 800 }}
                                 />
                             )
+                        },
+                        {
+                            key: 'statistics',
+                            label: <span style={{ fontSize: 16 }}><BarChartOutlined /> Báo cáo & Thống kê</span>,
+                            children: <StatisticsTab />
                         }
                     ]}
                 />

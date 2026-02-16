@@ -23,7 +23,11 @@ public class ProductRequest {
 
     private String imageUrl;
 
+    private String moreImages;
+
     private String brand;
+
+    private String specifications;
 
     @NotNull(message = "Danh mục không được để trống")
     private Long categoryId;

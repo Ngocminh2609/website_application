@@ -42,8 +42,12 @@ public class Product {
     @Min(value = 0, message = "Số lượng kho không được âm")
     private Integer stockQuantity;
 
-    // URL hình ảnh để hiển thị ở phía Frontend
+    // URL hình ảnh chính
     private String imageUrl;
+
+    // Các hình ảnh bổ sung (phân tách bằng dấu phẩy) để hiển thị trong slide ảnh chi tiết
+    @Column(columnDefinition = "TEXT")
+    private String moreImages;
 
     // Hãng sản xuất (Apple, Samsung,...)
     private String brand;
@@ -62,6 +66,10 @@ public class Product {
 
     // Số lượng lượt đánh giá
     private Integer reviewCount = 0;
+
+    // Thông số kỹ thuật của sản phẩm (Lưu dưới dạng TEXT/JSON để linh hoạt)
+    @Column(columnDefinition = "TEXT")
+    private String specifications;
 
     // Quan hệ nhiều sản phẩm thuộc về một danh mục
     // FetchType.LAZY giúp tối ưu hiệu năng khi không cần tải dữ liệu danh mục ngay lập tức

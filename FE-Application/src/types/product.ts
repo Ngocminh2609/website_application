@@ -10,12 +10,14 @@ export interface Product {
     price: number;
     stockQuantity: number;
     imageUrl: string;
+    moreImages?: string;
     brand?: string;
     isBestSeller?: boolean;
     originalPrice?: number;
     discountPrice?: number;
     rating?: number;
     reviewCount?: number;
+    specifications?: string;
     category?: Category;
     createdAt?: string;
     updatedAt?: string;

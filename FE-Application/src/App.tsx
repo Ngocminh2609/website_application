@@ -9,6 +9,7 @@ import RegisterPage from './pages/Auth/RegisterPage';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import CartPage from './pages/Cart/CartPage';
 import ProductsPage from './pages/Product/ProductsPage';
+import ProductDetailPage from './pages/Product/ProductDetailPage';
 import PaymentSuccessPage from './pages/Payment/PaymentSuccessPage';
 import OrdersPage from './pages/Order/OrdersPage';
 import type { User } from './types/auth';
@@ -65,6 +66,7 @@ const App: React.FC = () => {
                   <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/products" element={<ProductsPage />} />
+                    <Route path="/product/:id" element={<ProductDetailPage />} />
                     <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/cart" element={user ? <CartPage /> : <Navigate to="/login" />} />

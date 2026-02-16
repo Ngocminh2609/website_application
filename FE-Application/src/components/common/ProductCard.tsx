@@ -1,6 +1,7 @@
 import React from 'react';
-import { Card, Typography, Tag, Rate, Tooltip } from 'antd';
-import { ShoppingCartOutlined, FireOutlined } from '@ant-design/icons';
+import { Card, Typography, Tag, Rate, Tooltip, Space } from 'antd';
+import { ShoppingCartOutlined, FireOutlined, EyeOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import type { Product } from '../../types/product';
 import BaseButton from '../common/BaseButton';
 import { notification } from '../../utils/notification';
@@ -80,13 +81,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                         </div>
                     )}
 
-                    <img
-                        alt={product.name}
-                        src={product.imageUrl}
-                        onError={handleImgError}
-                        className="product-image"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
-                    />
+                    <Link to={`/product/${product.id}`}>
+                        <img
+                            alt={product.name}
+                            src={product.imageUrl}
+                            onError={handleImgError}
+                            className="product-image"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+                        />
+                    </Link>
                 </div>
             }
             style={{
@@ -123,20 +126,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
                 {/* Tiêu đề */}
                 <Tooltip title={product.name}>
-                    <Title
-                        level={4}
-                        style={{
-                            marginBottom: '10px',
-                            color: '#fff',
-                            fontSize: '1.1rem',
-                            height: '1.4em',
-                            overflow: 'hidden',
-                            fontWeight: 600
-                        }}
-                        ellipsis={{ rows: 1 }}
-                    >
-                        {product.name}
-                    </Title>
+                    <Link to={`/product/${product.id}`}>
+                        <Title
+                            level={4}
+                            style={{
+                                marginBottom: '10px',
+                                color: '#fff',
+                                fontSize: '1.1rem',
+                                height: '1.4em',
+                                overflow: 'hidden',
+                                fontWeight: 600
+                            }}
+                            ellipsis={{ rows: 1 }}
+                        >
+                            {product.name}
+                        </Title>
+                    </Link>
                 </Tooltip>
 
                 {/* Mô tả */}
@@ -169,14 +174,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     )}
                 </div>
 
-                <BaseButton
-                    type="primary"
-                    icon={<ShoppingCartOutlined />}
-                    onClick={handleAddToCart}
-                    style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 600 }}
-                >
-                    Thêm Vào Giỏ
-                </BaseButton>
+                <Space direction="vertical" style={{ width: '100%' }} size="small">
+                    <BaseButton
+                        type="primary"
+                        icon={<ShoppingCartOutlined />}
+                        onClick={handleAddToCart}
+                        style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 600 }}
+                    >
+                        Thêm Vào Giỏ
+                    </BaseButton>
+                    <Link to={`/product/${product.id}`} style={{ width: '100%' }}>
+                        <BaseButton
+                            icon={<EyeOutlined />}
+                            style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 600, background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                        >
+                            Xem Chi Tiết
+                        </BaseButton>
+                    </Link>
+                </Space>
             </div>
         </Card>
     );

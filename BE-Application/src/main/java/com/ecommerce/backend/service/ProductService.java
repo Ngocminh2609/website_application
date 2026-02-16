@@ -64,7 +64,9 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setStockQuantity(request.getStockQuantity());
         product.setImageUrl(request.getImageUrl());
+        product.setMoreImages(request.getMoreImages());
         product.setBrand(request.getBrand());
+        product.setSpecifications(request.getSpecifications());
         product.setCategory(category);
     }
 
