@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Space, Dropdown, Avatar, Badge, Drawer } from 'antd';
-import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined, ShoppingOutlined } from '@ant-design/icons';
+import { Layout, Menu, Space, Dropdown, Avatar, Badge, Drawer, Select } from 'antd';
+import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined, ShoppingOutlined, SearchOutlined, FireOutlined } from '@ant-design/icons';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import BaseButton from '../common/BaseButton';
 import type { User } from '../../types/auth';
 import type { MenuProps } from 'antd';
 import { useCart } from '../../hooks/useCart';
+import { productApi } from '../../api/productApi';
+import { useProducts } from '../../hooks/useProducts';
+import type { Product } from '../../types/product';
 
 const { Header } = Layout;
 
@@ -15,14 +18,20 @@ interface NavbarProps {
 }
 
 /**
- * Thanh điều hướng (Navbar) đáp ứng (Responsive) 
- * Tự động điều chỉnh giao diện giữa Desktop và Mobile.
+ * Thanh điều hướng (Navbar) được tối ưu hóa với công cụ tìm kiếm thông minh.
+ * Dọn dẹp các tab thừa và tập trung vào trải nghiệm tìm kiếm của người dùng.
  */
 const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { cartCount } = useCart();
+    const { bestSellers } = useProducts();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // State cho tìm kiếm và gợi ý
+    const [searchValue, setSearchValue] = useState('');
+    const [searchResults, setSearchResults] = useState<Product[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
 
     const menuItems: MenuProps['items'] = [
         { key: '/', label: <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Trang Chủ</Link> },
@@ -59,10 +68,67 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
         },
     ];
 
+    // Xử lý tìm kiếm sản phẩm theo từ khóa
+    const handleSearch = async (value: string) => {
+        setSearchValue(value);
+        if (!value.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            const results = await productApi.searchProducts(value);
+            setSearchResults(results);
+        } catch (error) {
+            console.error('Lỗi tìm kiếm:', error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    // Chuyển hướng khi chọn sản phẩm từ kết quả tìm kiếm hoặc gợi ý
+    const onSelectProduct = (productId: string | number) => {
+        navigate(`/products/${productId}`);
+        setSearchValue('');
+        setSearchResults([]);
+    };
+
+    // Thuật toán gợi ý: Nếu chưa nhập gì, hiện các sản phẩm bán chạy nhất.
+    // Nếu đang nhập, hiện kết quả tìm kiếm tương ứng.
+    const searchOptions = [
+        {
+            label: <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                {!searchValue ? 'GỢI Ý CHO BẠN' : `KẾT QUẢ CHO "${searchValue}"`}
+            </span>,
+            options: (!searchValue ? bestSellers.slice(0, 5) : searchResults.slice(0, 8)).map(product => ({
+                value: product.id,
+                label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '4px 0' }}>
+                        <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 500, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {product.name}
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'var(--primary-color)' }}>
+                                {product.price.toLocaleString()}đ
+                                {!searchValue && <FireOutlined style={{ marginLeft: '8px', color: '#ff4d4f' }} />}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }))
+        }
+    ];
+
     return (
         <Header className="glass-effect" style={{
             position: 'fixed',
-            zIndex: 1010, // Cao hơn Drawer một chút nếu cần
+            zIndex: 1010,
             width: '100%',
             display: 'flex',
             alignItems: 'center',
@@ -73,7 +139,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
         }}>
             <Space size="middle">
-                {/* Nút Hamburger cho Mobile */}
                 <div className="mobile-only" onClick={() => setIsMobileMenuOpen(true)}>
                     <MenuOutlined style={{ fontSize: '20px', color: '#fff', cursor: 'pointer' }} />
                 </div>
@@ -83,24 +148,34 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                 </div>
             </Space>
 
-            {/* Menu chính cho Desktop */}
-            <Menu
-                theme="dark"
-                mode="horizontal"
-                items={menuItems}
-                selectedKeys={[location.pathname]}
-                className="desktop-only"
-                style={{
-                    flex: 1,
-                    minWidth: 0,
-                    justifyContent: 'center',
-                    background: 'transparent',
-                    borderBottom: 'none'
-                }}
-            />
+            {/* Ô tìm kiếm trung tâm thay thế các tab Menu */}
+            <div className="desktop-only" style={{ flex: 1, maxWidth: '600px', margin: '0 40px' }}>
+                <Select
+                    showSearch
+                    value={searchValue || undefined}
+                    placeholder="Tìm kiếm sản phẩm, thương hiệu..."
+                    defaultActiveFirstOption={false}
+                    suffixIcon={<SearchOutlined style={{ color: 'var(--primary-color)', fontSize: '18px' }} />}
+                    filterOption={false}
+                    onSearch={handleSearch}
+                    onSelect={onSelectProduct}
+                    options={searchOptions}
+                    loading={isSearching}
+                    notFoundContent={searchValue ? "Không tìm thấy sản phẩm" : null}
+                    dropdownStyle={{
+                        backgroundColor: '#1e293b',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        padding: '8px',
+                        backdropFilter: 'blur(10px)'
+                    }}
+                    style={{
+                        width: '100%',
+                    }}
+                    className="premium-search-input"
+                />
+            </div>
 
             <Space size="large">
-                {/* Icon Giỏ hàng */}
                 {user && (
                     <div onClick={() => navigate('/cart')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <Badge count={cartCount} size="small" offset={[5, 0]} color="#6366f1">
@@ -134,7 +209,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                 )}
             </Space>
 
-            {/* Mobile Drawer Navigation */}
             <Drawer
                 title={<div className="logo">TECH NOVA</div>}
                 placement="left"
