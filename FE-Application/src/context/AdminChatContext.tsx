@@ -205,10 +205,25 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
         ));
     };
 
+    const loadChatHistory = async (clientKey: string) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/chat/history/${clientKey}`);
+            if (response.ok) {
+                const history: ChatMessage[] = await response.json();
+                setConversations(prev => ({
+                    ...prev,
+                    [clientKey]: history
+                }));
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải lịch sử chat:', error);
+        }
+    };
+
     const totalUnread = sessions.reduce((total, session) => total + (session.unreadCount || 0), 0);
 
     return (
-        <AdminChatContext.Provider value={{ conversations, sessions, connected, addMessage, updateSession, sendMessage, markSessionRead, totalUnread }}>
+        <AdminChatContext.Provider value={{ conversations, sessions, connected, addMessage, updateSession, sendMessage, markSessionRead, loadChatHistory, totalUnread }}>
             {children}
         </AdminChatContext.Provider>
     );

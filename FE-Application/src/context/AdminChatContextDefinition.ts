@@ -28,6 +28,7 @@ export interface AdminChatContextType {
     updateSession: (session: ChatSession) => void;
     sendMessage: (recipientId: string, content: string) => void;
     markSessionRead: (sessionId: string) => void;
+    loadChatHistory: (clientKey: string) => Promise<void>;
     totalUnread: number;
 }
 

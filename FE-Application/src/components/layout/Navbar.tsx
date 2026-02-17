@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Space, Dropdown, Avatar, Badge, Drawer, Select } from 'antd';
-import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined, ShoppingOutlined, SearchOutlined, FireOutlined, BellOutlined } from '@ant-design/icons';
+import { Layout, Menu, Space, Dropdown, Avatar, Badge, Drawer, Select, List, Typography } from 'antd';
+import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined, ShoppingOutlined, SearchOutlined, FireOutlined, BellOutlined, MessageOutlined } from '@ant-design/icons';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import BaseButton from '../common/BaseButton';
 import type { User } from '../../types/auth';
@@ -10,8 +10,10 @@ import { productApi } from '../../api/productApi';
 import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../types/product';
 import { useNotifications } from '../../context/NotificationContext';
+import { useAdminChat } from '../../context/useAdminChat';
 
 const { Header } = Layout;
+const { Text } = Typography;
 
 interface NavbarProps {
     user: User | null;
@@ -27,7 +29,8 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
     const location = useLocation();
     const { cartCount } = useCart();
     const { bestSellers } = useProducts();
-    const { unreadCount } = useNotifications();
+    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+    const { totalUnread: chatUnread } = useAdminChat();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // State cho tìm kiếm và gợi ý
@@ -95,6 +98,75 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
         setSearchValue('');
         setSearchResults([]);
     };
+
+    // Nội dung dropdown thông báo
+    const notificationMenu = (
+        <div style={{
+            width: '350px',
+            backgroundColor: '#1e293b',
+            borderRadius: '12px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            overflow: 'hidden'
+        }}>
+            <div style={{
+                padding: '16px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+            }}>
+                <Text strong style={{ color: '#fff', fontSize: '16px' }}>Thông báo</Text>
+                {unreadCount > 0 && (
+                    <BaseButton type="text" size="small" onClick={() => markAllAsRead()} style={{ color: 'var(--primary-color)', fontSize: '12px', padding: 0 }}>
+                        Đánh dấu tất cả đã đọc
+                    </BaseButton>
+                )}
+            </div>
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {notifications.length > 0 ? (
+                    <List
+                        dataSource={notifications}
+                        renderItem={(item) => (
+                            <List.Item
+                                onClick={() => !item.isRead && markAsRead(item.id)}
+                                style={{
+                                    padding: '12px 16px',
+                                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                                    cursor: 'pointer',
+                                    backgroundColor: item.isRead ? 'transparent' : 'rgba(99, 102, 241, 0.05)',
+                                    transition: 'all 0.3s'
+                                }}
+                            >
+                                <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                                    <div style={{
+                                        width: '8px',
+                                        height: '8px',
+                                        borderRadius: '50%',
+                                        backgroundColor: item.isRead ? 'transparent' : 'var(--primary-color)',
+                                        marginTop: '6px'
+                                    }} />
+                                    <div style={{ flex: 1 }}>
+                                        <Text style={{ color: item.isRead ? 'rgba(255,255,255,0.6)' : '#fff', fontSize: '14px', display: 'block' }}>
+                                            {item.message}
+                                        </Text>
+                                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                                            {new Date(item.createdAt).toLocaleString('vi-VN')}
+                                        </Text>
+                                    </div>
+                                </div>
+                            </List.Item>
+                        )}
+                    />
+                ) : (
+                    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                        <BellOutlined style={{ fontSize: '32px', color: 'rgba(255,255,255,0.2)', marginBottom: '12px' }} />
+                        <div style={{ color: 'rgba(255,255,255,0.4)' }}>Không có thông báo nào</div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 
     // Thuật toán gợi ý: Nếu chưa nhập gì, hiện các sản phẩm bán chạy nhất.
     // Nếu đang nhập, hiện kết quả tìm kiếm tương ứng.
@@ -180,11 +252,20 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             <Space size="large">
                 {user && (
                     <>
-                        <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                            <Badge count={unreadCount} size="small" offset={[5, 0]} color="#ff4d4f">
-                                <BellOutlined style={{ fontSize: '22px', color: '#fff' }} />
-                            </Badge>
-                        </div>
+                        {user.role === 'ADMIN' && (
+                            <div onClick={() => navigate('/admin#chat')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                <Badge count={chatUnread} size="small" offset={[5, 0]} color="#6366f1">
+                                    <MessageOutlined style={{ fontSize: '22px', color: '#fff' }} />
+                                </Badge>
+                            </div>
+                        )}
+                        <Dropdown dropdownRender={() => notificationMenu} placement="bottomRight" trigger={['click']} arrow>
+                            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                <Badge count={unreadCount} size="small" offset={[5, 0]} color="#ff4d4f">
+                                    <BellOutlined style={{ fontSize: '22px', color: '#fff' }} />
+                                </Badge>
+                            </div>
+                        </Dropdown>
                         <div onClick={() => navigate('/cart')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                             <Badge count={cartCount} size="small" offset={[5, 0]} color="#6366f1">
                                 <ShoppingCartOutlined style={{ fontSize: '22px', color: '#fff' }} />

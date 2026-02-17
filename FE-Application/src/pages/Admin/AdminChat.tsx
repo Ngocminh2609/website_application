@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input, Button, List, Avatar, Typography, Badge, Space } from 'antd';
 import { SendOutlined, MessageOutlined, UserOutlined } from '@ant-design/icons';
 import { useAdminChat } from '../../context/useAdminChat';
@@ -10,15 +10,6 @@ const AdminChat: React.FC = () => {
     const { conversations, sessions, connected, sendMessage, markSessionRead } = useAdminChat();
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [inputValue, setInputValue] = useState('');
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [conversations]);
 
     // Tự động đánh dấu đã đọc khi đang xem session đó
     useEffect(() => {
@@ -112,7 +103,6 @@ const AdminChat: React.FC = () => {
                                     <div style={{ color: '#fff' }}>{msg.content}</div>
                                 </div>
                             ))}
-                            <div ref={messagesEndRef} />
                         </div>
 
                         <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>

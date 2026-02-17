@@ -17,6 +17,7 @@ import org.springframework.stereotype.Controller;
 public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final com.ecommerce.backend.service.ChatService chatService;
 
     /**
      * Nhận tin nhắn và định hướng tới đích tương ứng.
@@ -24,6 +25,11 @@ public class ChatController {
      */
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload ChatMessage chatMessage) {
+        // Lưu tin nhắn vào DB (luôn lưu mọi tin nhắn CHAT)
+        if (chatMessage.getType() == ChatMessage.MessageType.CHAT) {
+            chatService.saveMessage(chatMessage);
+        }
+
         String recipientTopic;
         String recipientId;
 

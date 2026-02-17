@@ -48,6 +48,7 @@ const AdminDashboard: React.FC = () => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [form] = Form.useForm<ProductRequest>();
+    const [activeTab, setActiveTab] = useState<string>('products');
 
     const loadCoreData = async () => {
         setLoading(true);
@@ -70,6 +71,11 @@ const AdminDashboard: React.FC = () => {
 
     useEffect(() => {
         loadCoreData();
+        // Xử lý chuyển tab qua hash (#chat, #orders, etc.)
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+            setActiveTab(hash);
+        }
     }, []);
 
     const handleAddProduct = () => {
@@ -365,7 +371,8 @@ const AdminDashboard: React.FC = () => {
 
             <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
                 <Tabs
-                    defaultActiveKey="products"
+                    activeKey={activeTab}
+                    onChange={setActiveTab}
                     items={[
                         {
                             key: 'products',
