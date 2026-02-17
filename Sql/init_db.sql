@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `recipient_id` VARCHAR(100) NOT NULL COMMENT 'ID người nhận: user-{id} hoặc admin',
     `message` TEXT NOT NULL COMMENT 'Nội dung thông báo',
-    `type` VARCHAR(20) NOT NULL DEFAULT 'MESSAGE' COMMENT 'MESSAGE, ORDER, SYSTEM',
+    `type` VARCHAR(20) NOT NULL DEFAULT 'SYSTEM' COMMENT 'MESSAGE, ORDER, SYSTEM',
     `is_read` TINYINT(1) DEFAULT 0 COMMENT '0: Chưa đọc, 1: Đã đọc',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -137,9 +137,29 @@ CREATE TABLE IF NOT EXISTS `notifications` (
     INDEX (`is_read`)
 ) ENGINE = InnoDB;
 
+-- 10. Bảng Tin nhắn Chat (Chat Messages)
+CREATE TABLE IF NOT EXISTS `chat_messages` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `sender` VARCHAR(100) NOT NULL COMMENT 'Tên hiển thị người gửi',
+    `sender_id` VARCHAR(100) NOT NULL COMMENT 'ID người gửi (admin hoặc client_id)',
+    `recipient_id` VARCHAR(100) COMMENT 'ID người nhận (admin hoặc client_id)',
+    `content` TEXT NOT NULL COMMENT 'Nội dung tin nhắn',
+    `type` VARCHAR(20) NOT NULL DEFAULT 'CHAT' COMMENT 'CHAT, JOIN, LEAVE',
+    `email` VARCHAR(100) COMMENT 'Email của client để phân biệt hội thoại',
+    `full_name` VARCHAR(100) COMMENT 'Tên đầy đủ của client',
+    `is_bot_response` TINYINT(1) DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    INDEX (`sender_id`),
+    INDEX (`recipient_id`),
+    INDEX (`email`),
+    INDEX (`created_at`)
+) ENGINE = InnoDB;
+
 -- III. CHÈN DỮ LIỆU MẪU (DML - INSERT)
 
 -- 1. Dữ liệu người dùng (Mật khẩu: password123)
+-- Admin và User cơ bản
 INSERT INTO `users` (`username`, `password`, `email`, `full_name`, `role`) VALUES
 ('admin', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'admin@technova.com', 'Hệ Thống Admin', 'ADMIN'),
 ('user1', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'user1@gmail.com', 'Nguyễn Văn A', 'USER')
@@ -162,21 +182,8 @@ VALUES
 ('Galaxy Watch6 Classic', 'Vòng xoay bezel sành điệu, theo dõi giấc ngủ nâng cao.', 7200000.00, 60, 'https://images.samsung.com/is/image/samsung/p6pim/vn/2307/gallery/vn-galaxy-watch6-classic-r960-sm-r965fzsaxvv-thumb-537446146', '', 3, 'Samsung', 0, 8500000.00, 6990000.00, 4.6, 310, 'Màn hình: Sapphire Crystal; Chip: Exynos W930; Pin: 40 giờ'),
 ('Dell XPS 13 Plus', 'Màn hình 3.5K OLED rực rỡ, bàn phím vô cực.', 42000000.00, 15, 'https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/xps-notebooks/xps-13-9315/media-gallery/un-9315-nt-sky-notebook-xps13-9315-sky-gallery-3.psd?wid=800&hei=600&qlt=95', '', 1, 'Dell', 0, 46000000.00, 41000000.00, 4.8, 150, 'Màn hình: 13.4 inch 3.5K OLED; CPU: Intel Core i7-1360P; RAM: 16GB; SSD: 512GB'),
 ('ROG Zephyrus G14', 'Màn hình 120Hz, sức mạnh gaming trong thân xác văn phòng.', 38000000.00, 20, 'https://dlcdnwebimgs.asus.com/gain/3DCCBA1D-7C61-464A-A8E2-9E46714E2D30/w800', '', 1, 'Asus', 1, 41500000.00, 37500000.00, 4.9, 540, 'Màn hình: 14 inch QHD+ 120Hz; CPU: AMD Ryzen 9; GPU: RTX 4060; RAM: 16GB');
--- 10. Bảng Tin nhắn Chat (Chat Messages)
-CREATE TABLE IF NOT EXISTS `chat_messages` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT,
-    `sender` VARCHAR(100) NOT NULL COMMENT 'Tên hiển thị người gửi',
-    `sender_id` VARCHAR(100) NOT NULL COMMENT 'ID người gửi (admin hoặc client_id)',
-    `recipient_id` VARCHAR(100) COMMENT 'ID người nhận (admin hoặc client_id)',
-    `content` TEXT NOT NULL COMMENT 'Nội dung tin nhắn',
-    `type` VARCHAR(20) NOT NULL DEFAULT 'CHAT' COMMENT 'CHAT, JOIN, LEAVE',
-    `email` VARCHAR(100) COMMENT 'Email của client để phân biệt hội thoại',
-    `full_name` VARCHAR(100) COMMENT 'Tên đầy đủ của client',
-    `is_bot_response` TINYINT(1) DEFAULT 0,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`),
-    INDEX (`sender_id`),
-    INDEX (`recipient_id`),
-    INDEX (`email`),
-    INDEX (`created_at`)
-) ENGINE = InnoDB;
+
+-- 4. Thông báo mẫu (Chào mừng)
+INSERT INTO `notifications` (`recipient_id`, `message`, `type`) VALUES
+('admin', 'Chào mừng Admin quay trở lại hệ thống!', 'SYSTEM'),
+('user-2', 'Chào mừng bạn đến với Tech Nova! Hãy bắt đầu mua sắm ngay.', 'SYSTEM');

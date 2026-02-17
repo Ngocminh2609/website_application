@@ -2,6 +2,7 @@ package com.ecommerce.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,6 +24,7 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     private NotificationType type;
     
+    @JsonProperty("isRead")
     private boolean isRead = false;
     
     private LocalDateTime createdAt;

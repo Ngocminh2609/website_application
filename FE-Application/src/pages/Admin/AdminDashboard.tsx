@@ -16,7 +16,8 @@ import {
     ClockCircleOutlined,
     CarOutlined,
     MessageOutlined,
-    BarChartOutlined
+    BarChartOutlined,
+    BellOutlined
 } from '@ant-design/icons';
 import AdminChat from './AdminChat';
 import { useAdminChat } from '../../context/useAdminChat';
@@ -30,6 +31,7 @@ import BaseButton from '../../components/common/BaseButton';
 import { notification } from '../../utils/notification';
 import type { ColumnsType } from 'antd/es/table';
 import StatisticsTab from './StatisticsTab';
+import NotificationManagement from './NotificationManagement';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -422,6 +424,11 @@ const AdminDashboard: React.FC = () => {
                                 </Badge>
                             ),
                             children: <AdminChat />
+                        },
+                        {
+                            key: 'notifications',
+                            label: <span style={{ fontSize: 16 }}><BellOutlined /> Quản lý thông báo</span>,
+                            children: <NotificationManagement />
                         }
                     ]}
                 />

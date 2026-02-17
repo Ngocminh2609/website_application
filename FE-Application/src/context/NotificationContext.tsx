@@ -55,6 +55,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
             onConnect: () => {
                 client.subscribe(`/topic/notifications/${userId}`, (msg) => {
                     const newNotification: Notification = JSON.parse(msg.body);
+
+                    // Cập nhật danh sách thông báo trên UI cho tất cả người dùng (Real-time)
                     setNotifications(prev => [newNotification, ...prev]);
                 });
             },

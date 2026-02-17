@@ -21,6 +21,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final PaymentTransactionRepository transactionRepository;
+    private final NotificationService notificationService;
 
     /**
      * Tạo đơn hàng từ giỏ hàng hiện tại của người dùng.
@@ -88,6 +89,13 @@ public class OrderService {
                 cart.getItems().clear();
                 cartRepository.save(cart);
             });
+
+            // Gửi thông báo cho khách hàng
+            notificationService.sendToUser(
+                "user-" + order.getUser().getId(),
+                "Thanh toán thành công đơn hàng #" + order.getId() + ". Chúng tôi sẽ sớm giao hàng cho bạn!",
+                Notification.NotificationType.ORDER
+            );
         } else {
             order.setStatus("FAILED");
         }
@@ -132,6 +140,19 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng ID: " + orderId));
         order.setStatus(status);
         orderRepository.save(order);
+
+        // Gửi thông báo cho khách hàng về thay đổi trạng thái
+        String message = getStatusChangeMessage(order.getId(), status);
+        notificationService.sendToUser("user-" + order.getUser().getId(), message, Notification.NotificationType.ORDER);
+    }
+
+    private String getStatusChangeMessage(Long orderId, String status) {
+        switch (status) {
+            case "SHIPPING": return "Đơn hàng #" + orderId + " đang trên đường giao đến bạn.";
+            case "DELIVERED": return "Chúc mừng! Đơn hàng #" + orderId + " đã được giao thành công.";
+            case "CANCELLED": return "Đơn hàng #" + orderId + " đã bị hủy.";
+            default: return "Cập nhật trạng thái mới cho đơn hàng #" + orderId + ": " + status;
+        }
     }
 
     /**
