@@ -17,6 +17,7 @@ export interface ChatSession {
     lastMessage?: string;
     timestamp: number;
     senderId?: string; // Lưu senderId để gửi tin nhắn lại
+    unreadCount?: number;
 }
 
 export interface AdminChatContextType {
@@ -26,6 +27,8 @@ export interface AdminChatContextType {
     addMessage: (clientKey: string, message: ChatMessage) => void;
     updateSession: (session: ChatSession) => void;
     sendMessage: (recipientId: string, content: string) => void;
+    markSessionRead: (sessionId: string) => void;
+    totalUnread: number;
 }
 
 export const AdminChatContext = createContext<AdminChatContextType | undefined>(undefined);

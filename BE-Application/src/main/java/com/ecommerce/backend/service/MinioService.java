@@ -66,7 +66,7 @@ public class MinioService {
             }
 
             // Tạo tên tệp tin duy nhất
-            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
             
             // Thực hiện tải lên
             try (InputStream inputStream = file.getInputStream()) {

@@ -38,7 +38,7 @@ public class ChatController {
             // Chỉ gửi tới Admin khi KHÔNG phải tin nhắn bot
             // isBotResponse = null hoặc false nghĩa là tin nhắn thật từ user cần admin xử lý
             if (chatMessage.getIsBotResponse() == null || !chatMessage.getIsBotResponse()) {
-                recipientId = "admin";
+//                recipientId = "admin";
                 recipientTopic = "/topic/admin";
                 
                 // Gửi tin nhắn chat từ client đến admin

@@ -19,7 +19,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         // Kiểm tra và khởi tạo tài khoản Admin nếu chưa có hoặc cập nhật lại mật khẩu chuẩn
         if (userRepository.findByUsername("admin").isEmpty()) {
             User admin = new User();

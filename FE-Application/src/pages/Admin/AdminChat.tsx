@@ -7,7 +7,7 @@ const { Text, Title } = Typography;
 
 const AdminChat: React.FC = () => {
     // Sử dụng context để lấy conversations, sessions và sendMessage
-    const { conversations, sessions, connected, sendMessage } = useAdminChat();
+    const { conversations, sessions, connected, sendMessage, markSessionRead } = useAdminChat();
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -19,6 +19,16 @@ const AdminChat: React.FC = () => {
     useEffect(() => {
         scrollToBottom();
     }, [conversations]);
+
+    // Tự động đánh dấu đã đọc khi đang xem session đó
+    useEffect(() => {
+        if (activeSessionId) {
+            const currentSession = sessions.find(s => s.id === activeSessionId);
+            if (currentSession?.unreadCount && currentSession.unreadCount > 0) {
+                markSessionRead(activeSessionId);
+            }
+        }
+    }, [sessions, activeSessionId, markSessionRead]);
 
     const handleSend = () => {
         if (inputValue.trim() && activeSessionId) {
@@ -46,7 +56,12 @@ const AdminChat: React.FC = () => {
                         dataSource={sessions}
                         renderItem={item => (
                             <div
-                                onClick={() => setActiveSessionId(item.id)}
+                                onClick={() => {
+                                    setActiveSessionId(item.id);
+                                    if (item.unreadCount && item.unreadCount > 0) {
+                                        markSessionRead(item.id);
+                                    }
+                                }}
                                 style={{
                                     padding: '15px 20px',
                                     cursor: 'pointer',
@@ -56,7 +71,9 @@ const AdminChat: React.FC = () => {
                                 }}
                             >
                                 <Space>
-                                    <Avatar icon={<UserOutlined />} style={{ background: '#6366f1' }} />
+                                    <Badge count={item.unreadCount || 0} size="small" offset={[-2, 2]}>
+                                        <Avatar icon={<UserOutlined />} style={{ background: '#6366f1' }} />
+                                    </Badge>
                                     <div style={{ display: 'flex', flexDirection: 'column', width: '180px' }}>
                                         <Text strong style={{ color: '#fff' }}>{item.name}</Text>
                                         <Text type="secondary" style={{ fontSize: '12px' }} ellipsis>{item.lastMessage}</Text>

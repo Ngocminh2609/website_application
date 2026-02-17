@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Row, Col, Card, Table, Space, Tag, Modal, Form, Input, InputNumber, Select, Upload, Tabs, Tooltip } from 'antd';
+import { Layout, Typography, Row, Col, Card, Table, Space, Tag, Modal, Form, Input, InputNumber, Select, Upload, Tabs, Tooltip, Badge } from 'antd';
 import type { UploadFile } from 'antd';
 import {
     TeamOutlined,
@@ -19,6 +19,7 @@ import {
     BarChartOutlined
 } from '@ant-design/icons';
 import AdminChat from './AdminChat';
+import { useAdminChat } from '../../context/useAdminChat';
 import { productApi } from '../../api/productApi';
 import { categoryApi } from '../../api/categoryApi';
 import { fileApi } from '../../api/fileApi';
@@ -38,6 +39,7 @@ const { Title, Text } = Typography;
  * Tích hợp quản lý sản phẩm và quản lý đơn hàng tập trung.
  */
 const AdminDashboard: React.FC = () => {
+    const { totalUnread } = useAdminChat();
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
@@ -407,7 +409,11 @@ const AdminDashboard: React.FC = () => {
                         },
                         {
                             key: 'chat',
-                            label: <span style={{ fontSize: 16 }}><MessageOutlined /> Chat Tư Vấn</span>,
+                            label: (
+                                <Badge count={totalUnread} offset={[10, 0]}>
+                                    <span style={{ fontSize: 16 }}><MessageOutlined /> Chat Tư Vấn</span>
+                                </Badge>
+                            ),
                             children: <AdminChat />
                         }
                     ]}

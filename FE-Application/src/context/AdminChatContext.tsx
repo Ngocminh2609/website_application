@@ -71,23 +71,33 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
                     if (!clientKey || clientKey === 'undefined' || clientKey === 'null') return;
 
                     // 4. Cập nhật hoặc thêm mới Session
+                    // 4. Cập nhật hoặc thêm mới Session
                     setSessions(prev => {
                         const existingIdx = prev.findIndex(s => s.id === clientKey);
-                        const newSession: ChatSession = {
-                            id: clientKey,
-                            name: clientName,
-                            senderId: receivedMsg.senderId,
-                            lastMessage: receivedMsg.content,
-                            timestamp: Date.now()
-                        };
 
                         if (existingIdx > -1) {
+                            const oldSession = prev[existingIdx];
+                            const updatedSession: ChatSession = {
+                                ...oldSession,
+                                lastMessage: receivedMsg.content,
+                                timestamp: Date.now(),
+                                unreadCount: (oldSession.unreadCount || 0) + 1
+                            };
+
                             const updated = [...prev];
-                            updated[existingIdx] = newSession;
+                            updated[existingIdx] = updatedSession;
                             // Đưa lên đầu danh sách
-                            return [updated[existingIdx], ...updated.filter((_, i) => i !== existingIdx)];
+                            return [updatedSession, ...updated.filter((_, i) => i !== existingIdx)];
                         } else {
                             // Tạo mới
+                            const newSession: ChatSession = {
+                                id: clientKey,
+                                name: clientName,
+                                senderId: receivedMsg.senderId,
+                                lastMessage: receivedMsg.content,
+                                timestamp: Date.now(),
+                                unreadCount: 1
+                            };
                             return [newSession, ...prev];
                         }
                     });
@@ -189,8 +199,16 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
         }
     };
 
+    const markSessionRead = (sessionId: string) => {
+        setSessions(prev => prev.map(s =>
+            s.id === sessionId ? { ...s, unreadCount: 0 } : s
+        ));
+    };
+
+    const totalUnread = sessions.reduce((total, session) => total + (session.unreadCount || 0), 0);
+
     return (
-        <AdminChatContext.Provider value={{ conversations, sessions, connected, addMessage, updateSession, sendMessage }}>
+        <AdminChatContext.Provider value={{ conversations, sessions, connected, addMessage, updateSession, sendMessage, markSessionRead, totalUnread }}>
             {children}
         </AdminChatContext.Provider>
     );
