@@ -3,6 +3,7 @@ import { Input, Button, Badge } from 'antd';
 import { SendOutlined, CloseOutlined, MessageOutlined } from '@ant-design/icons';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { getWsUrl } from '../../utils/url';
 import type { User } from '../../types/auth';
 
 interface Message {
@@ -55,6 +56,9 @@ interface ChatWidgetProps {
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+    const [isAdminActive, setIsAdminActive] = useState(false);
 
     // Move Refs up (For use in effects)
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -62,7 +66,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
 
     // 1. Init Session (Support Props & LocalStorage Fallback)
     const [chatSession] = useState(() => {
-        // Priority: Prop User > LocalStorage User > Guest
         const storageUser = localStorage.getItem('user');
         const userData = user || (storageUser ? JSON.parse(storageUser) : null);
 
@@ -75,7 +78,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             };
         }
 
-        // Guest persistence
         let gId = localStorage.getItem('guest_chat_id');
         let gName = localStorage.getItem('guest_chat_name');
 
@@ -104,13 +106,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             return [INITIAL_MESSAGE];
         }
     });
-
-
-
-    const [inputValue, setInputValue] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
-    const [isAdminActive, setIsAdminActive] = useState(false);
-
 
     // 3. Persist messages when changed
     useEffect(() => {
@@ -144,7 +139,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             setMessages(prev => [...prev, botMsg]);
         }, 800);
 
-        // Trả về true nếu bot có câu trả lời, false nếu cần admin xử lý
         return found !== undefined;
     }, [isAdminActive]);
 
@@ -158,7 +152,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             setInputValue('');
 
             if (!isAdminActive) {
-                // Kiểm tra xem bot có câu trả lời không
                 const lowerText = text.toLowerCase();
                 const found = DEFAULT_QUESTIONS.find(item =>
                     lowerText.includes(item.q.toLowerCase()) ||
@@ -167,7 +160,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
 
                 const isBotResponse = found !== undefined;
 
-                // CHỈ gửi đến server khi KHÔNG phải câu hỏi bot
                 if (!isBotResponse && stompClientRef.current && stompClientRef.current.connected) {
                     stompClientRef.current.publish({
                         destination: '/app/chat.sendMessage',
@@ -178,17 +170,15 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
                             fullName: chatSession.fullName,
                             content: text,
                             type: 'CHAT',
-                            isBotResponse: false // Tin nhắn thật cần admin xử lý
+                            isBotResponse: false
                         })
                     });
                 }
 
-                // Hiển thị câu trả lời bot
                 setTimeout(() => {
                     simulateBotResponse(text);
                 }, 1000);
             } else {
-                // Admin đang active, gửi trực tiếp đến admin
                 if (stompClientRef.current && stompClientRef.current.connected) {
                     stompClientRef.current.publish({
                         destination: '/app/chat.sendMessage',
@@ -199,7 +189,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
                             fullName: chatSession.fullName,
                             content: text,
                             type: 'CHAT',
-                            isBotResponse: false // Tin nhắn thật cần admin xử lý
+                            isBotResponse: false
                         })
                     });
                 }
@@ -208,41 +198,54 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     };
 
     useEffect(() => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-        const wsBaseUrl = apiUrl.replace(/\/api$/, '');
-        const socket = new SockJS(`${wsBaseUrl}/ws-chat`);
-        const client = new Client({
-            webSocketFactory: () => socket,
-            onConnect: () => {
-                // Đăng ký nhận tin nhắn RIÊNG cho Client này
-                client.subscribe(`/topic/user/${chatSession.id}`, (msg) => {
-                    const receivedMsg = JSON.parse(msg.body);
-                    setIsAdminActive(true);
-                    const newMsg = createMessageObject(receivedMsg.content, 'admin');
-                    setMessages(prev => [...prev, newMsg]);
-                });
+        if (!isOpen) {
+            if (stompClientRef.current) {
+                stompClientRef.current.deactivate();
+                stompClientRef.current = null;
+            }
+            return;
+        }
 
-                client.publish({
-                    destination: '/app/chat.addUser',
-                    body: JSON.stringify({
-                        sender: chatSession.name,
-                        senderId: chatSession.id,
-                        email: chatSession.email,
-                        fullName: chatSession.fullName,
-                        type: 'JOIN'
-                    })
-                });
-            },
-            reconnectDelay: 5000,
-        });
+        let client: Client | null = null;
+        try {
+            const socket = new SockJS(getWsUrl());
+            client = new Client({
+                webSocketFactory: () => socket,
+                onConnect: () => {
+                    client?.subscribe(`/topic/user/${chatSession.id}`, (msg) => {
+                        const receivedMsg = JSON.parse(msg.body);
+                        setIsAdminActive(true);
+                        const newMsg = createMessageObject(receivedMsg.content, 'admin');
+                        setMessages(prev => [...prev, newMsg]);
+                    });
 
-        client.activate();
-        stompClientRef.current = client;
+                    client?.publish({
+                        destination: '/app/chat.addUser',
+                        body: JSON.stringify({
+                            sender: chatSession.name,
+                            senderId: chatSession.id,
+                            email: chatSession.email,
+                            fullName: chatSession.fullName,
+                            type: 'JOIN'
+                        })
+                    });
+                },
+                reconnectDelay: 5000,
+            });
+
+            client.activate();
+            stompClientRef.current = client;
+        } catch (error) {
+            console.error('Không thể khởi tạo WebSocket Chat Widget:', error);
+        }
 
         return () => {
-            if (stompClientRef.current) stompClientRef.current.deactivate();
+            if (stompClientRef.current) {
+                stompClientRef.current.deactivate();
+                stompClientRef.current = null;
+            }
         };
-    }, [chatSession]);
+    }, [isOpen, chatSession]);
 
     return (
         <div className="chat-widget-container">

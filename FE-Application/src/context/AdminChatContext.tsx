@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { getBaseApiUrl, getWsUrl } from '../utils/url';
 import { AdminChatContext, type ChatMessage, type ChatSession } from './AdminChatContextDefinition';
 
 /**
@@ -48,85 +49,75 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
     useEffect(() => {
         if (!isAdmin) return;
 
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-        const wsBaseUrl = apiUrl.replace(/\/api$/, '');
-        const socket = new SockJS(`${wsBaseUrl}/ws-chat`);
-        const client = new Client({
-            webSocketFactory: () => socket,
-            onConnect: () => {
-                setConnected(true);
+        let client: Client | null = null;
+        try {
+            const socket = new SockJS(getWsUrl());
+            client = new Client({
+                webSocketFactory: () => socket,
+                onConnect: () => {
+                    setConnected(true);
 
-                // Admin đăng ký nhận tất cả tin nhắn từ khách hàng
-                client.subscribe('/topic/admin', (msg) => {
-                    const receivedMsg: ChatMessage = JSON.parse(msg.body);
+                    // Admin đăng ký nhận tất cả tin nhắn từ khách hàng
+                    client?.subscribe('/topic/admin', (msg) => {
+                        const receivedMsg: ChatMessage = JSON.parse(msg.body);
+                        if (receivedMsg.type !== 'CHAT') return;
+                        if (receivedMsg.senderId === 'admin') return;
 
-                    // 1. CHỈ xử lý tin nhắn CHAT (bỏ qua JOIN, LEAVE để tránh spam)
-                    if (receivedMsg.type !== 'CHAT') return;
+                        const clientKey = receivedMsg.email || receivedMsg.senderId;
+                        const clientName = receivedMsg.fullName || receivedMsg.sender;
 
-                    // 2. Bỏ qua tin nhắn từ chính Admin
-                    if (receivedMsg.senderId === 'admin') return;
+                        if (!clientKey || clientKey === 'undefined' || clientKey === 'null') return;
 
-                    // 3. Validate dữ liệu người gửi
-                    const clientKey = receivedMsg.email || receivedMsg.senderId;
-                    const clientName = receivedMsg.fullName || receivedMsg.sender;
+                        setSessions(prev => {
+                            const existingIdx = prev.findIndex(s => s.id === clientKey);
+                            if (existingIdx > -1) {
+                                const oldSession = prev[existingIdx];
+                                const updatedSession: ChatSession = {
+                                    ...oldSession,
+                                    lastMessage: receivedMsg.content,
+                                    timestamp: Date.now(),
+                                    unreadCount: (oldSession.unreadCount || 0) + 1
+                                };
+                                const updated = [...prev];
+                                updated[existingIdx] = updatedSession;
+                                return [updatedSession, ...updated.filter((_, i) => i !== existingIdx)];
+                            } else {
+                                const newSession: ChatSession = {
+                                    id: clientKey,
+                                    name: clientName,
+                                    senderId: receivedMsg.senderId,
+                                    lastMessage: receivedMsg.content,
+                                    timestamp: Date.now(),
+                                    unreadCount: 1
+                                };
+                                return [newSession, ...prev];
+                            }
+                        });
 
-                    if (!clientKey || clientKey === 'undefined' || clientKey === 'null') return;
-
-                    // 4. Cập nhật hoặc thêm mới Session
-                    // 4. Cập nhật hoặc thêm mới Session
-                    setSessions(prev => {
-                        const existingIdx = prev.findIndex(s => s.id === clientKey);
-
-                        if (existingIdx > -1) {
-                            const oldSession = prev[existingIdx];
-                            const updatedSession: ChatSession = {
-                                ...oldSession,
-                                lastMessage: receivedMsg.content,
-                                timestamp: Date.now(),
-                                unreadCount: (oldSession.unreadCount || 0) + 1
-                            };
-
-                            const updated = [...prev];
-                            updated[existingIdx] = updatedSession;
-                            // Đưa lên đầu danh sách
-                            return [updatedSession, ...updated.filter((_, i) => i !== existingIdx)];
-                        } else {
-                            // Tạo mới
-                            const newSession: ChatSession = {
-                                id: clientKey,
-                                name: clientName,
-                                senderId: receivedMsg.senderId,
-                                lastMessage: receivedMsg.content,
-                                timestamp: Date.now(),
-                                unreadCount: 1
-                            };
-                            return [newSession, ...prev];
-                        }
+                        setConversations(prev => ({
+                            ...prev,
+                            [clientKey]: [...(prev[clientKey] || []), receivedMsg]
+                        }));
                     });
 
-                    // 5. Lưu nội dung tin nhắn
-                    setConversations(prev => ({
-                        ...prev,
-                        [clientKey]: [...(prev[clientKey] || []), receivedMsg]
-                    }));
-                });
+                    client?.publish({
+                        destination: '/app/chat.addUser',
+                        body: JSON.stringify({
+                            sender: 'Admin',
+                            senderId: 'admin',
+                            type: 'JOIN'
+                        })
+                    });
+                },
+                onDisconnect: () => setConnected(false),
+                reconnectDelay: 5000,
+            });
 
-                // Thông báo Admin đã trực tuyến (Optional, có thể bor để tránh nhiễu)
-                client.publish({
-                    destination: '/app/chat.addUser',
-                    body: JSON.stringify({
-                        sender: 'Admin',
-                        senderId: 'admin',
-                        type: 'JOIN'
-                    })
-                });
-            },
-            onDisconnect: () => setConnected(false),
-            reconnectDelay: 5000,
-        });
-
-        client.activate();
-        stompClientRef.current = client;
+            client.activate();
+            stompClientRef.current = client;
+        } catch (error) {
+            console.error('Không thể khởi tạo WebSocket Admin Chat:', error);
+        }
 
         return () => {
             if (stompClientRef.current) {
@@ -209,7 +200,7 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
 
     const loadChatHistory = async (clientKey: string) => {
         try {
-            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+            const baseUrl = getBaseApiUrl();
             const response = await fetch(`${baseUrl}/chat/history/${clientKey}`);
             if (response.ok) {
                 const history: ChatMessage[] = await response.json();

@@ -192,7 +192,7 @@ const CartPage: React.FC = () => {
                                     Thanh Toán VNPay
                                 </BaseButton>
                                 <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                                    <img src="http://localhost:9000/product-images/vnpay-logo.png" alt="VNPay" style={{ height: 30, opacity: 1 }} />
+                                    <img src={`${import.meta.env.VITE_API_URL?.replace(/\/api$/, '') || 'http://localhost:8080'}/product-images/vnpay-logo.png`} alt="VNPay" style={{ height: 30, opacity: 1 }} />
                                 </div>
                             </Space>
                         </Card>

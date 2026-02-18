@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, Typography, Form, Input, List, Tag, Badge } from 'antd';
 import { NotificationOutlined, SendOutlined, HistoryOutlined } from '@ant-design/icons';
 import BaseButton from '../../components/common/BaseButton';
+import { getBaseApiUrl } from '../../utils/url';
 import { notification } from '../../utils/notification';
 
 const { Title, Text } = Typography;
@@ -28,7 +29,7 @@ const NotificationManagement: React.FC = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+            const baseUrl = getBaseApiUrl();
             const response = await fetch(`${baseUrl}/notifications/broadcast`, {
                 method: 'POST',
                 headers: {

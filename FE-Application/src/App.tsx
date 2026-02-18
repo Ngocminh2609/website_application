@@ -29,8 +29,13 @@ const GOOGLE_CLIENT_ID = "1051116450325-qneacpielnd6acgajc3kftfpk9nkjkqj.apps.go
  */
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (e) {
+      console.error('Lỗi phân giải thông tin người dùng từ storage:', e);
+      return null;
+    }
   });
 
   const getNotificationUserId = () => {
