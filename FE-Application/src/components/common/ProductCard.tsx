@@ -53,7 +53,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             'default': 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800'
         };
 
-        const categoryName = product.category?.name?.toLowerCase() || 'default';
+        const category = product.category;
+        const categoryName = (category && typeof category === 'object' && 'name' in category)
+            ? String(category.name).toLowerCase()
+            : 'default';
         target.src = replacements[categoryName] || replacements['default'];
     };
 
@@ -165,11 +168,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <div style={{ marginTop: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
                     <Title level={3} style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>
-                        {product.price?.toLocaleString('vi-VN')} ₫
+                        {(product.price ?? 0).toLocaleString('vi-VN')} ₫
                     </Title>
                     {product.originalPrice && (
                         <Text delete style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                            {product.originalPrice?.toLocaleString('vi-VN')} ₫
+                            {(product.originalPrice ?? 0).toLocaleString('vi-VN')} ₫
                         </Text>
                     )}
                 </div>

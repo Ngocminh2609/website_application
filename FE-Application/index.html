@@ -1,17 +1,33 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fe-application</title>
-    <script>
-      window.global = window;
-      window.process = { env: {} };
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fe-application</title>
+  <script>
+    window.global = window;
+    window.process = {
+      env: { NODE_ENV: 'production' },
+      browser: true,
+      version: '',
+      nextTick: function (fn) { setTimeout(fn, 0); }
+    };
+    // Polyfill Buffer cơ bản để tránh lỗi ném ra từ các thư viện WebSocket
+    if (!window.Buffer) {
+      window.Buffer = {
+        isBuffer: function () { return false; },
+        from: function () { return []; },
+        alloc: function () { return []; }
+      };
+    }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

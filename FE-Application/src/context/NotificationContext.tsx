@@ -53,23 +53,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
 
         let client: Client | null = null;
         try {
+            const url = getWsUrl();
+            const isUnsafe = window.location.protocol === 'https:' && url.startsWith('http:');
+
             client = new Client({
                 webSocketFactory: () => {
-                    const url = getWsUrl();
-                    // Nếu đang chạy HTTPS mà URL lại là HTTP, SockJS sẽ ném lỗi SecurityError đồng bộ
-                    // Chúng ta chặn luôn từ đây để không làm sập ứng dụng.
-                    if (window.location.protocol === 'https:' && url.startsWith('http:')) {
-                        console.error('Chặn khởi tạo WebSocket không an toàn từ trang HTTPS');
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        return null as any;
+                    if (isUnsafe) {
+                        console.warn('Bỏ qua khởi tạo WebSocket không an toàn');
+                        return new WebSocket('wss://localhost:0'); // Dummy socket
                     }
-                    try {
-                        return new SockJS(url);
-                    } catch (e) {
-                        console.error('Lỗi khởi tạo SockJS:', e);
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        return null as any;
-                    }
+                    return new SockJS(url);
                 },
                 onConnect: () => {
                     client?.subscribe(`/topic/notifications/${userId}`, (msg) => {
@@ -80,7 +73,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
                 reconnectDelay: 5000,
             });
 
-            client.activate();
+            if (!isUnsafe) {
+                client.activate();
+            }
         } catch (error) {
             console.error('Không thể kích hoạt kết nối thông báo:', error);
         }

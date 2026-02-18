@@ -208,21 +208,15 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
 
         let client: Client | null = null;
         try {
+            const url = getWsUrl();
+            const isUnsafe = window.location.protocol === 'https:' && url.startsWith('http:');
+
             client = new Client({
                 webSocketFactory: () => {
-                    const url = getWsUrl();
-                    if (window.location.protocol === 'https:' && url.startsWith('http:')) {
-                        console.error('Chặn khởi tạo WebSocket Widget không an toàn từ trang HTTPS');
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        return null as any;
+                    if (isUnsafe) {
+                        return new WebSocket('wss://localhost:0');
                     }
-                    try {
-                        return new SockJS(url);
-                    } catch (e) {
-                        console.error('Widget SockJS factory error:', e);
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        return null as any;
-                    }
+                    return new SockJS(url);
                 },
                 onConnect: () => {
                     client?.subscribe(`/topic/user/${chatSession.id}`, (msg) => {
@@ -246,8 +240,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
                 reconnectDelay: 5000,
             });
 
-            client.activate();
-            stompClientRef.current = client;
+            if (!isUnsafe) {
+                client.activate();
+                stompClientRef.current = client;
+            }
         } catch (error) {
             console.error('Không thể kích hoạt WebSocket Chat Widget:', error);
         }

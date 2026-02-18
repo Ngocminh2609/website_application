@@ -51,21 +51,15 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
 
         let client: Client | null = null;
         try {
+            const url = getWsUrl();
+            const isUnsafe = window.location.protocol === 'https:' && url.startsWith('http:');
+
             client = new Client({
                 webSocketFactory: () => {
-                    const url = getWsUrl();
-                    if (window.location.protocol === 'https:' && url.startsWith('http:')) {
-                        console.error('Chặn khởi tạo WebSocket Admin không an toàn từ trang HTTPS');
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        return null as any;
+                    if (isUnsafe) {
+                        return new WebSocket('wss://localhost:0');
                     }
-                    try {
-                        return new SockJS(url);
-                    } catch (e) {
-                        console.error('Admin SockJS factory error:', e);
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        return null as any;
-                    }
+                    return new SockJS(url);
                 },
                 onConnect: () => {
                     setConnected(true);
@@ -125,8 +119,10 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
                 reconnectDelay: 5000,
             });
 
-            client.activate();
-            stompClientRef.current = client;
+            if (!isUnsafe) {
+                client.activate();
+                stompClientRef.current = client;
+            }
         } catch (error) {
             console.error('Không thể kích hoạt WebSocket Admin Chat:', error);
         }
