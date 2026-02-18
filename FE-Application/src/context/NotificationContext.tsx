@@ -55,11 +55,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
         try {
             client = new Client({
                 webSocketFactory: () => {
+                    const url = getWsUrl();
+                    // Nếu đang chạy HTTPS mà URL lại là HTTP, SockJS sẽ ném lỗi SecurityError đồng bộ
+                    // Chúng ta chặn luôn từ đây để không làm sập ứng dụng.
+                    if (window.location.protocol === 'https:' && url.startsWith('http:')) {
+                        console.error('Chặn khởi tạo WebSocket không an toàn từ trang HTTPS');
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        return null as any;
+                    }
                     try {
-                        return new SockJS(getWsUrl());
+                        return new SockJS(url);
                     } catch (e) {
-                        console.error('SockJS factory error:', e);
-                        throw e;
+                        console.error('Lỗi khởi tạo SockJS:', e);
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        return null as any;
                     }
                 },
                 onConnect: () => {

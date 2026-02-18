@@ -210,11 +210,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
         try {
             client = new Client({
                 webSocketFactory: () => {
+                    const url = getWsUrl();
+                    if (window.location.protocol === 'https:' && url.startsWith('http:')) {
+                        console.error('Chặn khởi tạo WebSocket Widget không an toàn từ trang HTTPS');
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        return null as any;
+                    }
                     try {
-                        return new SockJS(getWsUrl());
+                        return new SockJS(url);
                     } catch (e) {
                         console.error('Widget SockJS factory error:', e);
-                        throw e;
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        return null as any;
                     }
                 },
                 onConnect: () => {

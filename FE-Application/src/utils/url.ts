@@ -3,7 +3,13 @@
  * Đảm bảo giao thức (http/https) đồng bộ với trình duyệt.
  */
 export const getBaseApiUrl = () => {
-    let url = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+    let url = import.meta.env.VITE_API_URL;
+
+    if (!url) {
+        console.warn('CẢNH BÁO: VITE_API_URL không được định nghĩa, sử dụng fallback localhost');
+        url = 'http://localhost:8080/api';
+    }
+
     if (window.location.protocol === 'https:' && url.startsWith('http:')) {
         url = url.replace('http:', 'https:');
     }
