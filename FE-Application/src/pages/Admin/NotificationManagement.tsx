@@ -28,7 +28,8 @@ const NotificationManagement: React.FC = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:8080/api/notifications/broadcast', {
+            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+            const response = await fetch(`${baseUrl}/notifications/broadcast`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

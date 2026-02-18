@@ -30,7 +30,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
 
         const fetchNotifications = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/notifications/${userId}`, {
+                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+                const response = await fetch(`${baseUrl}/notifications/${userId}`, {
                     headers: getAuthHeaders()
                 });
 
@@ -49,7 +50,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
     useEffect(() => {
         if (!userId) return;
 
-        const socket = new SockJS('http://localhost:8080/ws-chat');
+        // Lấy URL base từ VITE_API_URL (loại bỏ /api ở cuối nếu có)
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+        const wsBaseUrl = apiUrl.replace(/\/api$/, '');
+        const socket = new SockJS(`${wsBaseUrl}/ws-chat`);
         const client = new Client({
             webSocketFactory: () => socket,
             onConnect: () => {
@@ -72,7 +76,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
 
     const markAsRead = async (id: number) => {
         try {
-            await fetch(`http://localhost:8080/api/notifications/${id}/read`, {
+            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+            await fetch(`${baseUrl}/notifications/${id}/read`, {
                 method: 'PUT',
                 headers: getAuthHeaders()
             });
@@ -85,7 +90,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
     const markAllAsRead = async () => {
         if (!userId) return;
         try {
-            await fetch(`http://localhost:8080/api/notifications/read-all/${userId}`, {
+            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+            await fetch(`${baseUrl}/notifications/read-all/${userId}`, {
                 method: 'PUT',
                 headers: getAuthHeaders()
             });

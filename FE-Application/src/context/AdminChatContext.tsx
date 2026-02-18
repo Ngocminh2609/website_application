@@ -48,7 +48,9 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
     useEffect(() => {
         if (!isAdmin) return;
 
-        const socket = new SockJS('http://localhost:8080/ws-chat');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+        const wsBaseUrl = apiUrl.replace(/\/api$/, '');
+        const socket = new SockJS(`${wsBaseUrl}/ws-chat`);
         const client = new Client({
             webSocketFactory: () => socket,
             onConnect: () => {
@@ -207,7 +209,8 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
 
     const loadChatHistory = async (clientKey: string) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/chat/history/${clientKey}`);
+            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+            const response = await fetch(`${baseUrl}/chat/history/${clientKey}`);
             if (response.ok) {
                 const history: ChatMessage[] = await response.json();
                 setConversations(prev => ({

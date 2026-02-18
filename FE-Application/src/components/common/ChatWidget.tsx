@@ -208,7 +208,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     };
 
     useEffect(() => {
-        const socket = new SockJS('http://localhost:8080/ws-chat');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+        const wsBaseUrl = apiUrl.replace(/\/api$/, '');
+        const socket = new SockJS(`${wsBaseUrl}/ws-chat`);
         const client = new Client({
             webSocketFactory: () => socket,
             onConnect: () => {
