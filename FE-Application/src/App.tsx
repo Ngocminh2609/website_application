@@ -70,11 +70,11 @@ const App: React.FC = () => {
     >
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <AntdApp>
-          <NotificationProvider userId={getNotificationUserId()}>
-            <AdminChatProvider isAdmin={user?.role === 'ADMIN'}>
-              <Router>
-                <ProductProvider>
-                  <CartProvider>
+          <Router>
+            <ProductProvider>
+              <CartProvider>
+                <NotificationProvider userId={getNotificationUserId()}>
+                  <AdminChatProvider isAdmin={user?.role === 'ADMIN'}>
                     <Layout style={{ minHeight: '100vh', background: 'transparent' }}>
                       <Navbar user={user} onLogout={handleLogout} />
 
@@ -88,7 +88,6 @@ const App: React.FC = () => {
                         <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
                         <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
-                        {/* Route bảo vệ cho Admin */}
                         <Route
                           path="/admin"
                           element={
@@ -104,11 +103,11 @@ const App: React.FC = () => {
                       <Footer />
                       <ChatWidget key={user ? String(user.id) : 'guest'} user={user} />
                     </Layout>
-                  </CartProvider>
-                </ProductProvider>
-              </Router>
-            </AdminChatProvider>
-          </NotificationProvider>
+                  </AdminChatProvider>
+                </NotificationProvider>
+              </CartProvider>
+            </ProductProvider>
+          </Router>
         </AntdApp>
       </GoogleOAuthProvider>
     </ConfigProvider>

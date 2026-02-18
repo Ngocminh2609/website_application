@@ -208,9 +208,15 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
 
         let client: Client | null = null;
         try {
-            const socket = new SockJS(getWsUrl());
             client = new Client({
-                webSocketFactory: () => socket,
+                webSocketFactory: () => {
+                    try {
+                        return new SockJS(getWsUrl());
+                    } catch (e) {
+                        console.error('Widget SockJS factory error:', e);
+                        throw e;
+                    }
+                },
                 onConnect: () => {
                     client?.subscribe(`/topic/user/${chatSession.id}`, (msg) => {
                         const receivedMsg = JSON.parse(msg.body);
@@ -236,7 +242,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             client.activate();
             stompClientRef.current = client;
         } catch (error) {
-            console.error('Không thể khởi tạo WebSocket Chat Widget:', error);
+            console.error('Không thể kích hoạt WebSocket Chat Widget:', error);
         }
 
         return () => {

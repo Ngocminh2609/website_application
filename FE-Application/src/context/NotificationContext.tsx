@@ -53,9 +53,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
 
         let client: Client | null = null;
         try {
-            const socket = new SockJS(getWsUrl());
             client = new Client({
-                webSocketFactory: () => socket,
+                webSocketFactory: () => {
+                    try {
+                        return new SockJS(getWsUrl());
+                    } catch (e) {
+                        console.error('SockJS factory error:', e);
+                        throw e;
+                    }
+                },
                 onConnect: () => {
                     client?.subscribe(`/topic/notifications/${userId}`, (msg) => {
                         const newNotification: Notification = JSON.parse(msg.body);
@@ -67,7 +73,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userId:
 
             client.activate();
         } catch (error) {
-            console.error('Không thể khởi tạo WebSocket thông báo:', error);
+            console.error('Không thể kích hoạt kết nối thông báo:', error);
         }
 
         return () => {
