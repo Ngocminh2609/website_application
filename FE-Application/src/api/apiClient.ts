@@ -2,7 +2,7 @@
  * Cấu hình API Client dùng chung cho toàn hệ thống.
  * Tích hợp tự động gắn Token JWT vào Header 'Authorization' để xác thực với Backend.
  */
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 export const apiClient = {
     /**
