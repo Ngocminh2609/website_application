@@ -27,7 +27,7 @@ export const notification = {
 
     // Các hàm helper cho từng nghiệp vụ cụ thể (DRY)
     auth: {
-        loginSuccess: () => notification.success('Chào mừng bạn quay trở lại với Tech Nova!'),
+        loginSuccess: () => notification.success('Chào mừng bạn quay trở lại với Tech Nova'),
         loginError: () => notification.error('Tên đăng nhập hoặc mật khẩu không chính xác.'),
         registerSuccess: () => notification.success('Tài khoản của bạn đã được tạo thành công!'),
         registerError: () => notification.error('Không thể tạo tài khoản. Vui lòng kiểm tra lại thông tin hoặc thử một email khác.'),
