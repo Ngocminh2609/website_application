@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
 
     // Xử lý lỗi sai thông tin đăng nhập
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentials(BadCredentialsException ex) {
+    public ResponseEntity<Map<String, String>> handleBadCredentials() {
         Map<String, String> error = new HashMap<>();
         error.put("message", "Tên đăng nhập hoặc mật khẩu không chính xác!");
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
