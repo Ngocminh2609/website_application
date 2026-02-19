@@ -2,7 +2,7 @@ package com.ecommerce.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+
 
 import java.time.LocalDateTime;
 
@@ -45,7 +45,21 @@ public class ChatMessageEntity {
     @Column(name = "is_bot_response")
     private Boolean isBotResponse;
 
-    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        // Chỉ gán createdAt khi tạo mới
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        // Gán updatedAt khi có cập nhật
+        this.updatedAt = LocalDateTime.now();
+    }
 }

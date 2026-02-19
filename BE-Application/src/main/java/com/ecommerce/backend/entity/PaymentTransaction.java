@@ -37,8 +37,18 @@ public class PaymentTransaction {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        // Chỉ gán createdAt khi tạo mới
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        // Gán updatedAt khi có cập nhật
+        this.updatedAt = LocalDateTime.now();
     }
 }

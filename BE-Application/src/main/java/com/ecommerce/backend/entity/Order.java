@@ -50,12 +50,13 @@ public class Order {
 
     @PrePersist
     protected void onCreate() {
-        orderDate = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        // Chỉ gán orderDate khi tạo mới
+        this.orderDate = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        // Gán updatedAt khi có cập nhật
+        this.updatedAt = LocalDateTime.now();
     }
 }

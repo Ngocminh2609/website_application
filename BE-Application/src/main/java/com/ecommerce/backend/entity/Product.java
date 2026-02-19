@@ -89,12 +89,13 @@ public class Product {
     // Sử dụng PrePersist/PreUpdate để tự động quản lý thời gian mà không cần can thiệp thủ công từ Service
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        // Chỉ gán createdAt khi tạo mới theo yêu cầu
+        this.createdAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        // Gán updatedAt khi có cập nhật
+        this.updatedAt = LocalDateTime.now();
     }
 }
