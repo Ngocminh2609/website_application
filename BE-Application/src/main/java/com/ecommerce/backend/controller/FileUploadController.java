@@ -3,13 +3,10 @@ package com.ecommerce.backend.controller;
 import com.ecommerce.backend.service.MinioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URI;
 import java.util.Map;
 
 @RestController
@@ -60,22 +57,6 @@ public class FileUploadController {
             return ResponseEntity.ok(Map.of("url", url));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("message", "Không thể tải lên hình ảnh: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * Redirect sang presigned URL de FE lay file tu private bucket ma khong can xu ly xac thuc phia FE.
-     * BE dong vai tro trung gian tao chu ky, browser tu dong follow redirect den B2/MinIO.
-     */
-    @GetMapping("/{bucket}/{objectName}")
-    public ResponseEntity<Void> getFile(@PathVariable String bucket, @PathVariable String objectName) {
-        try {
-            String presignedUrl = minioService.getPresignedUrl(bucket, objectName);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setLocation(URI.create(presignedUrl));
-            return new ResponseEntity<>(headers, HttpStatus.FOUND);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
         }
     }
 }
