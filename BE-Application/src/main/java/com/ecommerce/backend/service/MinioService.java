@@ -87,4 +87,23 @@ public class MinioService {
             System.err.println("Lỗi khi xóa tệp từ MinIO: " + e.getMessage());
         }
     }
+
+    /**
+     * Tao presigned URL tu bucket va ten object bat ky.
+     * Dung cho endpoint phuc vu anh cu da co san trong bucket ma khong qua uploadFile.
+     */
+    public String getPresignedUrl(String bucket, String objectName) {
+        try {
+            return minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.GET)
+                            .bucket(bucket)
+                            .object(objectName)
+                            .expiry(7, TimeUnit.DAYS)
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi tao presigned URL: " + e.getMessage(), e);
+        }
+    }
 }

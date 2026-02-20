@@ -35,6 +35,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        // Cho phep lay file (anh, docx,...) tu storage ma khong can dang nhap
+                        .requestMatchers(HttpMethod.GET, "/api/upload/**").permitAll()
                         
                         // Chỉ ADMIN mới có quyền thay đổi dữ liệu (POST, PUT, DELETE)
                         .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")

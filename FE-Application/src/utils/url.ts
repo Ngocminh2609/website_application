@@ -37,9 +37,9 @@ export const getWsUrl = () => {
     return `${wsBaseUrl}/ws-chat`;
 };
 
-// VITE_STORAGE_URL tro den MinIO khi local (http://localhost:9000) va Backblaze B2 khi production
-// Tach biet khoi VITE_API_URL (Spring Boot) vi storage chay tren endpoint/port khac
+// FE goi BE /api/upload/{bucket}/{object}, BE tu redirect sang presigned URL cua B2/MinIO.
+// Cach nay tranh FE phai biet bucket la private hay public, va khong lo het han chu ky.
 export const getStorageUrl = (bucket: string, fileName: string) => {
-    const storageBase = import.meta.env.VITE_STORAGE_URL || 'http://localhost:9000';
-    return `${storageBase}/${bucket}/${fileName}`;
+    const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:8080/api').replace(/\/$/, '');
+    return `${apiBase}/upload/${bucket}/${fileName}`;
 };
