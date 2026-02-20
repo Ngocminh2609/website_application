@@ -48,6 +48,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             key: 'profile',
             label: 'Hồ sơ cá nhân',
             icon: <UserOutlined />,
+            onClick: () => navigate('/profile'),
         },
         {
             key: 'orders',
@@ -183,6 +184,13 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                             src={product.imageUrl}
                             alt={product.name}
                             style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                // Tránh vòng lặp vô tận nếu chính ảnh fallback cũng không load được
+                                if (target.dataset.errored === 'true') return;
+                                target.dataset.errored = 'true';
+                                target.src = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800';
+                            }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 500, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

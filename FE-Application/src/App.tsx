@@ -12,6 +12,7 @@ import ProductsPage from './pages/Product/ProductsPage';
 import ProductDetailPage from './pages/Product/ProductDetailPage';
 import PaymentSuccessPage from './pages/Payment/PaymentSuccessPage';
 import OrdersPage from './pages/Order/OrdersPage';
+import ProfilePage from './pages/Profile/ProfilePage';
 import type { User } from './types/auth';
 import { notification } from './utils/notification';
 import { CartProvider } from './context/CartContext';
@@ -57,6 +58,11 @@ const App: React.FC = () => {
     notification.auth.logoutSuccess();
   };
 
+  // Merge các field thay đổi vào user state để Navbar render lại avatar/tên ngay lập tức
+  const handleUserUpdate = (updated: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...updated } : prev);
+  };
+
   return (
     <ConfigProvider
       theme={{
@@ -86,6 +92,7 @@ const App: React.FC = () => {
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/cart" element={user ? <CartPage /> : <Navigate to="/login" />} />
                         <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
+                        <Route path="/profile" element={user ? <ProfilePage onUserUpdate={handleUserUpdate} /> : <Navigate to="/login" />} />
                         <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
                         <Route

@@ -26,9 +26,11 @@ public class Notification {
     
     @JsonProperty("isRead")
     private boolean isRead = false;
-    
+
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-    
+
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
     @PrePersist

@@ -51,6 +51,8 @@ public class User implements UserDetails {
 
     private String avatarUrl;
 
+    private String phone;
+
     private String role; // Mặc định là 'USER'
 
     @Column(name = "created_at", updatable = false)

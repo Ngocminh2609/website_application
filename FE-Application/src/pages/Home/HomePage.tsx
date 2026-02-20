@@ -194,15 +194,14 @@ const HomePage: React.FC = () => {
                         <Title level={2} style={{ color: '#ffffff', fontSize: '3rem', fontWeight: 800, margin: 0 }}>Được Ưa Chuộng Nhất</Title>
                         <Text style={{ color: '#94a3b8', fontSize: '1.2rem', marginTop: '10px', display: 'block' }}>Những lựa chọn hàng đầu từ hàng triệu game thủ và người yêu công nghệ.</Text>
                     </div>
-                    <Row gutter={[32, 32]}>
-                        {bestSellers.slice(0, 6).map(product => (
-                            <Col xs={24} sm={12} md={8} lg={6} xxl={4} key={product.id}>
-                                <div className="premium-hover">
-                                    <ProductCard product={product} />
-                                </div>
-                            </Col>
+                    {/* Dùng flexbox thay Row/Col vì Ant Design Grid chia 24 đơn vị không chia hết cho 5, gây xuống dòng */}
+                    <div style={{ display: 'flex', gap: '32px', flexWrap: 'nowrap' }}>
+                        {bestSellers.slice(0, 5).map(product => (
+                            <div key={product.id} className="premium-hover" style={{ flex: '0 0 calc(20% - 26px)', minWidth: 0 }}>
+                                <ProductCard product={product} />
+                            </div>
                         ))}
-                    </Row>
+                    </div>
                 </section>
 
                 {/* BRANDS - Sidebar Layout */}
