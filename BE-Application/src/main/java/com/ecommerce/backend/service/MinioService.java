@@ -1,25 +1,24 @@
 package com.ecommerce.backend.service;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
+import io.minio.http.Method;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class MinioService {
 
     private final MinioClient minioClient;
-
-    @Value("${minio.url.external}")
-    private String externalUrl;
 
     @Autowired
     public MinioService(MinioClient minioClient) {
@@ -27,48 +26,20 @@ public class MinioService {
     }
 
     /**
-     * Tải tệp tin lên một bucket cụ thể trong MinIO.
-     * Hàm này kiểm tra sự tồn tại của bucket trước khi tải lên, nếu không có sẽ tự động tạo.
-     * Tên tệp tin được generate ngẫu nhiên bằng UUID để tránh trùng lặp.
+     * Tải tệp lên bucket và trả về presigned URL.
+     * Presigned URL cho phép truy cập file trong bucket Private mà không cần public bucket,
+     * vì URL đã chứa chữ ký xác thực hợp lệ trong thời hạn nhất định.
      */
     public String uploadFile(MultipartFile file, String bucketName) {
         try {
-            // Kiểm tra và tạo bucket nếu chưa có
+            // Tạo bucket nếu chưa tồn tại - Backblaze B2 không hỗ trợ setBucketPolicy qua SDK
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
             if (!found) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-                
-                // Thiết lập chính sách (Policy) cho phép đọc công khai (Public Read)
-                // Điều này cho phép Frontend có thể hiển thị ảnh qua URL trực tiếp
-                String policy = "{\n" +
-                        "    \"Version\": \"2012-10-17\",\n" +
-                        "    \"Statement\": [\n" +
-                        "        {\n" +
-                        "            \"Effect\": \"Allow\",\n" +
-                        "            \"Principal\": {\"AWS\": [\"*\"]},\n" +
-                        "            \"Action\": [\"s3:GetBucketLocation\", \"s3:ListBucket\"],\n" +
-                        "            \"Resource\": [\"arn:aws:s3:::" + bucketName + "\"]\n" +
-                        "        },\n" +
-                        "        {\n" +
-                        "            \"Effect\": \"Allow\",\n" +
-                        "            \"Principal\": {\"AWS\": [\"*\"]},\n" +
-                        "            \"Action\": [\"s3:GetObject\"],\n" +
-                        "            \"Resource\": [\"arn:aws:s3:::" + bucketName + "/*\"]\n" +
-                        "        }\n" +
-                        "    ]\n" +
-                        "}";
-                minioClient.setBucketPolicy(
-                        io.minio.SetBucketPolicyArgs.builder()
-                                .bucket(bucketName)
-                                .config(policy)
-                                .build()
-                );
             }
 
-            // Tạo tên tệp tin duy nhất
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            
-            // Thực hiện tải lên
+
             try (InputStream inputStream = file.getInputStream()) {
                 minioClient.putObject(
                         PutObjectArgs.builder()
@@ -80,23 +51,32 @@ public class MinioService {
                 );
             }
 
-            // Trả về URL của tệp tin vừa tải lên
-            return externalUrl + "/" + bucketName + "/" + fileName;
+            // Tạo presigned URL có hiệu lực 7 ngày thay vì direct URL để dùng được với private bucket
+            return minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.GET)
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .expiry(7, TimeUnit.DAYS)
+                            .build()
+            );
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi tải tệp lên MinIO: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Xóa tệp tin khỏi MinIO dựa trên URL.
-     * Hàm này tách lấy tên tệp từ URL và thực hiện xóa trong bucket tương ứng.
+     * Xóa tệp khỏi bucket dựa trên URL.
+     * Tách tên tệp từ URL (bỏ qua phần query string của presigned URL) trước khi xóa.
      */
     public void deleteFile(String fileUrl, String bucketName) {
         if (fileUrl == null || fileUrl.isEmpty()) {
             return;
         }
         try {
-            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            // Loai bo query string cua presigned URL truoc khi lay ten file
+            String urlWithoutQuery = fileUrl.contains("?") ? fileUrl.substring(0, fileUrl.indexOf("?")) : fileUrl;
+            String fileName = urlWithoutQuery.substring(urlWithoutQuery.lastIndexOf("/") + 1);
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
                             .bucket(bucketName)
@@ -104,7 +84,6 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            // Log lỗi nhưng không chặn luồng chính nếu xóa file thất bại
             System.err.println("Lỗi khi xóa tệp từ MinIO: " + e.getMessage());
         }
     }
