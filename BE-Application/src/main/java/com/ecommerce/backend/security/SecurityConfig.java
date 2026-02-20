@@ -33,6 +33,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép mọi người truy cập Auth và xem dữ liệu (GET)
                         .requestMatchers("/api/auth/**").permitAll()
+                        // Cho phep browser lay anh qua proxy ma khong can xac thuc
+                        .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         

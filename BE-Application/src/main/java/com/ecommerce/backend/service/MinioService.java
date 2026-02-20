@@ -1,24 +1,28 @@
 package com.ecommerce.backend.service;
 
 import io.minio.BucketExistsArgs;
-import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
-import io.minio.http.Method;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class MinioService {
 
     private final MinioClient minioClient;
+
+    // URL public cua BE de tao proxy URL tra ve cho FE, thay vi dung presigned URL het han
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     @Autowired
     public MinioService(MinioClient minioClient) {
@@ -51,17 +55,27 @@ public class MinioService {
                 );
             }
 
-            // Tạo presigned URL có hiệu lực 7 ngày thay vì direct URL để dùng được với private bucket
-            return minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
+            // Tra ve proxy URL qua BE thay vi presigned URL, nhu vay anh khong bi het han sau 7 ngay
+            return baseUrl + "/api/files/" + bucketName + "/" + fileName;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi tải tệp lên MinIO: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Lay file tu storage duoi dang stream de controller co the tra thang ve cho browser.
+     * Dung GetObjectResponse thay vi InputStream thong thuong de giu lai Content-Type header.
+     */
+    public GetObjectResponse getObject(String bucketName, String objectName) {
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(fileName)
-                            .expiry(7, TimeUnit.DAYS)
+                            .object(objectName)
                             .build()
             );
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi tải tệp lên MinIO: " + e.getMessage(), e);
+            throw new RuntimeException("Lỗi khi lấy tệp từ storage: " + e.getMessage(), e);
         }
     }
 

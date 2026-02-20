@@ -7,7 +7,6 @@ import type { CartItem } from '../../types/cart';
 import { useCart } from '../../hooks/useCart';
 import BaseButton from '../../components/common/BaseButton';
 import { notification } from '../../utils/notification';
-import { getStorageUrl } from '../../utils/url';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Content } = Layout;
@@ -193,7 +192,7 @@ const CartPage: React.FC = () => {
                                     Thanh Toán VNPay
                                 </BaseButton>
                                 <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                                    <img src={getStorageUrl('products-image', 'vnpay-logo.png')} alt="VNPay" style={{ height: 30, opacity: 1 }} />
+                                    <img src="/vnpay-logo.png" alt="VNPay" style={{ height: 30, opacity: 1 }} />
                                 </div>
                             </Space>
                         </Card>
