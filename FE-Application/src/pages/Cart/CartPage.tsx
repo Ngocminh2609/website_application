@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import vnpayLogo from '../../assets/vnpay-logo.png';
 import { Layout, Typography, Table, Space, InputNumber, Card, Row, Col, Empty, Tag, Modal, Form, Input } from 'antd';
 import { DeleteOutlined, ShoppingCartOutlined, CreditCardOutlined, EnvironmentOutlined, PhoneOutlined } from '@ant-design/icons';
 import { cartApi } from '../../api/cartApi';
@@ -192,7 +193,7 @@ const CartPage: React.FC = () => {
                                     Thanh Toán VNPay
                                 </BaseButton>
                                 <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                                    <img src="src\assets\vnpay-logo.png" alt="VNPay" style={{ height: 30, opacity: 1 }} />
+                                    <img src={vnpayLogo} alt="VNPay" style={{ height: 30, opacity: 1 }} />
                                 </div>
                             </Space>
                         </Card>
