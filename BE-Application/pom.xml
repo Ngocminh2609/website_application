@@ -77,11 +77,11 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- MinIO SDK for Object Storage -->
+        <!-- AWS SDK v2 S3 - duoc Backblaze B2 chinh thuc ho tro, thay the MinIO SDK de tranh loi key format -->
         <dependency>
-            <groupId>io.minio</groupId>
-            <artifactId>minio</artifactId>
-            <version>8.5.7</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.25.16</version>
         </dependency>
         <!-- WebSocket support -->
         <dependency>

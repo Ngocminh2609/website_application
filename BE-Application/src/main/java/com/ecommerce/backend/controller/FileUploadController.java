@@ -1,7 +1,6 @@
 package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.service.MinioService;
-import io.minio.GetObjectResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -10,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.util.Map;
 
@@ -73,9 +74,8 @@ public class FileUploadController {
             @PathVariable String bucket,
             @PathVariable String objectName) {
         try {
-            GetObjectResponse objectResponse = minioService.getObject(bucket, objectName);
-            // Lay Content-Type tu response cua MinIO/B2, fallback ve octet-stream neu khong co
-            String contentType = objectResponse.headers().get("Content-Type");
+            ResponseInputStream<GetObjectResponse> objectResponse = minioService.getObject(bucket, objectName);
+            String contentType = objectResponse.response().contentType();
             MediaType mediaType = contentType != null ? MediaType.parseMediaType(contentType) : MediaType.APPLICATION_OCTET_STREAM;
 
             StreamingResponseBody body = outputStream -> {

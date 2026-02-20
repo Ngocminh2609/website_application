@@ -1,9 +1,15 @@
 package com.ecommerce.backend.config;
 
-import io.minio.MinioClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
+
+import java.net.URI;
 
 @Configuration
 public class MinioConfig {
@@ -17,15 +23,24 @@ public class MinioConfig {
     @Value("${minio.secret-key}")
     private String secretKey;
 
+    @Value("${minio.region:us-east-1}")
+    private String region;
+
     /**
-     * Khởi tạo Bean MinioClient để tương tác với server MinIO.
-     * Bean này sẽ được Spring Container quản lý và inject vào các service cần thiết.
+     * Dung S3Client cua AWS SDK v2 thay MinioClient vi AWS SDK co tai lieu chinh thuc ho tro Backblaze B2.
+     * pathStyleAccessEnabled(true) de tuong thich voi ca MinIO local lan B2.
      */
     @Bean
-    public MinioClient minioClient() {
-        return MinioClient.builder()
-                .endpoint(endpoint)
-                .credentials(accessKey, secretKey)
+    public S3Client s3Client() {
+        return S3Client.builder()
+                .endpointOverride(URI.create(endpoint))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(accessKey, secretKey)
+                ))
+                .region(Region.of(region))
+                .serviceConfiguration(S3Configuration.builder()
+                        .pathStyleAccessEnabled(true)
+                        .build())
                 .build();
     }
 }
