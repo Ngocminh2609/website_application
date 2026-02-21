@@ -110,7 +110,7 @@ const VoucherManagement: React.FC = () => {
             render: (_, record: Coupon) => (
                 <Tooltip title={`Đã dùng: ${record.usedCount} / Tổng: ${record.usageLimit}`}>
                     <div style={{ width: 100 }}>
-                        <div style={{ fontSize: 11, marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: 11, marginBottom: 4, display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                             <span>Tiến độ:</span>
                             <span>{record.usedCount}/{record.usageLimit}</span>
                         </div>

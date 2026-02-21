@@ -381,32 +381,47 @@ const AdminDashboard: React.FC = () => {
             }}>
                 <div>
                     <Title level={1} style={{ color: 'var(--text-main)', margin: 0 }}>Quản Trị Hệ Thống</Title>
-                    <Text style={{ color: 'var(--text-muted)' }}>Cửa hàng của bạn đang có {orders.length} đơn hàng cần theo dõi</Text>
+                    <Text style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Cửa hàng của bạn đang có <Text strong style={{ color: 'var(--primary-color)' }}>{orders.length}</Text> đơn hàng cần theo dõi</Text>
                 </div>
             </div>
 
             <Row gutter={[24, 24]} style={{ marginBottom: '40px' }}>
                 <Col xs={24} sm={8}>
                     <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
-                        <Space direction="vertical" size="small">
-                            <Text style={{ color: 'var(--text-muted)' }}><ShoppingOutlined /> Kho hàng</Text>
-                            <Title level={2} style={{ margin: 0, color: 'var(--text-main)' }}>{products.length} <Text style={{ fontSize: 14 }}>Sản phẩm</Text></Title>
+                        <Space direction="vertical" size={4}>
+                            <Text style={{ color: 'var(--text-muted)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <ShoppingOutlined style={{ color: 'var(--primary-color)' }} />
+                                KHO HÀNG
+                            </Text>
+                            <Title level={2} style={{ margin: 0, color: 'var(--text-main)', fontWeight: 800 }}>
+                                {products.length} <Text style={{ fontSize: 16, color: 'var(--text-muted)', fontWeight: 400 }}>Sản phẩm</Text>
+                            </Title>
                         </Space>
                     </Card>
                 </Col>
                 <Col xs={24} sm={8}>
                     <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
-                        <Space direction="vertical" size="small">
-                            <Text style={{ color: 'var(--text-muted)' }}><HistoryOutlined /> Đơn hàng</Text>
-                            <Title level={2} style={{ margin: 0, color: 'var(--text-main)' }}>{orders.length} <Text style={{ fontSize: 14 }}>Yêu cầu</Text></Title>
+                        <Space direction="vertical" size={4}>
+                            <Text style={{ color: 'var(--text-muted)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <HistoryOutlined style={{ color: 'var(--primary-color)' }} />
+                                ĐƠN HÀNG
+                            </Text>
+                            <Title level={2} style={{ margin: 0, color: 'var(--text-main)', fontWeight: 800 }}>
+                                {orders.length} <Text style={{ fontSize: 16, color: 'var(--text-muted)', fontWeight: 400 }}>Yêu cầu</Text>
+                            </Title>
                         </Space>
                     </Card>
                 </Col>
                 <Col xs={24} sm={8}>
                     <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
-                        <Space direction="vertical" size="small">
-                            <Text style={{ color: 'var(--text-muted)' }}><DollarOutlined /> Doanh thu thực</Text>
-                            <Title level={2} style={{ margin: 0, color: 'var(--primary-color)' }}>{calculateTotalRevenue().toLocaleString('vi-VN')}đ</Title>
+                        <Space direction="vertical" size={4}>
+                            <Text style={{ color: 'var(--text-muted)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <DollarOutlined style={{ color: 'var(--primary-color)' }} />
+                                DOANH THU THỰC
+                            </Text>
+                            <Title level={2} style={{ margin: 0, color: 'var(--primary-hover)', fontWeight: 800 }}>
+                                {calculateTotalRevenue().toLocaleString('vi-VN')}đ
+                            </Title>
                         </Space>
                     </Card>
                 </Col>
@@ -420,7 +435,7 @@ const AdminDashboard: React.FC = () => {
                     items={[
                         {
                             key: 'products',
-                            label: <span style={{ fontSize: 16 }}><ShoppingOutlined /> Danh sách sản phẩm</span>,
+                            label: <span style={{ fontSize: 16, color: 'var(--text-main)' }}><ShoppingOutlined /> Danh sách sản phẩm</span>,
                             children: (
                                 <div>
                                     <div style={{ textAlign: 'right', marginBottom: 20 }}>
@@ -441,7 +456,7 @@ const AdminDashboard: React.FC = () => {
                         },
                         {
                             key: 'orders',
-                            label: <span style={{ fontSize: 16 }}><HistoryOutlined /> Quản lý đơn hàng</span>,
+                            label: <span style={{ fontSize: 16, color: 'var(--text-main)' }}><HistoryOutlined /> Quản lý đơn hàng</span>,
                             children: (
                                 <Table
                                     columns={orderColumns}
@@ -455,31 +470,31 @@ const AdminDashboard: React.FC = () => {
                         },
                         {
                             key: 'statistics',
-                            label: <span style={{ fontSize: 16 }}><BarChartOutlined /> Báo cáo & Thống kê</span>,
+                            label: <span style={{ fontSize: 16, color: 'var(--text-main)' }}><BarChartOutlined /> Báo cáo & Thống kê</span>,
                             children: <StatisticsTab />
                         },
                         {
                             key: 'chat',
                             label: (
                                 <Badge count={totalUnread} offset={[10, 0]}>
-                                    <span style={{ fontSize: 16 }}><MessageOutlined /> Chat Tư Vấn</span>
+                                    <span style={{ fontSize: 16, color: 'var(--text-main)' }}><MessageOutlined /> Chat Tư Vấn</span>
                                 </Badge>
                             ),
                             children: <AdminChat />
                         },
                         {
                             key: 'notifications',
-                            label: <span style={{ fontSize: 16 }}><BellOutlined /> Quản lý thông báo</span>,
+                            label: <span style={{ fontSize: 16, color: 'var(--text-main)' }}><BellOutlined /> Quản lý thông báo</span>,
                             children: <NotificationManagement />
                         },
                         {
                             key: 'vouchers',
-                            label: <span style={{ fontSize: 16 }}><GiftOutlined /> Mã giảm giá</span>,
+                            label: <span style={{ fontSize: 16, color: 'var(--text-main)' }}><GiftOutlined /> Mã giảm giá</span>,
                             children: <VoucherManagement />
                         },
                         {
                             key: 'reviews',
-                            label: <span style={{ fontSize: 16 }}><StarOutlined /> Kiểm duyệt đánh giá</span>,
+                            label: <span style={{ fontSize: 16, color: 'var(--text-main)' }}><StarOutlined /> Kiểm duyệt đánh giá</span>,
                             children: <ReviewModeration />
                         }
                     ]}

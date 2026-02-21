@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input, Button, List, Avatar, Typography, Badge, Space } from 'antd';
 import { SendOutlined, MessageOutlined, UserOutlined } from '@ant-design/icons';
 import { useAdminChat } from '../../context/useAdminChat';
@@ -7,9 +7,10 @@ const { Text, Title } = Typography;
 
 const AdminChat: React.FC = () => {
     // Sử dụng context để lấy conversations, sessions và sendMessage
-    const { conversations, sessions, connected, sendMessage, markSessionRead } = useAdminChat();
+    const { conversations, sessions, typingSessions, connected, sendMessage, sendTypingStatus, markSessionRead } = useAdminChat();
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [inputValue, setInputValue] = useState('');
+    const lastTypingTime = useRef<number>(0);
 
     // Tự động đánh dấu đã đọc khi đang xem session đó
     useEffect(() => {
@@ -30,6 +31,22 @@ const AdminChat: React.FC = () => {
             // Gửi tin nhắn qua context
             sendMessage(recipientSenderId, inputValue);
             setInputValue('');
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setInputValue(val);
+
+        if (activeSessionId) {
+            const now = Date.now();
+            // Gửi tín hiệu typing tối đa 1 lần mỗi 2 giây để tránh làm quá tải server
+            if (now - lastTypingTime.current > 2000) {
+                const activeSession = sessions.find(s => s.id === activeSessionId);
+                const recipientSenderId = activeSession?.senderId || activeSessionId;
+                sendTypingStatus(recipientSenderId);
+                lastTypingTime.current = now;
+            }
         }
     };
 
@@ -67,7 +84,7 @@ const AdminChat: React.FC = () => {
                                     </Badge>
                                     <div style={{ display: 'flex', flexDirection: 'column', width: '180px' }}>
                                         <Text strong style={{ color: 'var(--text-main)' }}>{item.name}</Text>
-                                        <Text type="secondary" style={{ fontSize: '12px' }} ellipsis>{item.lastMessage}</Text>
+                                        <Text style={{ fontSize: '12px', color: 'var(--text-muted)' }} ellipsis>{item.lastMessage}</Text>
                                     </div>
                                 </Space>
                             </div>
@@ -94,15 +111,34 @@ const AdminChat: React.FC = () => {
                                     alignSelf: msg.senderId === 'admin' ? 'flex-end' : 'flex-start',
                                     maxWidth: '75%',
                                     padding: '10px 15px',
-                                    background: msg.senderId === 'admin' ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.05)',
+                                    background: msg.senderId === 'admin' ? 'var(--primary-gradient)' : 'var(--bg-secondary)',
                                     borderRadius: '12px',
                                     borderBottomRightRadius: msg.senderId === 'admin' ? '2px' : '12px',
                                     borderBottomLeftRadius: msg.senderId === 'admin' ? '12px' : '2px',
+                                    border: msg.senderId === 'admin' ? 'none' : '1px solid var(--glass-border)',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                                 }}>
-                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>{msg.sender}</div>
-                                    <div style={{ color: msg.senderId === 'admin' ? '#fff' : 'var(--text-main)' }}>{msg.content}</div>
+                                    <div style={{ fontSize: '11px', color: msg.senderId === 'admin' ? '#fff' : 'var(--text-muted)', marginBottom: '4px', fontWeight: 600 }}>{msg.sender}</div>
+                                    <div style={{ color: msg.senderId === 'admin' ? '#fff' : 'var(--text-main)', fontSize: '14px', lineHeight: '1.5' }}>{msg.content}</div>
                                 </div>
                             ))}
+                            {activeSessionId && typingSessions[activeSessionId] && (
+                                <div style={{
+                                    alignSelf: 'flex-start',
+                                    padding: '10px 15px',
+                                    background: 'var(--bg-secondary)',
+                                    borderRadius: '12px',
+                                    borderBottomLeftRadius: '2px',
+                                    border: '1px solid var(--glass-border)',
+                                    display: 'flex',
+                                    gap: '4px',
+                                    alignItems: 'center'
+                                }}>
+                                    <div className="typing-dot"></div>
+                                    <div className="typing-dot"></div>
+                                    <div className="typing-dot"></div>
+                                </div>
+                            )}
                         </div>
 
                         <div style={{ padding: '20px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--glass-border)' }}>
@@ -110,7 +146,7 @@ const AdminChat: React.FC = () => {
                                 <Input
                                     placeholder="Gửi câu trả lời cho khách hàng..."
                                     value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onChange={handleInputChange}
                                     onPressEnter={handleSend}
                                 />
                                 <Button type="primary" icon={<SendOutlined />} onClick={handleSend}>Gửi ngay</Button>

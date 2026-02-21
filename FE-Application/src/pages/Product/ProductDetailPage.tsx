@@ -23,6 +23,7 @@ import BaseButton from '../../components/common/BaseButton';
 import BaseInput from '../../components/common/BaseInput';
 import { notification } from '../../utils/notification';
 import PersonalizedRecommendations from '../../components/common/PersonalizedRecommendations';
+import RealTimeViewerCount from '../../components/product/RealTimeViewerCount';
 
 
 
@@ -256,6 +257,8 @@ const ProductDetailPage: React.FC = () => {
                                     <Tag color="blue" bordered={false} style={{ borderRadius: '4px', fontWeight: 600 }}>CHÍNH HÃNG</Tag>
                                     {product.isBestSeller && <Tag color="gold" bordered={false} style={{ borderRadius: '4px', fontWeight: 600 }}>BÁN CHẠY</Tag>}
                                 </Space>
+
+                                <RealTimeViewerCount productId={product.id} />
 
                                 <Typography.Title level={1} style={{ color: 'var(--text-main)', fontSize: '2.5rem', marginBottom: '8px' }}>{product.name}</Typography.Title>
 

@@ -110,13 +110,13 @@ const NotificationManagement: React.FC = () => {
                     <Card
                         size="small"
                         className="glass-effect"
-                        style={{ marginBottom: '12px', border: '1px solid rgba(255,255,255,0.05)' }}
+                        style={{ marginBottom: '12px', border: '1px solid var(--glass-border)' }}
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ flex: 1 }}>
                                 <Badge status="processing" text={<Text strong style={{ color: 'var(--text-main)' }}>{item.message}</Text>} />
                                 <div style={{ marginTop: '8px' }}>
-                                    <Text type="secondary" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                                    <Text style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                                         {new Date(item.createdAt).toLocaleString('vi-VN')}
                                     </Text>
                                 </div>

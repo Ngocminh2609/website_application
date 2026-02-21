@@ -70,7 +70,7 @@ const ReviewModeration: React.FC = () => {
                     />
                     <div>
                         <Text strong style={{ display: 'block', color: 'var(--text-main)' }}>{record.user.fullName || record.user.username}</Text>
-                        <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</Text>
+                        <Text style={{ fontSize: 11, color: 'var(--text-muted)' }}>{dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</Text>
                     </div>
                 </Space>
             )

@@ -29,6 +29,9 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
         return parsedSessions;
     });
 
+    const [typingSessions, setTypingSessions] = useState<Record<string, boolean>>({});
+    const typingTimeoutRefs = useRef<Record<string, any>>({});
+
     const [connected, setConnected] = useState(false);
     const stompClientRef = useRef<Client | null>(null);
 
@@ -66,13 +69,35 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
                     // ... subscribe logic ...
                     client?.subscribe('/topic/admin', (msg) => {
                         const receivedMsg: ChatMessage = JSON.parse(msg.body);
-                        if (receivedMsg.type !== 'CHAT') return;
-                        if (receivedMsg.senderId === 'admin') return;
-
                         const clientKey = receivedMsg.email || receivedMsg.senderId;
                         const clientName = receivedMsg.fullName || receivedMsg.sender;
 
                         if (!clientKey || clientKey === 'undefined' || clientKey === 'null') return;
+
+                        // Xử lý trạng thái TYPING từ client
+                        if (receivedMsg.type === 'TYPING') {
+                            if (receivedMsg.senderId === 'admin') return;
+
+                            setTypingSessions(prev => ({ ...prev, [clientKey]: true }));
+
+                            // Tự động tắt trạng thái sau 3 giây nếu không nhận được tin nhắn typing tiếp theo
+                            if (typingTimeoutRefs.current[clientKey]) {
+                                clearTimeout(typingTimeoutRefs.current[clientKey]);
+                            }
+                            typingTimeoutRefs.current[clientKey] = setTimeout(() => {
+                                setTypingSessions(prev => ({ ...prev, [clientKey]: false }));
+                            }, 3000);
+                            return;
+                        }
+
+                        if (receivedMsg.type !== 'CHAT') return;
+                        if (receivedMsg.senderId === 'admin') return;
+
+                        // Khi nhận được tin nhắn CHAT, tắt trạng thái typing ngay lập tức
+                        if (typingTimeoutRefs.current[clientKey]) {
+                            clearTimeout(typingTimeoutRefs.current[clientKey]);
+                        }
+                        setTypingSessions(prev => ({ ...prev, [clientKey]: false }));
 
                         setSessions(prev => {
                             const existingIdx = prev.findIndex(s => s.id === clientKey);
@@ -206,6 +231,21 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
         ));
     };
 
+    const sendTypingStatus = (recipientId: string) => {
+        if (stompClientRef.current && connected) {
+            stompClientRef.current.publish({
+                destination: '/app/chat.sendMessage',
+                body: JSON.stringify({
+                    sender: 'Admin',
+                    senderId: 'admin',
+                    recipientId: recipientId,
+                    content: 'typing...',
+                    type: 'TYPING'
+                })
+            });
+        }
+    };
+
     const loadChatHistory = async (clientKey: string) => {
         try {
             const baseUrl = getBaseApiUrl();
@@ -225,7 +265,19 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
     const totalUnread = sessions.reduce((total, session) => total + (session.unreadCount || 0), 0);
 
     return (
-        <AdminChatContext.Provider value={{ conversations, sessions, connected, addMessage, updateSession, sendMessage, markSessionRead, loadChatHistory, totalUnread }}>
+        <AdminChatContext.Provider value={{
+            conversations,
+            sessions,
+            typingSessions,
+            connected,
+            addMessage,
+            updateSession,
+            sendMessage,
+            sendTypingStatus,
+            markSessionRead,
+            loadChatHistory,
+            totalUnread
+        }}>
             {children}
         </AdminChatContext.Provider>
     );

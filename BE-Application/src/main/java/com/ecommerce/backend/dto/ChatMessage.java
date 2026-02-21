@@ -27,6 +27,6 @@ public class ChatMessage {
     private Boolean isBotResponse; // true nếu là câu trả lời từ bot, false/null nếu là tin nhắn thật cần admin xử lý
 
     public enum MessageType {
-        CHAT, JOIN, LEAVE
+        CHAT, JOIN, LEAVE, TYPING
     }
 }

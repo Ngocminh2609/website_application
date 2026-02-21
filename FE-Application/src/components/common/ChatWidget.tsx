@@ -58,25 +58,28 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
-    const [isAdminActive, setIsAdminActive] = useState(false);
+    const [isAdminTyping, setIsAdminTyping] = useState(false);
 
-    // Move Refs up (For use in effects)
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const stompClientRef = useRef<Client | null>(null);
+    const lastTypingTime = useRef<number>(0);
+    const adminTypingTimeoutRef = useRef<any>(null);
 
     // 1. Init Session (Support Props & LocalStorage Fallback)
     const [chatSession] = useState(() => {
-        const storageUser = localStorage.getItem('user');
-        const userData = user || (storageUser ? JSON.parse(storageUser) : null);
+        try {
+            const storageUser = localStorage.getItem('user');
+            const userData = user || (storageUser ? JSON.parse(storageUser) : null);
 
-        if (userData) {
-            return {
-                id: `user-${userData.id}`,
-                name: userData.fullName,
-                email: userData.email,
-                fullName: userData.fullName
-            };
-        }
+            if (userData) {
+                return {
+                    id: `user-${userData.id}`,
+                    name: userData.fullName,
+                    email: userData.email,
+                    fullName: userData.fullName
+                };
+            }
+        } catch (e) { console.error('Error parsing user data', e); }
 
         let gId = localStorage.getItem('guest_chat_id');
         let gName = localStorage.getItem('guest_chat_name');
@@ -88,12 +91,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             localStorage.setItem('guest_chat_name', gName);
         }
 
-        return {
-            id: gId,
-            name: gName,
-            email: null,
-            fullName: gName
-        };
+        return { id: gId || 'guest', name: gName || 'Khách', email: null, fullName: gName || 'Khách' };
+    });
+
+    const [isAdminActive, setIsAdminActive] = useState(() => {
+        try {
+            const lastAdminTime = localStorage.getItem(`last_admin_time_${chatSession?.id}`);
+            if (!lastAdminTime) return false;
+            const diff = Date.now() - Number(lastAdminTime);
+            return diff < 3600000;
+        } catch (e) { return false; }
     });
 
     // 2. Init Messages (Load History)
@@ -102,15 +109,30 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             const saved = localStorage.getItem(`chat_history_${chatSession.id}`);
             return saved ? JSON.parse(saved) : [INITIAL_MESSAGE];
         } catch (err) {
-            void err;
+            console.error('Error loading chat history', err);
             return [INITIAL_MESSAGE];
         }
     });
 
-    // 3. Persist messages when changed
+    // 3. Persist messages when changed & Check Admin Inactivity
     useEffect(() => {
         localStorage.setItem(`chat_history_${chatSession.id}`, JSON.stringify(messages));
     }, [messages, chatSession.id]);
+
+    useEffect(() => {
+        const checkInactivity = () => {
+            const lastAdminTime = localStorage.getItem(`last_admin_time_${chatSession.id}`);
+            if (lastAdminTime && isAdminActive) {
+                const diff = Date.now() - parseInt(lastAdminTime);
+                if (diff >= 3600000) {
+                    setIsAdminActive(false);
+                }
+            }
+        };
+
+        const interval = setInterval(checkInactivity, 60000); // Check every minute
+        return () => clearInterval(interval);
+    }, [isAdminActive, chatSession.id]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -221,9 +243,24 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
                 onConnect: () => {
                     client?.subscribe(`/topic/user/${chatSession.id}`, (msg) => {
                         const receivedMsg = JSON.parse(msg.body);
-                        setIsAdminActive(true);
-                        const newMsg = createMessageObject(receivedMsg.content, 'admin');
-                        setMessages(prev => [...prev, newMsg]);
+
+                        if (receivedMsg.type === 'TYPING') {
+                            setIsAdminTyping(true);
+                            if (adminTypingTimeoutRef.current) clearTimeout(adminTypingTimeoutRef.current);
+                            adminTypingTimeoutRef.current = setTimeout(() => {
+                                setIsAdminTyping(false);
+                            }, 3000);
+                            return;
+                        }
+
+                        if (receivedMsg.type === 'CHAT') {
+                            setIsAdminActive(true);
+                            setIsAdminTyping(false);
+                            localStorage.setItem(`last_admin_time_${chatSession.id}`, Date.now().toString());
+                            if (adminTypingTimeoutRef.current) clearTimeout(adminTypingTimeoutRef.current);
+                            const newMsg = createMessageObject(receivedMsg.content, 'admin');
+                            setMessages(prev => [...prev, newMsg]);
+                        }
                     });
 
                     client?.publish({
@@ -287,6 +324,13 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
                                 NovaBot đang gõ...
                             </div>
                         )}
+                        {isAdminTyping && (
+                            <div className={`message message-admin`} style={{ display: 'flex', gap: '4px', alignItems: 'center', width: 'fit-content' }}>
+                                <div className="typing-dot" style={{ background: '#10b981' }}></div>
+                                <div className="typing-dot" style={{ background: '#10b981' }}></div>
+                                <div className="typing-dot" style={{ background: '#10b981' }}></div>
+                            </div>
+                        )}
 
                         {!isAdminActive && !isTyping && messages[messages.length - 1]?.sender === 'bot' && (
                             <div className="auto-options">
@@ -309,7 +353,25 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
                             className="chat-input"
                             placeholder="Nhập tin nhắn..."
                             value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
+                            onChange={(e) => {
+                                setInputValue(e.target.value);
+                                const now = Date.now();
+                                if (now - lastTypingTime.current > 2000 && stompClientRef.current?.connected) {
+                                    stompClientRef.current.publish({
+                                        destination: '/app/chat.sendMessage',
+                                        body: JSON.stringify({
+                                            sender: chatSession.name,
+                                            senderId: chatSession.id,
+                                            email: chatSession.email,
+                                            fullName: chatSession.fullName,
+                                            content: 'typing...',
+                                            type: 'TYPING',
+                                            isBotResponse: false
+                                        })
+                                    });
+                                    lastTypingTime.current = now;
+                                }
+                            }}
                             onPressEnter={() => handleSend(inputValue)}
                         />
                         <Button
