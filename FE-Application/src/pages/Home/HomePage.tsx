@@ -6,6 +6,7 @@ import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../types/product';
 import ProductCard from '../../components/common/ProductCard';
 import BaseButton from '../../components/common/BaseButton';
+import PersonalizedRecommendations from '../../components/common/PersonalizedRecommendations';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -149,6 +150,12 @@ const HomePage: React.FC = () => {
                         ))}
                     </div>
                 </div>
+
+                {/* GỢI Ý CÁ NHÂN HÓA - Kỹ thuật tạo khác biệt */}
+                <PersonalizedRecommendations
+                    title="Gợi Ý Riêng Cho Bạn"
+                    limit={5}
+                />
 
                 {/* FLASH SALE - Chữ sáng, nền nhấn đỏ */}
                 {flashSales.length > 0 && (

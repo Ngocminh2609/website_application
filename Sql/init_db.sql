@@ -255,3 +255,19 @@ INSERT INTO `product_reviews` (`product_id`, `user_id`, `rating`, `comment`, `is
 (1, 2, 5, 'Sản phẩm tuyệt vời, camera chụp rất đẹp. Đáng đồng tiền!', 1, 1),
 (2, 2, 5, 'MacBook Air M2 quá mỏng nhẹ, pin trâu cả ngày không lo hếtpin thật sự ấn tượng.', 1, 1),
 (4, 2, 4, 'Samsung S24 Ultra màn hình đẹp, bút S Pen tiện nhưng giá hơi cao.', 1, 1);
+
+-- 14. Bảng Lịch sử xem sản phẩm (User Product Views) - Dành cho tính năng gợi ý chuyên nghiệp
+CREATE TABLE IF NOT EXISTS `user_product_views` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `product_id` BIGINT NOT NULL,
+    `view_count` INT DEFAULT 1,
+    `last_viewed_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_user_product_view` (`user_id`, `product_id`),
+    INDEX (`user_id`),
+    INDEX (`last_viewed_at`)
+) ENGINE = InnoDB;
+

@@ -12,6 +12,8 @@ import { useCart } from '../../hooks/useCart';
 import BaseButton from '../../components/common/BaseButton';
 import { notification } from '../../utils/notification';
 import type { ColumnsType } from 'antd/es/table';
+import PersonalizedRecommendations from '../../components/common/PersonalizedRecommendations';
+
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -299,6 +301,12 @@ const CartPage: React.FC = () => {
                     </Col>
                 </Row>
             )}
+
+            <PersonalizedRecommendations
+                title="Khám Phá Thêm"
+                description="Sản phẩm công nghệ cao cấp bạn có thể quan tâm."
+                limit={5}
+            />
 
             {/* Modal Checkout */}
             <Modal

@@ -22,6 +22,8 @@ import type { ProductReview } from '../../types/coupon-review';
 import BaseButton from '../../components/common/BaseButton';
 import BaseInput from '../../components/common/BaseInput';
 import { notification } from '../../utils/notification';
+import PersonalizedRecommendations from '../../components/common/PersonalizedRecommendations';
+
 
 
 /**
@@ -62,6 +64,15 @@ const ProductDetailPage: React.FC = () => {
                 const data = await productApi.getProductById(parseInt(id));
                 setProduct(data);
                 setMainImage(data.imageUrl);
+
+                // Theo dõi hành vi người dùng
+                import('../../utils/tracking').then(({ trackingUtils }) => {
+                    trackingUtils.trackProductView(data.id);
+                    if (data.category?.name) {
+                        trackingUtils.trackCategoryView(data.category.name);
+                    }
+                });
+
                 await fetchReviews(parseInt(id));
             } catch (error) {
                 console.error("Lỗi khi tải chi tiết sản phẩm:", error);
@@ -484,6 +495,13 @@ const ProductDetailPage: React.FC = () => {
                         </Col>
                     </Row>
                 </div>
+
+                {/* GỢI Ý CÁ NHÂN HÓA */}
+                <PersonalizedRecommendations
+                    title="Có Thể Bạn Cũng Thích"
+                    description="Sản phẩm được gợi ý riêng dựa trên lịch sử xem của bạn."
+                    limit={5}
+                />
             </div>
         </Layout>
     );
