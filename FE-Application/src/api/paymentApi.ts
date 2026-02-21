@@ -16,9 +16,13 @@ export const paymentApi = {
         });
     },
 
-    createOrderPayment: async (username: string, address: string, phone: string): Promise<PaymentResponse> => {
+    createOrderPayment: async (username: string, address: string, phone: string, couponCode?: string): Promise<PaymentResponse> => {
         // Sử dụng POST request để gửi dữ liệu checkout một cách an toàn
-        return apiClient.fetch<PaymentResponse>(`/v1/payment/create-order-payment?username=${username}&shippingAddress=${encodeURIComponent(address)}&phoneNumber=${encodeURIComponent(phone)}`, {
+        let url = `/v1/payment/create-order-payment?username=${username}&shippingAddress=${encodeURIComponent(address)}&phoneNumber=${encodeURIComponent(phone)}`;
+        if (couponCode) {
+            url += `&couponCode=${encodeURIComponent(couponCode)}`;
+        }
+        return apiClient.fetch<PaymentResponse>(url, {
             method: 'POST'
         });
     },

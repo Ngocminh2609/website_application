@@ -17,7 +17,12 @@ import {
     CarOutlined,
     MessageOutlined,
     BarChartOutlined,
-    BellOutlined
+    BellOutlined,
+    InfoCircleOutlined,
+    FireFilled,
+    AppstoreOutlined,
+    GiftOutlined,
+    StarOutlined
 } from '@ant-design/icons';
 import AdminChat from './AdminChat';
 import { useAdminChat } from '../../context/useAdminChat';
@@ -32,6 +37,8 @@ import { notification } from '../../utils/notification';
 import type { ColumnsType } from 'antd/es/table';
 import StatisticsTab from './StatisticsTab';
 import NotificationManagement from './NotificationManagement';
+import VoucherManagement from './VoucherManagement';
+import ReviewModeration from './ReviewModeration';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -52,11 +59,22 @@ const AdminDashboard: React.FC = () => {
     const [form] = Form.useForm<ProductRequest>();
     const [activeTab, setActiveTab] = useState<string>('products');
 
+    // Watch values for live calculation
+    const watchOriginalPrice = Form.useWatch('originalPrice', form);
+    const watchDiscountPercent = Form.useWatch('discountPercent', form);
+    const [livePrice, setLivePrice] = useState<number>(0);
+
+    useEffect(() => {
+        const price = watchOriginalPrice || 0;
+        const percent = watchDiscountPercent || 0;
+        setLivePrice(Math.round(price * (100 - percent) / 100));
+    }, [watchOriginalPrice, watchDiscountPercent]);
+
     const loadCoreData = async () => {
         setLoading(true);
         try {
             const [productData, categoryData, orderData] = await Promise.all([
-                productApi.getAllProducts(),
+                productApi.getAllAdmin(),
                 categoryApi.getAllCategories(),
                 orderApi.getAllOrders()
             ]);
@@ -91,11 +109,17 @@ const AdminDashboard: React.FC = () => {
         setEditingId(product.id);
         form.setFieldsValue({
             name: product.name,
-            price: product.price,
+            originalPrice: product.originalPrice || product.price,
+            discountPercent: product.discountPercent || 0,
             stockQuantity: product.stockQuantity,
             categoryId: product.category?.id || 0,
             imageUrl: product.imageUrl,
-            description: product.description
+            description: product.description,
+            brand: product.brand,
+            isBestSeller: product.isBestSeller,
+            specifications: product.specifications,
+            moreImages: product.moreImages,
+            isActive: product.isActive !== false // Mặc định là true nếu undefined
         });
         setFileList([]);
         setIsModalVisible(true);
@@ -120,7 +144,7 @@ const AdminDashboard: React.FC = () => {
             }
 
             setIsModalVisible(false);
-            const productData = await productApi.getAllProducts();
+            const productData = await productApi.getAllAdmin();
             setProducts(productData);
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Không thể thực hiện yêu cầu này';
@@ -138,7 +162,7 @@ const AdminDashboard: React.FC = () => {
                 try {
                     await productApi.deleteProduct(id);
                     notification.success('Xóa sản phẩm thành công');
-                    const productData = await productApi.getAllProducts();
+                    const productData = await productApi.getAllAdmin();
                     setProducts(productData);
                 } catch {
                     notification.error('Lỗi khi xóa sản phẩm');
@@ -200,26 +224,41 @@ const AdminDashboard: React.FC = () => {
             key: 'product',
             render: (_, record: Product) => (
                 <Space size="middle">
-                    <img
-                        src={record.imageUrl}
-                        alt={record.name}
-                        onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=200';
-                        }}
-                        style={{ width: 45, height: 45, borderRadius: 8, objectFit: 'cover' }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <img
+                            src={record.imageUrl}
+                            alt={record.name}
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=200';
+                            }}
+                            style={{ width: 50, height: 50, borderRadius: 10, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }}
+                        />
+                        {record.isBestSeller && (
+                            <FireFilled style={{ position: 'absolute', top: -5, right: -5, color: '#ff4d4f', fontSize: 16 }} />
+                        )}
+                    </div>
                     <div>
-                        <Text strong style={{ display: 'block', fontSize: '15px' }}>{record.name}</Text>
-                        <Tag color="cyan">{record.category?.name || 'Chưa phân loại'}</Tag>
+                        <Text strong style={{ display: 'block', fontSize: '15px', color: '#fff' }}>{record.name}</Text>
+                        <Space>
+                            <Tag color="blue" style={{ borderRadius: 4, margin: 0 }}>{record.brand || 'No Brand'}</Tag>
+                            <Tag color="purple" style={{ borderRadius: 4, margin: 0 }}>{record.category?.name}</Tag>
+                        </Space>
                     </div>
                 </Space>
             ),
         },
         {
-            title: 'Giá tiền',
-            dataIndex: 'price',
+            title: 'Giá bán',
             key: 'price',
-            render: (price: number) => <Text strong>{price.toLocaleString('vi-VN')}đ</Text>,
+            render: (_, record: Product) => (
+                <div>
+                    <Text strong style={{ display: 'block', color: 'var(--primary-color)' }}>{record.price.toLocaleString('vi-VN')} đ</Text>
+                    {record.discountPercent && record.discountPercent > 0 ? (
+                        <Text delete type="secondary" style={{ fontSize: 11 }}>{record.originalPrice?.toLocaleString('vi-VN')} đ</Text>
+                    ) : null}
+                    {!record.isActive && <Tag color="default" style={{ fontSize: 10, marginTop: 4 }}>ĐANG ẨN</Tag>}
+                </div>
+            ),
         },
         {
             title: 'Tồn kho',
@@ -429,6 +468,16 @@ const AdminDashboard: React.FC = () => {
                             key: 'notifications',
                             label: <span style={{ fontSize: 16 }}><BellOutlined /> Quản lý thông báo</span>,
                             children: <NotificationManagement />
+                        },
+                        {
+                            key: 'vouchers',
+                            label: <span style={{ fontSize: 16 }}><GiftOutlined /> Mã giảm giá</span>,
+                            children: <VoucherManagement />
+                        },
+                        {
+                            key: 'reviews',
+                            label: <span style={{ fontSize: 16 }}><StarOutlined /> Kiểm duyệt đánh giá</span>,
+                            children: <ReviewModeration />
                         }
                     ]}
                 />
@@ -440,36 +489,113 @@ const AdminDashboard: React.FC = () => {
                 onCancel={() => setIsModalVisible(false)}
                 onOk={() => form.submit()}
                 okButtonProps={{ loading: loading }}
-                width={700}
-                centered
+                width={800}
+                style={{ top: 110 }}
+                styles={{
+                    body: {
+                        maxHeight: 'calc(100vh - 270px)',
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
+                        paddingRight: '8px'
+                    }
+                }}
             >
                 <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: '20px' }}>
-                    <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}>
-                        <Input size="large" />
-                    </Form.Item>
                     <Row gutter={24}>
-                        <Col span={12}>
-                            <Form.Item name="price" label="Giá bán (đ)" rules={[{ required: true, message: 'Nhập giá' }]}>
-                                <InputNumber size="large" style={{ width: '100%' }} />
+                        <Col span={16}>
+                            <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}>
+                                <Input size="large" placeholder="Nhập tên sản phẩm..." />
                             </Form.Item>
                         </Col>
-                        <Col span={12}>
-                            <Form.Item name="stockQuantity" label="Tồn kho" rules={[{ required: true, message: 'Nhập số lượng' }]}>
-                                <InputNumber size="large" style={{ width: '100%' }} />
+                        <Col span={8}>
+                            <Form.Item name="brand" label="Thương hiệu">
+                                <Input size="large" placeholder="Ví dụ: Apple, Sony..." />
                             </Form.Item>
                         </Col>
                     </Row>
-                    <Form.Item name="categoryId" label="Danh mục" rules={[{ required: true, message: 'Chọn danh mục' }]}>
-                        <Select size="large" options={categories.map(c => ({ label: c.name, value: c.id }))} />
+
+                    <Row gutter={24}>
+                        <Col span={8}>
+                            <Form.Item name="originalPrice" label="Giá bán gốc (đ)" rules={[{ required: true, message: 'Nhập giá gốc' }]}>
+                                <InputNumber size="large" style={{ width: '100%' }} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item name="discountPercent" label="Giảm giá (%)">
+                                <InputNumber size="large" min={0} max={99} style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={10}>
+                            <div style={{
+                                background: 'rgba(99, 102, 241, 0.05)',
+                                padding: '12px 16px',
+                                borderRadius: 12,
+                                marginTop: 30,
+                                border: '1px dashed var(--primary-color)',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <Text style={{ color: 'var(--text-muted)' }}>Giá sau giảm:</Text>
+                                <Text strong style={{ color: 'var(--primary-color)', fontSize: 18 }}>{livePrice.toLocaleString('vi-VN')} đ</Text>
+                            </div>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={24}>
+                        <Col span={12}>
+                            <Form.Item name="categoryId" label="Danh mục sản phẩm" rules={[{ required: true, message: 'Chọn danh mục' }]}>
+                                <Select size="large" options={categories.map(c => ({ label: c.name, value: c.id }))} prefix={<AppstoreOutlined />} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item name="stockQuantity" label="Tồn kho" rules={[{ required: true, message: 'Nhập số' }]}>
+                                <InputNumber size="large" style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item name="isBestSeller" label="Bán chạy?" valuePropName="checked">
+                                <Select size="large" options={[{ label: 'Có', value: true }, { label: 'Không', value: false }]} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item name="isActive" label="Hiển thị?" valuePropName="checked" initialValue={true}>
+                                <Select size="large" options={[
+                                    { label: 'Công khai', value: true },
+                                    { label: 'Tạm ẩn', value: false }
+                                ]} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Form.Item label={<Space><UploadOutlined /> Hình ảnh sản phẩm</Space>}>
+                        <Row gutter={16}>
+                            <Col span={6}>
+                                <Upload beforeUpload={() => false} listType="picture-card" maxCount={1} fileList={fileList} onChange={({ fileList }) => setFileList(fileList)}>
+                                    {fileList.length >= 1 ? null : <div><PlusOutlined /><div style={{ marginTop: 8 }}>Tải lên</div></div>}
+                                </Upload>
+                            </Col>
+                            <Col span={18}>
+                                <Form.Item name="imageUrl">
+                                    <Input placeholder="Hoặc dán URL ảnh tại đây" style={{ height: 102 }} disabled={fileList.length > 0} />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                        <Form.Item name="moreImages" label="Ảnh bổ sung (URLs cách nhau bởi dấu phẩy)">
+                            <Input.TextArea placeholder="URL1, URL2, URL3..." rows={2} />
+                        </Form.Item>
                     </Form.Item>
-                    <Form.Item label="Hình ảnh">
-                        <Upload beforeUpload={() => false} listType="picture-card" maxCount={1} fileList={fileList} onChange={({ fileList }) => setFileList(fileList)}>
-                            {fileList.length >= 1 ? null : <div><UploadOutlined /><div style={{ marginTop: 8 }}>Tải ảnh</div></div>}
-                        </Upload>
-                        <Input name="imageUrl" placeholder="Hoặc dán URL ảnh tại đây" style={{ marginTop: 10 }} disabled={fileList.length > 0} />
+
+                    <Form.Item name="description" label="Mô tả ngắn gọn">
+                        <Input.TextArea rows={2} placeholder="Mô tả tóm tắt về sản phẩm..." />
                     </Form.Item>
-                    <Form.Item name="description" label="Mô tả">
-                        <Input.TextArea rows={3} />
+
+                    <Form.Item
+                        name="specifications"
+                        label={<Space><InfoCircleOutlined /> Thông số kỹ thuật chi tiết</Space>}
+                        help="Định dạng: Tên thông số: Giá trị; (Ví dụ: RAM: 16GB; Chip: M3;)"
+                    >
+                        <Input.TextArea rows={4} placeholder="Màn hình: 6.7 inch; Chip: A17 Pro; Pin: 29 giờ;" />
                     </Form.Item>
                 </Form>
             </Modal>

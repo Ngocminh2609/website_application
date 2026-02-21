@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Entity
@@ -61,6 +62,12 @@ public class Product {
     // Giá Flash Sale (nếu có)
     private BigDecimal discountPrice;
 
+    // Phần trăm giảm giá (0-100)
+    private Integer discountPercent = 0;
+
+    // Trạng thái hiển thị (Ẩn/Hiện)
+    private Boolean isActive = true;
+
     // Đánh giá sản phẩm (0-5 sao)
     private Double rating = 5.0;
 
@@ -86,16 +93,40 @@ public class Product {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Sử dụng PrePersist/PreUpdate để tự động quản lý thời gian mà không cần can thiệp thủ công từ Service
+    // Sử dụng PrePersist/PreUpdate để tự động quản lý thời gian và đồng bộ giá
     @PrePersist
     protected void onCreate() {
-        // Chỉ gán createdAt khi tạo mới theo yêu cầu
         this.createdAt = LocalDateTime.now();
+        updateFinalPrice();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        // Gán updatedAt khi có cập nhật
         this.updatedAt = LocalDateTime.now();
+        updateFinalPrice();
+    }
+
+    /**
+     * Đồng bộ giá cuối cùng (price) dựa trên giá gốc và phần trăm giảm giá.
+     * Quy tắc: 
+     * 1. Nếu có discountPercent > 0: tính discountPrice = originalPrice * (100 - %) / 100.
+     * 2. price luôn là giá cuối cùng khách phải trả.
+     */
+    private void updateFinalPrice() {
+        if (this.originalPrice != null) {
+            if (this.discountPercent != null && this.discountPercent > 0) {
+                // Tính giá đã giảm
+                BigDecimal discount = this.originalPrice
+                        .multiply(BigDecimal.valueOf(100 - this.discountPercent))
+                        .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+                this.discountPrice = discount;
+                this.price = discount;
+            } else {
+                // Không giảm giá
+                this.discountPrice = null;
+                this.discountPercent = 0;
+                this.price = this.originalPrice;
+            }
+        }
     }
 }

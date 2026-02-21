@@ -22,12 +22,13 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final PaymentTransactionRepository transactionRepository;
     private final NotificationService notificationService;
+    private final CouponService couponService;
 
     /**
      * Tạo đơn hàng từ giỏ hàng hiện tại của người dùng.
      */
     @Transactional
-    public Order createOrderFromCart(User user, String shippingAddress, String phoneNumber) {
+    public Order createOrderFromCart(User user, String shippingAddress, String phoneNumber, String couponCode) {
         Cart cart = cartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy giỏ hàng!"));
 
@@ -35,10 +36,28 @@ public class OrderService {
             throw new RuntimeException("Giỏ hàng trống!");
         }
 
-        // Tính tổng tiền
-        BigDecimal totalAmount = cart.getItems().stream()
+        // Tính tổng tiền sản phẩm (chưa giảm giá)
+        BigDecimal subtotal = cart.getItems().stream()
                 .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        String validatedCode = null;
+
+        // Xử lý mã giảm giá nếu có
+        if (couponCode != null && !couponCode.trim().isEmpty()) {
+            try {
+                var couponResult = couponService.validateCoupon(couponCode, subtotal);
+                discountAmount = couponResult.getDiscountAmount();
+                validatedCode = couponResult.getCode();
+            } catch (Exception e) {
+                // Nếu lỗi validate, có thể ném exception hoặc bỏ qua coupon. Ở đây ta ném exception để user biết.
+                throw new RuntimeException("Mã giảm giá không hợp lệ: " + e.getMessage());
+            }
+        }
+
+        BigDecimal totalAmount = subtotal.subtract(discountAmount);
+        if (totalAmount.compareTo(BigDecimal.ZERO) < 0) totalAmount = BigDecimal.ZERO;
 
         // Tạo Order
         Order order = Order.builder()
@@ -48,6 +67,8 @@ public class OrderService {
                 .shippingAddress(shippingAddress)
                 .phoneNumber(phoneNumber)
                 .paymentMethod("VNPAY")
+                .appliedCouponCode(validatedCode)
+                .couponDiscount(discountAmount)
                 .build();
 
         // Chuyển CartItem sang OrderItem
@@ -96,6 +117,16 @@ public class OrderService {
                 "Thanh toán thành công đơn hàng #" + order.getId() + ". Chúng tôi sẽ sớm giao hàng cho bạn!",
                 Notification.NotificationType.ORDER
             );
+
+            // 3. Tiêu hao mã giảm giá nếu có
+            if (order.getAppliedCouponCode() != null) {
+                try {
+                    couponService.consumeCoupon(order.getAppliedCouponCode());
+                } catch (Exception e) {
+                    System.err.println("Không thể tiêu hao mã giảm giá: " + e.getMessage());
+                    // Không ném exception ở đây để tránh rollback nghiệp vụ chính là thanh toán
+                }
+            }
         } else {
             order.setStatus("FAILED");
         }

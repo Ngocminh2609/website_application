@@ -25,16 +25,16 @@ public class DataInitializer implements CommandLineRunner {
             User admin = new User();
             admin.setUsername("admin");
             // Mã hóa mật khẩu chuẩn BCrypt cho 'password123'
-            admin.setPassword(passwordEncoder.encode("password123"));
+            admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setEmail("admin@technova.com");
             admin.setFullName("Quản Trị Hệ Thống");
             admin.setRole("ADMIN");
             userRepository.save(admin);
-            System.out.println(">>> Đã khởi tạo tài khoản Admin mặc định: admin / password123");
+            System.out.println(">>> Đã khởi tạo tài khoản Admin mặc định: admin / admin123");
         } else {
             // Nếu đã tồn tại nhưng bạn vẫn không đăng nhập được, hãy ép lại mật khẩu mới
             User existingAdmin = userRepository.findByUsername("admin").get();
-            existingAdmin.setPassword(passwordEncoder.encode("password123"));
+            existingAdmin.setPassword(passwordEncoder.encode("admin123"));
             existingAdmin.setRole("ADMIN");
             userRepository.save(existingAdmin);
             System.out.println(">>> Đã cập nhật lại mật khẩu mã hóa cho Admin");

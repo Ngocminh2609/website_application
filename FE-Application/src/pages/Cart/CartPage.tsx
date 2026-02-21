@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import vnpayLogo from '../../assets/vnpay-logo.png';
-import { Layout, Typography, Table, Space, InputNumber, Card, Row, Col, Empty, Tag, Modal, Form, Input } from 'antd';
-import { DeleteOutlined, ShoppingCartOutlined, CreditCardOutlined, EnvironmentOutlined, PhoneOutlined } from '@ant-design/icons';
+import { Layout, Typography, Table, Space, InputNumber, Card, Row, Col, Empty, Tag, Modal, Form, Input, Spin } from 'antd';
+import { DeleteOutlined, ShoppingCartOutlined, CreditCardOutlined, EnvironmentOutlined, PhoneOutlined, TagOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { cartApi } from '../../api/cartApi';
 import { paymentApi } from '../../api/paymentApi';
+import { couponApi } from '../../api/couponApi';
 import type { CartItem } from '../../types/cart';
+import type { CouponValidateResponse } from '../../types/coupon-review';
 import { useCart } from '../../hooks/useCart';
 import BaseButton from '../../components/common/BaseButton';
 import { notification } from '../../utils/notification';
@@ -21,6 +23,11 @@ const CartPage: React.FC = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [form] = Form.useForm();
+
+    const [couponCode, setCouponCode] = useState('');
+    const [couponResult, setCouponResult] = useState<CouponValidateResponse | null>(null);
+    const [couponLoading, setCouponLoading] = useState(false);
+    const [couponError, setCouponError] = useState<string | null>(null);
 
     const handleUpdateQuantity = async (itemId: number, quantity: number) => {
         try {
@@ -46,6 +53,29 @@ const CartPage: React.FC = () => {
         return cart.items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
     };
 
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) return;
+        const total = calculateTotal();
+        if (total <= 0) return;
+        try {
+            setCouponLoading(true);
+            setCouponError(null);
+            const result = await couponApi.validate(couponCode.trim(), total);
+            setCouponResult(result);
+        } catch (err: unknown) {
+            setCouponResult(null);
+            setCouponError(err instanceof Error ? err.message : 'Mã giảm giá không hợp lệ');
+        } finally {
+            setCouponLoading(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setCouponResult(null);
+        setCouponCode('');
+        setCouponError(null);
+    };
+
     const handlePaymentClick = () => {
         const amount = calculateTotal();
         if (amount <= 0) {
@@ -56,7 +86,6 @@ const CartPage: React.FC = () => {
     };
 
     const handleConfirmPayment = async (values: { address: string; phone: string }) => {
-        // Lấy thông tin user từ localStorage
         const userStr = localStorage.getItem('user');
         if (!userStr) {
             notification.error('Bạn cần đăng nhập để thanh toán');
@@ -69,7 +98,8 @@ const CartPage: React.FC = () => {
             const response = await paymentApi.createOrderPayment(
                 user.username,
                 values.address,
-                values.phone
+                values.phone,
+                couponResult?.code
             );
 
             if (response.url) {
@@ -177,13 +207,71 @@ const CartPage: React.FC = () => {
                                     <Text style={{ color: 'var(--text-muted)' }}>Tạm tính:</Text>
                                     <Text style={{ color: '#fff' }}>{calculateTotal().toLocaleString('vi-VN')}đ</Text>
                                 </div>
+
+                                {/* Khu vực nhập mã giảm giá */}
+                                <div>
+                                    <Text style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 8 }}>
+                                        <TagOutlined /> Mã giảm giá
+                                    </Text>
+                                    {couponResult ? (
+                                        <div style={{
+                                            background: 'rgba(34, 197, 94, 0.1)',
+                                            border: '1px solid rgba(34, 197, 94, 0.4)',
+                                            borderRadius: 10,
+                                            padding: '10px 14px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
+                                            <Space>
+                                                <CheckCircleOutlined style={{ color: '#22c55e' }} />
+                                                <Text style={{ color: '#22c55e', fontWeight: 600 }}>{couponResult.code}</Text>
+                                                <Text style={{ color: '#22c55e', fontSize: 12 }}>
+                                                    -{couponResult.discountAmount.toLocaleString('vi-VN')}đ
+                                                </Text>
+                                            </Space>
+                                            <CloseCircleOutlined
+                                                style={{ color: '#22c55e', cursor: 'pointer' }}
+                                                onClick={handleRemoveCoupon}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <Space.Compact style={{ width: '100%' }}>
+                                            <Input
+                                                placeholder="Nhập mã giảm giá"
+                                                value={couponCode}
+                                                onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(null); }}
+                                                onPressEnter={handleApplyCoupon}
+                                                status={couponError ? 'error' : undefined}
+                                                style={{ textTransform: 'uppercase' }}
+                                            />
+                                            <BaseButton onClick={handleApplyCoupon} loading={couponLoading} type="primary">
+                                                {couponLoading ? <Spin size="small" /> : 'Mã'}
+                                            </BaseButton>
+                                        </Space.Compact>
+                                    )}
+                                    {couponError && (
+                                        <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 6, display: 'block' }}>
+                                            {couponError}
+                                        </Text>
+                                    )}
+                                </div>
+
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <Text style={{ color: 'var(--text-muted)' }}>Vận chuyển:</Text>
                                     <Tag color="green">Miễn phí toàn quốc</Tag>
                                 </div>
+                                {couponResult && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text style={{ color: '#22c55e' }}>Giảm giá:</Text>
+                                        <Text style={{ color: '#22c55e', fontWeight: 600 }}>-{couponResult.discountAmount.toLocaleString('vi-VN')}đ</Text>
+                                    </div>
+                                )}
                                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between' }}>
                                     <Text strong style={{ color: '#fff', fontSize: '18px' }}>Tổng cộng:</Text>
-                                    <Text strong style={{ color: 'var(--primary-color)', fontSize: '24px' }}>{calculateTotal().toLocaleString('vi-VN')}đ</Text>
+                                    <Text strong style={{ color: 'var(--primary-color)', fontSize: '24px' }}>
+                                        {(couponResult ? couponResult.finalAmount : calculateTotal()).toLocaleString('vi-VN')}đ
+                                    </Text>
                                 </div>
                                 <BaseButton
                                     type="primary"

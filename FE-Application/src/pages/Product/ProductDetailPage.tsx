@@ -1,22 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Layout, Row, Col, Typography, Tag, Rate, Space, Divider, Spin, Empty, Breadcrumb, Image } from 'antd';
+import { Layout, Row, Col, Typography, Tag, Rate, Space, Divider, Spin, Empty, Breadcrumb, Image, Avatar, Progress } from 'antd';
 import {
     ShoppingCartOutlined,
     ArrowLeftOutlined,
     CheckCircleFilled,
     RocketOutlined,
     SafetyCertificateOutlined,
-    SwapOutlined
+    SwapOutlined,
+    UserOutlined,
+    DeleteOutlined,
+    StarFilled
 } from '@ant-design/icons';
+import { StarRating } from '../../components/common/ProductCard';
 import { productApi } from '../../api/productApi';
 import { cartApi } from '../../api/cartApi';
+import { reviewApi } from '../../api/reviewApi';
 import { useCart } from '../../hooks/useCart';
 import type { Product } from '../../types/product';
+import type { ProductReview } from '../../types/coupon-review';
 import BaseButton from '../../components/common/BaseButton';
+import BaseInput from '../../components/common/BaseInput';
 import { notification } from '../../utils/notification';
 
-const { Title, Text, Paragraph } = Typography;
 
 /**
  * Trang chi tiết sản phẩm cao cấp.
@@ -29,6 +35,24 @@ const ProductDetailPage: React.FC = () => {
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [mainImage, setMainImage] = useState<string>('');
+    const [reviews, setReviews] = useState<ProductReview[]>([]);
+    const [reviewLoading, setReviewLoading] = useState(false);
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [userRating, setUserRating] = useState(5);
+    const [userComment, setUserComment] = useState('');
+    const currentUser = (() => { try { const s = localStorage.getItem('user'); return s ? JSON.parse(s) : null; } catch { return null; } })();
+
+    const fetchReviews = async (productId: number) => {
+        try {
+            setReviewLoading(true);
+            const data = await reviewApi.getByProduct(productId);
+            setReviews(data);
+        } catch {
+            // Không cần hiện lỗi khi review rỗng
+        } finally {
+            setReviewLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchProductDetail = async () => {
@@ -38,13 +62,13 @@ const ProductDetailPage: React.FC = () => {
                 const data = await productApi.getProductById(parseInt(id));
                 setProduct(data);
                 setMainImage(data.imageUrl);
+                await fetchReviews(parseInt(id));
             } catch (error) {
                 console.error("Lỗi khi tải chi tiết sản phẩm:", error);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchProductDetail();
     }, [id]);
 
@@ -89,9 +113,49 @@ const ProductDetailPage: React.FC = () => {
         ? product.specifications.split(';').map(s => s.trim()).filter(s => s !== '')
         : [];
 
-    const discountPercent = product.originalPrice && product.price
+    const discountPercent = product.discountPercent || (product.originalPrice && product.price
         ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-        : 0;
+        : 0);
+
+    const handleSubmitReview = async () => {
+        if (!currentUser) { notification.error('Vui lòng đăng nhập để gửi đánh giá'); return; }
+        if (!id) return;
+        try {
+            setSubmitLoading(true);
+            await reviewApi.create(parseInt(id), userRating, userComment);
+            notification.success('Gửi đánh giá thành công!');
+            setUserComment('');
+            setUserRating(5);
+            await fetchReviews(parseInt(id));
+        } catch (err: unknown) {
+            notification.error(err instanceof Error ? err.message : 'Gửi đánh giá thất bại');
+        } finally {
+            setSubmitLoading(false);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId: number) => {
+        try {
+            await reviewApi.delete(reviewId);
+            notification.success('Xóa đánh giá thành công');
+            if (id) await fetchReviews(parseInt(id));
+        } catch (err: unknown) {
+            notification.error(err instanceof Error ? err.message : 'Xóa thất bại');
+        }
+    };
+
+    // Tính phân bố số sao để hiển thị progress bar
+    const ratingDistribution = [5, 4, 3, 2, 1].map(star => ({
+        star,
+        count: reviews.filter(r => Math.round(r.rating) === star).length,
+        percent: reviews.length > 0
+            ? Math.round((reviews.filter(r => Math.round(r.rating) === star).length / reviews.length) * 100)
+            : 0
+    }));
+
+    const avgRating = reviews.length > 0
+        ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+        : (product?.rating || 5).toFixed(1);
 
     return (
         <Layout style={{ background: 'transparent', minHeight: '100vh', paddingTop: '100px' }}>
@@ -162,19 +226,19 @@ const ProductDetailPage: React.FC = () => {
                             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                                 {/* Nhãn hiệu & Huy hiệu */}
                                 <Space split={<Divider type="vertical" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />}>
-                                    <Text style={{ color: 'var(--primary-color)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>
+                                    <Typography.Text style={{ color: 'var(--primary-color)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>
                                         {product.brand || 'NO BRAND'}
-                                    </Text>
+                                    </Typography.Text>
                                     <Tag color="blue" bordered={false} style={{ borderRadius: '4px', fontWeight: 600 }}>CHÍNH HÃNG</Tag>
                                     {product.isBestSeller && <Tag color="gold" bordered={false} style={{ borderRadius: '4px', fontWeight: 600 }}>BÁN CHẠY</Tag>}
                                 </Space>
 
-                                <Title level={1} style={{ color: '#fff', fontSize: '2.5rem', marginBottom: '8px' }}>{product.name}</Title>
+                                <Typography.Title level={1} style={{ color: '#fff', fontSize: '2.5rem', marginBottom: '8px' }}>{product.name}</Typography.Title>
 
                                 {/* Rating */}
                                 <Space size="large" style={{ marginBottom: '10px' }}>
-                                    <Rate disabled defaultValue={product.rating || 5} />
-                                    <Text style={{ color: 'var(--text-muted)' }}>( {product.reviewCount || 0} đánh giá từ người dùng )</Text>
+                                    <StarRating value={parseFloat(avgRating)} size={20} />
+                                    <Typography.Text style={{ color: 'var(--text-muted)' }}>( {reviews.length} đánh giá từ người dùng )</Typography.Text>
                                 </Space>
 
                                 {/* Giá cả */}
@@ -185,13 +249,13 @@ const ProductDetailPage: React.FC = () => {
                                     borderLeft: '4px solid var(--primary-color)'
                                 }}>
                                     <Space align="baseline" size="middle">
-                                        <Title level={2} style={{ color: '#fff', margin: 0, fontSize: '2rem' }}>
+                                        <Typography.Title level={2} style={{ color: '#fff', margin: 0, fontSize: '2rem' }}>
                                             {product.price?.toLocaleString('vi-VN')} ₫
-                                        </Title>
+                                        </Typography.Title>
                                         {product.originalPrice && (
-                                            <Text delete style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>
+                                            <Typography.Text delete style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>
                                                 {product.originalPrice?.toLocaleString('vi-VN')} ₫
-                                            </Text>
+                                            </Typography.Text>
                                         )}
                                         {discountPercent > 0 && (
                                             <Tag color="red" bordered={false} style={{ fontSize: '1rem', padding: '4px 8px' }}>
@@ -205,16 +269,16 @@ const ProductDetailPage: React.FC = () => {
                                 <div style={{ margin: '20px 0' }}>
                                     <Row gutter={[16, 16]}>
                                         <Col span={12}>
-                                            <Space><RocketOutlined style={{ color: 'var(--primary-color)' }} /> <Text style={{ color: '#fff' }}>Giao hàng nhanh 2h</Text></Space>
+                                            <Space><RocketOutlined style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: '#fff' }}>Giao hàng nhanh 2h</Typography.Text></Space>
                                         </Col>
                                         <Col span={12}>
-                                            <Space><SafetyCertificateOutlined style={{ color: 'var(--primary-color)' }} /> <Text style={{ color: '#fff' }}>Bảo hành 24 tháng</Text></Space>
+                                            <Space><SafetyCertificateOutlined style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: '#fff' }}>Bảo hành 24 tháng</Typography.Text></Space>
                                         </Col>
                                         <Col span={12}>
-                                            <Space><SwapOutlined style={{ color: 'var(--primary-color)' }} /> <Text style={{ color: '#fff' }}>Lỗi 1 đổi 1 trong 30 ngày</Text></Space>
+                                            <Space><SwapOutlined style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: '#fff' }}>Lỗi 1 đổi 1 trong 30 ngày</Typography.Text></Space>
                                         </Col>
                                         <Col span={12}>
-                                            <Space><CheckCircleFilled style={{ color: 'var(--primary-color)' }} /> <Text style={{ color: '#fff' }}>Cam kết 100% chính hãng</Text></Space>
+                                            <Space><CheckCircleFilled style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: '#fff' }}>Cam kết 100% chính hãng</Typography.Text></Space>
                                         </Col>
                                     </Row>
                                 </div>
@@ -223,10 +287,10 @@ const ProductDetailPage: React.FC = () => {
 
                                 {/* Mô tả ngắn */}
                                 <div>
-                                    <Title level={5} style={{ color: '#fff' }}>Mô tả sản phẩm</Title>
-                                    <Paragraph style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.8' }}>
+                                    <Typography.Title level={5} style={{ color: '#fff' }}>Mô tả sản phẩm</Typography.Title>
+                                    <Typography.Paragraph style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.8' }}>
                                         {product.description}
-                                    </Paragraph>
+                                    </Typography.Paragraph>
                                 </div>
 
                                 {/* Nút hành động */}
@@ -256,7 +320,7 @@ const ProductDetailPage: React.FC = () => {
                     </Col>
                 </Row>
 
-                {/* THÔNG SỐ KỸ THUẬT & CHI TIẾT DƯỚI */}
+                {/* THÔNG SỐ KỸ THUẬT & REVIEW */}
                 <div style={{
                     background: 'var(--glass-bg)',
                     borderRadius: '24px',
@@ -265,8 +329,9 @@ const ProductDetailPage: React.FC = () => {
                     marginBottom: '80px'
                 }}>
                     <Row gutter={[48, 48]}>
+                        {/* THÔNG SỐ KỸ THUẬT */}
                         <Col xs={24} md={12}>
-                            <Title level={3} style={{ color: '#fff', marginBottom: '30px' }}>Thông số kỹ thuật</Title>
+                            <Typography.Title level={3} style={{ color: '#fff', marginBottom: '30px' }}>Thông số kỹ thuật</Typography.Title>
                             {specs.length > 0 ? (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                     {specs.map((spec, index) => {
@@ -279,25 +344,130 @@ const ProductDetailPage: React.FC = () => {
                                                 padding: '12px 0',
                                                 borderBottom: '1px solid rgba(255,255,255,0.03)'
                                             }}>
-                                                <Text style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label.trim()}</Text>
-                                                <Text style={{ color: '#fff', fontWeight: 600 }}>{value ? value.trim() : ''}</Text>
+                                                <Typography.Text style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label.trim()}</Typography.Text>
+                                                <Typography.Text style={{ color: '#fff', fontWeight: 600 }}>{value ? value.trim() : ''}</Typography.Text>
                                             </div>
                                         );
                                     })}
                                 </div>
                             ) : (
-                                <Text style={{ color: 'var(--text-muted)' }}>Đang cập nhật thông tin...</Text>
+                                <Typography.Text style={{ color: 'var(--text-muted)' }}>Đang cập nhật thông tin...</Typography.Text>
                             )}
                         </Col>
+
+                        {/* ĐÁNH GIÁ SẢN PHẨM */}
                         <Col xs={24} md={12}>
-                            <Title level={3} style={{ color: '#fff', marginBottom: '30px' }}>Đánh giá từ khách hàng</Title>
-                            <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px' }}>
-                                <Title level={2} style={{ color: '#fff', margin: 0 }}>{product.rating || 5}/5</Title>
-                                <Rate disabled defaultValue={product.rating || 5} />
-                                <div style={{ marginTop: '10px' }}>
-                                    <Text style={{ color: 'var(--text-muted)' }}>Mọi khách hàng đều hài lòng với sản phẩm này</Text>
-                                </div>
+                            <Typography.Title level={3} style={{ color: '#fff', marginBottom: '30px' }}>Đánh giá từ khách hàng</Typography.Title>
+
+                            {/* Tổng quan rating */}
+                            <div style={{
+                                background: 'rgba(255,255,255,0.03)',
+                                borderRadius: 16,
+                                padding: '24px',
+                                marginBottom: 24
+                            }}>
+                                <Row gutter={24} align="middle">
+                                    <Col xs={8} style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '3rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{avgRating}</div>
+                                        <StarRating value={parseFloat(avgRating)} size={14} />
+                                        <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>{reviews.length} đánh giá</div>
+                                    </Col>
+                                    <Col xs={16}>
+                                        {ratingDistribution.map(({ star, count, percent }) => (
+                                            <div key={star} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                                <Typography.Text style={{ color: 'var(--text-muted)', fontSize: 12, width: 10 }}>{star}</Typography.Text>
+                                                <StarFilled style={{ color: '#fadb14', fontSize: 12 }} />
+                                                <Progress percent={percent} showInfo={false} strokeColor="#fadb14" trailColor="rgba(255,255,255,0.05)" style={{ flex: 1, margin: 0 }} />
+                                                <Typography.Text style={{ color: 'var(--text-muted)', fontSize: 12, width: 20 }}>{count}</Typography.Text>
+                                            </div>
+                                        ))}
+                                    </Col>
+                                </Row>
                             </div>
+
+                            {/* Form gửi đánh giá */}
+                            {currentUser ? (
+                                <div style={{
+                                    background: 'rgba(99,102,241,0.05)',
+                                    border: '1px solid rgba(99,102,241,0.2)',
+                                    borderRadius: 16,
+                                    padding: 20,
+                                    marginBottom: 24
+                                }}>
+                                    <Typography.Text style={{ color: '#fff', display: 'block', marginBottom: 12, fontWeight: 600 }}>Viết đánh giá của bạn</Typography.Text>
+                                    <Rate value={userRating} onChange={setUserRating} style={{ marginBottom: 12 }} />
+                                    <BaseInput
+                                        placeholder="Nhập nhận xét của bạn..."
+                                        value={userComment}
+                                        onChange={(e) => setUserComment(e.target.value)}
+                                        style={{ marginBottom: 12 }}
+                                    />
+                                    <BaseButton type="primary" onClick={handleSubmitReview} loading={submitLoading} style={{ width: '100%' }}>
+                                        Gửi đánh giá
+                                    </BaseButton>
+                                </div>
+                            ) : (
+                                <div style={{ textAlign: 'center', padding: '16px', marginBottom: 16 }}>
+                                    <Typography.Text style={{ color: 'var(--text-muted)' }}>
+                                        <Link to="/login" style={{ color: 'var(--primary-color)' }}>Đăng nhập</Link> để viết đánh giá
+                                    </Typography.Text>
+                                </div>
+                            )}
+
+                            {/* Danh sách review */}
+                            {reviewLoading ? (
+                                <div style={{ textAlign: 'center', padding: 40 }}><Spin /></div>
+                            ) : reviews.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: 24 }}>
+                                    <Typography.Text style={{ color: 'var(--text-muted)' }}>Chưa có đánh giá nào. Hãy là người đầu tiên!</Typography.Text>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                    {reviews.map((review) => (
+                                        <div key={review.id} style={{
+                                            background: 'rgba(255,255,255,0.03)',
+                                            borderRadius: 12,
+                                            padding: '16px 20px',
+                                            border: '1px solid rgba(255,255,255,0.05)'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <Space>
+                                                    <Avatar src={review.user.avatarUrl} icon={<UserOutlined />} size={36} />
+                                                    <div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                            <Typography.Text style={{ color: '#fff', fontWeight: 600 }}>
+                                                                {review.user.fullName || review.user.username}
+                                                            </Typography.Text>
+                                                            {review.isVerifiedPurchase && (
+                                                                <Tag color="green" bordered={false} style={{ fontSize: 11, padding: '0 6px' }}>
+                                                                    <CheckCircleFilled /> Đã mua
+                                                                </Tag>
+                                                            )}
+                                                        </div>
+                                                        <StarRating value={review.rating} size={12} />
+                                                    </div>
+                                                </Space>
+                                                <Space>
+                                                    <Typography.Text style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                                                        {new Date(review.createdAt).toLocaleDateString('vi-VN')}
+                                                    </Typography.Text>
+                                                    {(currentUser?.id === review.user.id || currentUser?.role === 'ADMIN') && (
+                                                        <DeleteOutlined
+                                                            style={{ color: '#ef4444', cursor: 'pointer', fontSize: 14 }}
+                                                            onClick={() => handleDeleteReview(review.id)}
+                                                        />
+                                                    )}
+                                                </Space>
+                                            </div>
+                                            {review.comment && (
+                                                <Typography.Paragraph style={{ color: 'var(--text-muted)', margin: '10px 0 0 44px', fontSize: 14 }}>
+                                                    {review.comment}
+                                                </Typography.Paragraph>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </Col>
                     </Row>
                 </div>

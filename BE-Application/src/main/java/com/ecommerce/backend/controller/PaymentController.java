@@ -35,14 +35,15 @@ public class PaymentController {
         HttpServletRequest request,
         @RequestParam("username") String username,
         @RequestParam("shippingAddress") String shippingAddress,
-        @RequestParam("phoneNumber") String phoneNumber
+        @RequestParam("phoneNumber") String phoneNumber,
+        @RequestParam(value = "couponCode", required = false) String couponCode
     ) {
         
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
 
         // 1. Tạo đơn hàng trong DB (Trạng thái PENDING)
-        Order order = orderService.createOrderFromCart(user, shippingAddress, phoneNumber);
+        Order order = orderService.createOrderFromCart(user, shippingAddress, phoneNumber, couponCode);
 
         // 2. Chuẩn bị tham số VNPay
         String vnp_Version = "2.1.0";

@@ -37,6 +37,10 @@ public class Order {
     private String shippingAddress;
 
     private String phoneNumber;
+    
+    private String appliedCouponCode;
+    
+    private BigDecimal couponDiscount = BigDecimal.ZERO;
 
     @Column(name = "order_date", updatable = false)
     private LocalDateTime orderDate;

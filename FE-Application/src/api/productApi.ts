@@ -5,8 +5,11 @@ import type { Product, ProductRequest } from '../types/product';
  * Service quản lý các yêu cầu liên quan đến Sản phẩm.
  */
 export const productApi = {
-    // Lấy danh sách tất cả sản phẩm
+    // Lấy danh sách sản phẩm đang kinh doanh (Public)
     getAllProducts: () => apiClient.fetch<Product[]>('/products'),
+
+    // Lấy toàn bộ danh sách (Admin)
+    getAllAdmin: () => apiClient.fetch<Product[]>('/products/admin'),
 
     // Tìm kiếm sản phẩm theo ID
     getProductById: (id: number) => apiClient.fetch<Product>(`/products/${id}`),

@@ -22,8 +22,13 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return ResponseEntity.ok(productService.getAllProductsPublic());
+    }
+
+    @GetMapping("/admin")
+    public ResponseEntity<List<Product>> getAllProductsAdmin() {
+        return ResponseEntity.ok(productService.getAllProductsAdmin());
     }
 
     // --- CÁC ENDPOINT CỤ THỂ PHẢI ĐƯỢC ĐỊNH NGHĨA TRƯỚC {ID} ---

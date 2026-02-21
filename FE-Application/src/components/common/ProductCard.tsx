@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Tag, Rate, Tooltip, Space } from 'antd';
+import { Card, Typography, Tag, Tooltip, Space } from 'antd';
 import { ShoppingCartOutlined, FireOutlined, EyeOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import type { Product } from '../../types/product';
@@ -10,9 +10,41 @@ import { useCart } from '../../hooks/useCart';
 
 const { Paragraph, Title, Text } = Typography;
 
+import { StarFilled } from '@ant-design/icons';
+
 interface ProductCardProps {
     product: Product;
 }
+
+/**
+ * Hiển thị số sao chính xác theo tỉ lệ thực (4.3 = 4 sao + 30% sao thứ 5).
+ */
+export const StarRating: React.FC<{ value: number; size?: number }> = ({ value, size = 16 }) => (
+    <div style={{ display: 'inline-flex', gap: 3, alignItems: 'center', lineHeight: 0 }}>
+        {[1, 2, 3, 4, 5].map(star => {
+            const fillPercent = Math.min(100, Math.max(0, (value - (star - 1)) * 100));
+            return (
+                <div key={star} style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+                    <StarFilled style={{ color: 'rgba(255,255,255,0.1)', fontSize: size, position: 'absolute', top: 0, left: 0, display: 'block' }} />
+                    {fillPercent > 0 && (
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: `${fillPercent}%`,
+                            overflow: 'hidden',
+                            height: '100%',
+                            display: 'block',
+                            transition: 'width 0.3s ease'
+                        }}>
+                            <StarFilled style={{ color: '#fadb14', fontSize: size, width: size, display: 'block' }} />
+                        </div>
+                    )}
+                </div>
+            );
+        })}
+    </div>
+);
 
 /**
  * Thẻ hiển thị sản phẩm cao cấp (Premium Card)
@@ -21,10 +53,10 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const { refreshCart } = useCart();
 
-    // Tính toán phần trăm giảm giá nếu có
-    const discountPercent = product.originalPrice && product.price
+    // Sử dụng % giảm giá từ DB hoặc tự tính toán nếu chưa có
+    const discountPercent = product.discountPercent || (product.originalPrice && product.price
         ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-        : 0;
+        : 0);
 
     const handleAddToCart = async () => {
         const token = localStorage.getItem('token');
@@ -113,8 +145,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     <Text style={{ color: 'var(--primary-color)', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
                         {product.brand || 'TECH'}
                     </Text>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Rate disabled defaultValue={product.rating || 5} style={{ fontSize: '10px' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <StarRating value={product.rating || 5} size={10} />
                         <Text style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>({product.reviewCount || 0})</Text>
                     </div>
                 </div>

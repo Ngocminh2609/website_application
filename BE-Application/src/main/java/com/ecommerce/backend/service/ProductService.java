@@ -33,7 +33,15 @@ public class ProductService {
     }
 
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        return productRepository.findByIsActiveTrue();
+    }
+
+    public List<Product> getAllProductsPublic() {
+        return productRepository.findByIsActiveTrue();
+    }
+
+    public List<Product> getAllProductsAdmin() {
+        return productRepository.findAllByOrderByCreatedAtDesc();
     }
 
     public Optional<Product> getProductById(Long id) {
@@ -41,11 +49,11 @@ public class ProductService {
     }
 
     public List<Product> getProductsByCategory(Long categoryId) {
-        return productRepository.findByCategoryId(categoryId);
+        return productRepository.findByCategoryIdAndIsActiveTrue(categoryId);
     }
 
     public List<Product> searchProducts(String query) {
-        return productRepository.findByNameContainingIgnoreCase(query);
+        return productRepository.findByNameContainingIgnoreCaseAndIsActiveTrue(query);
     }
 
     public Product saveProduct(ProductRequest request) {
@@ -80,25 +88,28 @@ public class ProductService {
     private void mapRequestToEntity(ProductRequest request, Product product, Category category) {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
-        product.setPrice(request.getPrice());
+        product.setOriginalPrice(request.getOriginalPrice());
+        product.setDiscountPercent(request.getDiscountPercent());
         product.setStockQuantity(request.getStockQuantity());
         product.setImageUrl(request.getImageUrl());
         product.setMoreImages(request.getMoreImages());
         product.setBrand(request.getBrand());
         product.setSpecifications(request.getSpecifications());
+        product.setBestSeller(request.isBestSeller());
+        product.setIsActive(request.isActive());
         product.setCategory(category);
     }
 
     public List<Product> getProductsByBrand(String brand) {
-        return productRepository.findByBrand(brand);
+        return productRepository.findByBrandAndIsActiveTrue(brand);
     }
 
     public List<Product> getBestSellers() {
-        return productRepository.findByIsBestSellerTrue();
+        return productRepository.findByIsBestSellerTrueAndIsActiveTrue();
     }
 
     public List<Product> getFlashSales() {
-        return productRepository.findByDiscountPriceNotNull();
+        return productRepository.findByDiscountPriceNotNullAndIsActiveTrue();
     }
 
     public void deleteProduct(Long id) {

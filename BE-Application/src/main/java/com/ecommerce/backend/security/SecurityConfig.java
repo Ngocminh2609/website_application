@@ -37,16 +37,25 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                        
+
                         // Chỉ ADMIN mới có quyền thay đổi dữ liệu (POST, PUT, DELETE)
                         .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
-                        
+
                         .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
-                        
+
+                        // Review: ai cũng có thể đọc, phải đăng nhập mới được viết/xóa
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/reviews/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
+
+                        // Coupon: validate cần đăng nhập, các endpoint admin cần ADMIN role
+                        .requestMatchers(HttpMethod.GET, "/api/coupons/validate").authenticated()
+                        .requestMatchers("/api/coupons/admin/**").hasRole("ADMIN")
+
                         .requestMatchers("/api/notifications/broadcast").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/chat/**").authenticated()

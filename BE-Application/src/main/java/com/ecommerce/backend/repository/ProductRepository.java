@@ -8,22 +8,14 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    // Tìm kiếm các sản phẩm thuộc một danh mục cụ thể
-    // Spring Data JPA sẽ tự động parse tên hàm thành câu truy vấn SQL tương ứng
-    List<Product> findByCategoryId(Long categoryId);
+    List<Product> findByIsActiveTrue();
+    List<Product> findByCategoryIdAndIsActiveTrue(Long categoryId);
+    List<Product> findByNameContainingIgnoreCaseAndIsActiveTrue(String name);
+    List<Product> findByBrandAndIsActiveTrue(String brand);
+    List<Product> findByIsBestSellerTrueAndIsActiveTrue();
+    List<Product> findByDiscountPriceNotNullAndIsActiveTrue();
+    List<Product> findByBrandAndCategoryIdAndIsActiveTrue(String brand, Long categoryId);
 
-    // Tìm kiếm sản phẩm theo tên (hỗ trợ tính năng search cơ bản trên web)
-    List<Product> findByNameContainingIgnoreCase(String name);
-
-    // Lọc sản phẩm theo Hãng
-    List<Product> findByBrand(String brand);
-
-    // Lấy sản phẩm bán chạy
-    List<Product> findByIsBestSellerTrue();
-
-    // Lấy sản phẩm đang Flash Sale (có giá giảm)
-    List<Product> findByDiscountPriceNotNull();
-
-    // Lọc theo Brand và Category đồng thời
-    List<Product> findByBrandAndCategoryId(String brand, Long categoryId);
+    // --- ADMIN (QUẢN TRỊ) ---
+    List<Product> findAllByOrderByCreatedAtDesc();
 }

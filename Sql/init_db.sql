@@ -32,9 +32,11 @@ CREATE TABLE IF NOT EXISTS products (
     is_best_seller TINYINT(1) DEFAULT 0,
     original_price DECIMAL(19, 2) DEFAULT NULL,
     discount_price DECIMAL(19, 2) DEFAULT NULL,
+    discount_percent INT DEFAULT 0,
     rating DOUBLE DEFAULT 5.0,
     review_count INT DEFAULT 0,
     specifications TEXT COMMENT 'Thông số kỹ thuật của sản phẩm',
+    is_active TINYINT(1) DEFAULT 1 COMMENT '1: đang kinh doanh, 0: tạm ẩn',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -89,6 +91,8 @@ CREATE TABLE IF NOT EXISTS `orders` (
     `payment_method` VARCHAR(50) DEFAULT 'VNPAY',
     `shipping_address` TEXT,
     `phone_number` VARCHAR(20),
+    `applied_coupon_code` VARCHAR(50),
+    `coupon_discount` DECIMAL(19, 2) DEFAULT 0.00,
     `order_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -157,6 +161,42 @@ CREATE TABLE IF NOT EXISTS `chat_messages` (
     INDEX (`created_at`)
 ) ENGINE = InnoDB;
 
+-- 11. Bảng Mã giảm giá (Coupons)
+CREATE TABLE IF NOT EXISTS `coupons` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `code` VARCHAR(50) NOT NULL UNIQUE COMMENT 'Mã code người dùng nhập vào (ví dụ: SALE20)',
+    `discount_type` VARCHAR(10) NOT NULL DEFAULT 'PERCENT' COMMENT 'PERCENT: giảm theo %, FIXED: giảm số tiền cố định',
+    `discount_value` DECIMAL(19, 2) NOT NULL COMMENT 'Giá trị giảm (20 = 20% hoặc 50000 = 50.000đ)',
+    `min_order_amount` DECIMAL(19, 2) DEFAULT 0 COMMENT 'Giá trị đơn hàng tối thiểu để áp dụng mã',
+    `max_discount_amount` DECIMAL(19, 2) DEFAULT NULL COMMENT 'Mức giảm tối đa (dùng để giới hạn khi giảm theo %)',
+    `usage_limit` INT DEFAULT NULL COMMENT 'Tổng số lần được dùng, NULL = không giới hạn',
+    `used_count` INT NOT NULL DEFAULT 0 COMMENT 'Số lần đã dùng thực tế',
+    `is_active` TINYINT(1) DEFAULT 1 COMMENT '1: đang hoạt động, 0: tạm khóa',
+    `expires_at` DATETIME DEFAULT NULL COMMENT 'Thời điểm hết hạn, NULL = không hết hạn',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    INDEX (`code`),
+    INDEX (`is_active`)
+) ENGINE = InnoDB;
+
+-- 12. Bảng Đánh giá sản phẩm (Product Reviews)
+CREATE TABLE IF NOT EXISTS `product_reviews` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `product_id` BIGINT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `rating` TINYINT NOT NULL COMMENT 'Số sao từ 1 đến 5',
+    `comment` TEXT COMMENT 'Nội dung đánh giá của người dùng',
+    `is_verified_purchase` TINYINT(1) DEFAULT 0 COMMENT '1: đã mua sản phẩm này, 0: chưa xác nhận',
+    `is_approved` TINYINT(1) DEFAULT 0 COMMENT '1: được hiển thị, 0: đang chờ admin duyệt',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_user_product_review` (`user_id`, `product_id`) COMMENT 'Mỗi user chỉ được review 1 lần mỗi sản phẩm',
+    INDEX (`product_id`),
+    INDEX (`is_approved`)
+) ENGINE = InnoDB;
+
 -- III. CHÈN DỮ LIỆU MẪU (DML - INSERT)
 
 -- 1. Dữ liệu người dùng (Mật khẩu: password123)
@@ -174,17 +214,30 @@ INSERT INTO categories (id, name, image_url, description) VALUES
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- 3. Sản phẩm mẫu
-INSERT INTO products (name, description, price, stock_quantity, image_url, more_images, category_id, brand, is_best_seller, original_price, discount_price, rating, review_count, specifications)
+INSERT INTO products (name, description, price, stock_quantity, image_url, more_images, category_id, brand, is_best_seller, original_price, discount_price, rating, review_count, specifications, is_active)
 VALUES 
-('iPhone 15 Pro Max', 'Chip A17 Pro mạnh mẽ, khung viền Titan siêu bền.', 32000000.00, 50, 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=1200&hei=630&fmt=jpeg&qlt=95&.v=1692845692711', 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium_AV1?wid=1200&hei=630&fmt=jpeg&qlt=95&.v=1692845692711,https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium_AV2?wid=1200&hei=630&fmt=jpeg&qlt=95&.v=1692845692711', 2, 'Apple', 1, 35000000.00, 31990000.00, 4.9, 1250, 'Màn hình: 6.7 inch Super Retina XDR; Chip: A17 Pro; Camera: 48MP Main | 12MP Ultra Wide | 12MP Telephoto; Pin: Lên đến 29 giờ xem video'),
-('MacBook Air M2 13"', 'Thiết kế mỏng nhẹ không tưởng, pin lên đến 18 giờ.', 24500000.00, 30, 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/macbook-air-midnight-select-202206?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1653084303665', 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/macbook-air-midnight-select-202206_AV1?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1653084303665', 1, 'Apple', 1, 28000000.00, 23990000.00, 4.8, 850, 'Màn hình: 13.6 inch Liquid Retina; CPU: Apple M2 8-core; RAM: 8GB/16GB; SSD: 256GB/512GB'),
-('Apple Watch Series 9', 'Cảm biến nhịp tim, đo nồng độ oxy trong máu.', 9500000.00, 100, 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/MTXG3ref_VW_34FR+watch-45-alum-midnight-nc-s9_VW_34FR_WF_CO?wid=750&hei=750&trim=1%2C0&fmt=p-jpg&qlt=95&.v=1694507905569', '', 3, 'Apple', 0, 10500000.00, 9200000.00, 4.7, 420, 'Kích thước: 41mm/45mm; Màn hình: Always-On Retina; Chip: S9 SiP; Pin: 18 giờ'),
-('Samsung Galaxy S24 Ultra', 'Bút S Pen huyền thoại, chip Snapdragon 8 Gen 3 for Galaxy.', 28900000.00, 45, 'https://images.samsung.com/is/image/samsung/p6pim/vn/2401/gallery/vn-galaxy-s24-s928-sm-s928bztqvnn-thumb-539311311', '', 2, 'Samsung', 1, 33500000.00, 28500000.00, 4.9, 980, 'Màn hình: 6.8 inch Dynamic AMOLED 2X; Chip: Snapdragon 8 Gen 3; Camera: 200MP + 12MP + 50MP + 10MP; Bút S Pen: Tích hợp'),
-('Galaxy Watch6 Classic', 'Vòng xoay bezel sành điệu, theo dõi giấc ngủ nâng cao.', 7200000.00, 60, 'https://images.samsung.com/is/image/samsung/p6pim/vn/2307/gallery/vn-galaxy-watch6-classic-r960-sm-r965fzsaxvv-thumb-537446146', '', 3, 'Samsung', 0, 8500000.00, 6990000.00, 4.6, 310, 'Màn hình: Sapphire Crystal; Chip: Exynos W930; Pin: 40 giờ'),
-('Dell XPS 13 Plus', 'Màn hình 3.5K OLED rực rỡ, bàn phím vô cực.', 42000000.00, 15, 'https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/xps-notebooks/xps-13-9315/media-gallery/un-9315-nt-sky-notebook-xps13-9315-sky-gallery-3.psd?wid=800&hei=600&qlt=95', '', 1, 'Dell', 0, 46000000.00, 41000000.00, 4.8, 150, 'Màn hình: 13.4 inch 3.5K OLED; CPU: Intel Core i7-1360P; RAM: 16GB; SSD: 512GB'),
-('ROG Zephyrus G14', 'Màn hình 120Hz, sức mạnh gaming trong thân xác văn phòng.', 38000000.00, 20, 'https://dlcdnwebimgs.asus.com/gain/3DCCBA1D-7C61-464A-A8E2-9E46714E2D30/w800', '', 1, 'Asus', 1, 41500000.00, 37500000.00, 4.9, 540, 'Màn hình: 14 inch QHD+ 120Hz; CPU: AMD Ryzen 9; GPU: RTX 4060; RAM: 16GB');
+('iPhone 15 Pro Max', 'Chip A17 Pro mạnh mẽ, khung viền Titan siêu bền.', 31990000.00, 50, 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=1200&hei=630&fmt=jpeg&qlt=95&.v=1692845692711', 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium_AV1?wid=1200&hei=630&fmt=jpeg&qlt=95&.v=1692845692711,https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium_AV2?wid=1200&hei=630&fmt=jpeg&qlt=95&.v=1692845692711', 2, 'Apple', 1, 35000000.00, 31990000.00, 4.9, 1250, 'Màn hình: 6.7 inch Super Retina XDR; Chip: A17 Pro; Camera: 48MP Main | 12MP Ultra Wide | 12MP Telephoto; Pin: Lên đến 29 giờ xem video', 1),
+('MacBook Air M2 13"', 'Thiết kế mỏng nhẹ không tưởng, pin lên đến 18 giờ.', 23990000.00, 30, 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/macbook-air-midnight-select-202206?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1653084303665', 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/macbook-air-midnight-select-202206_AV1?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1653084303665', 1, 'Apple', 1, 28000000.00, 23990000.00, 4.8, 850, 'Màn hình: 13.6 inch Liquid Retina; CPU: Apple M2 8-core; RAM: 8GB/16GB; SSD: 256GB/512GB', 1),
+('Apple Watch Series 9', 'Cảm biến nhịp tim, đo nồng độ oxy trong máu.', 9200000.00, 100, 'https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/MTXG3ref_VW_34FR+watch-45-alum-midnight-nc-s9_VW_34FR_WF_CO?wid=750&hei=750&trim=1%2C0&fmt=p-jpg&qlt=95&.v=1694507905569', '', 3, 'Apple', 0, 10500000.00, 9200000.00, 4.7, 420, 'Kích thước: 41mm/45mm; Màn hình: Always-On Retina; Chip: S9 SiP; Pin: 18 giờ', 1),
+('Samsung Galaxy S24 Ultra', 'Bút S Pen huyền thoại, chip Snapdragon 8 Gen 3 for Galaxy.', 28500000.00, 45, 'https://images.samsung.com/is/image/samsung/p6pim/vn/2401/gallery/vn-galaxy-s24-s928-sm-s928bztqvnn-thumb-539311311', '', 2, 'Samsung', 1, 33500000.00, 28500000.00, 4.9, 980, 'Màn hình: 6.8 inch Dynamic AMOLED 2X; Chip: Snapdragon 8 Gen 3; Camera: 200MP + 12MP + 50MP + 10MP; Bút S Pen: Tích hợp', 1),
+('Galaxy Watch6 Classic', 'Vòng xoay bezel sành điệu, theo dõi giấc ngủ nâng cao.', 6990000.00, 60, 'https://images.samsung.com/is/image/samsung/p6pim/vn/2307/gallery/vn-galaxy-watch6-classic-r960-sm-r965fzsaxvv-thumb-537446146', '', 3, 'Samsung', 0, 8500000.00, 6990000.00, 4.6, 310, 'Màn hình: Sapphire Crystal; Chip: Exynos W930; Pin: 40 giờ', 1),
+('Dell XPS 13 Plus', 'Màn hình 3.5K OLED rực rỡ, bàn phím vô cực.', 41000000.00, 15, 'https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/xps-notebooks/xps-13-9315/media-gallery/un-9315-nt-sky-notebook-xps13-9315-sky-gallery-3.psd?wid=800&hei=600&qlt=95', '', 1, 'Dell', 0, 46000000.00, 41000000.00, 4.8, 150, 'Màn hình: 13.4 inch 3.5K OLED; CPU: Intel Core i7-1360P; RAM: 16GB; SSD: 512GB', 1),
+('ROG Zephyrus G14', 'Màn hình 120Hz, sức mạnh gaming trong thân xác văn phòng.', 37500000.00, 20, 'https://dlcdnwebimgs.asus.com/gain/3DCCBA1D-7C61-464A-A8E2-9E46714E2D30/w800', '', 1, 'Asus', 1, 41500000.00, 37500000.00, 4.9, 540, 'Màn hình: 14 inch QHD+ 120Hz; CPU: AMD Ryzen 9; GPU: RTX 4060; RAM: 16GB', 1);
 
 -- 4. Thông báo mẫu (Chào mừng)
 INSERT INTO `notifications` (`recipient_id`, `message`, `type`) VALUES
 ('admin', 'Chào mừng Admin quay trở lại hệ thống!', 'SYSTEM'),
 ('user-2', 'Chào mừng bạn đến với Tech Nova! Hãy bắt đầu mua sắm ngay.', 'SYSTEM');
+
+-- 5. Mã giảm giá mẫu
+INSERT INTO `coupons` (`code`, `discount_type`, `discount_value`, `min_order_amount`, `max_discount_amount`, `usage_limit`, `is_active`, `expires_at`) VALUES
+('TECHNOVA10', 'PERCENT', 10.00, 1000000.00, 500000.00, 100, 1, DATE_ADD(NOW(), INTERVAL 30 DAY)),
+('SALE200K', 'FIXED', 200000.00, 2000000.00, NULL, 50, 1, DATE_ADD(NOW(), INTERVAL 15 DAY)),
+('NEWUSER20', 'PERCENT', 20.00, 500000.00, 300000.00, 200, 1, DATE_ADD(NOW(), INTERVAL 90 DAY)),
+('FLASH50', 'PERCENT', 50.00, 5000000.00, 1000000.00, 20, 1, DATE_ADD(NOW(), INTERVAL 7 DAY));
+
+-- 6. Đánh giá sản phẩm mẫu
+INSERT INTO `product_reviews` (`product_id`, `user_id`, `rating`, `comment`, `is_verified_purchase`, `is_approved`) VALUES
+(1, 2, 5, 'Sản phẩm tuyệt vời, camera chụp rất đẹp. Đáng đồng tiền!', 1, 1),
+(2, 2, 5, 'MacBook Air M2 quá mỏng nhẹ, pin trâu cả ngày không lo hếtpin thật sự ấn tượng.', 1, 1),
+(4, 2, 4, 'Samsung S24 Ultra màn hình đẹp, bút S Pen tiện nhưng giá hơi cao.', 1, 1);

@@ -15,9 +15,11 @@ export interface Product {
     isBestSeller?: boolean;
     originalPrice?: number;
     discountPrice?: number;
+    discountPercent?: number;
     rating?: number;
     reviewCount?: number;
     specifications?: string;
+    isActive?: boolean;
     category?: Category;
     createdAt?: string;
     updatedAt?: string;
@@ -29,8 +31,14 @@ export interface Product {
 export interface ProductRequest {
     name: string;
     description: string;
-    price: number;
+    originalPrice: number;
+    discountPercent: number;
     stockQuantity: number;
     imageUrl: string;
     categoryId: number;
+    brand?: string;
+    isBestSeller?: boolean;
+    specifications?: string;
+    moreImages?: string;
+    isActive?: boolean;
 }
