@@ -379,7 +379,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                                 </Badge>
                             </div>
                         </Dropdown>
-                        <div onClick={() => navigate('/cart')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                        <div id="cart-icon" onClick={() => navigate('/cart')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                             <Badge count={cartCount} size="small" offset={[5, 0]} color="#6366f1">
                                 <ShoppingCartOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
                             </Badge>

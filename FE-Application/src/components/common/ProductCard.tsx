@@ -62,6 +62,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
         : 0);
 
+    const imgRef = React.useRef<HTMLImageElement>(null);
+
     const handleAddToCart = async () => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -70,8 +72,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         }
 
         try {
+            // Thực hiện hiệu ứng bay ngay lập tức để tạo cảm giác phản hồi nhanh
+            if (imgRef.current) {
+                const { flyToCart } = await import('../../utils/cartAnimation');
+                flyToCart(imgRef.current);
+            }
+
             await cartApi.addToCart(product.id, 1);
             await refreshCart(true);
+            // Có thể bỏ qua notification nếu hiệu ứng bay đã đủ rõ ràng, 
+            // hoặc giữ lại để xác nhận thành công
             notification.product.addCartSuccess();
         } catch {
             notification.error('Không thể thêm sản phẩm vào giỏ hàng');
@@ -139,6 +149,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
                     <Link to={`/product/${product.id}`}>
                         <img
+                            ref={imgRef}
                             alt={product.name}
                             src={product.imageUrl}
                             onError={handleImgError}

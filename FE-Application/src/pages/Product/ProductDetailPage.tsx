@@ -72,6 +72,8 @@ const ProductDetailPage: React.FC = () => {
         fetchProductDetail();
     }, [id]);
 
+    const imageContainerRef = React.useRef<HTMLDivElement>(null);
+
     const handleAddToCart = async () => {
         if (!product) return;
         const token = localStorage.getItem('token');
@@ -81,6 +83,15 @@ const ProductDetailPage: React.FC = () => {
         }
 
         try {
+            // Thực hiện hiệu ứng bay
+            if (imageContainerRef.current) {
+                const imgElement = imageContainerRef.current.querySelector('img');
+                if (imgElement) {
+                    const { flyToCart } = await import('../../utils/cartAnimation');
+                    flyToCart(imgElement);
+                }
+            }
+
             await cartApi.addToCart(product.id, 1);
             await refreshCart(true);
             notification.product.addCartSuccess();
@@ -175,14 +186,16 @@ const ProductDetailPage: React.FC = () => {
                     <Col xs={24} lg={12}>
                         <div style={{ position: 'sticky', top: '120px' }}>
                             {/* Ảnh chính lớn */}
-                            <div style={{
-                                background: 'var(--glass-bg)',
-                                padding: '20px',
-                                borderRadius: '24px',
-                                border: '1px solid var(--glass-border)',
-                                marginBottom: '20px',
-                                overflow: 'hidden'
-                            }}>
+                            <div
+                                ref={imageContainerRef}
+                                style={{
+                                    background: 'var(--glass-bg)',
+                                    padding: '20px',
+                                    borderRadius: '24px',
+                                    border: '1px solid var(--glass-border)',
+                                    marginBottom: '20px',
+                                    overflow: 'hidden'
+                                }}>
                                 <Image
                                     src={mainImage}
                                     alt={product.name}
