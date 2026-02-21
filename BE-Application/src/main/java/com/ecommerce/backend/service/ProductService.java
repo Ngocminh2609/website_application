@@ -154,4 +154,8 @@ public class ProductService {
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
     }
+
+    public List<Product> getProductsByIds(List<Long> ids) {
+        return productRepository.findAllById(ids);
+    }
 }

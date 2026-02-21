@@ -60,6 +60,12 @@ public class ProductController {
         return productService.getProductsByCategory(categoryId);
     }
 
+    @GetMapping("/compare")
+    public ResponseEntity<List<Product>> getProductsByIds(@RequestParam List<Long> ids) {
+        // Lấy danh sách sản phẩm theo danh sách ID truyền vào để phục vụ tính năng so sánh sản phẩm.
+        return ResponseEntity.ok(productService.getProductsByIds(ids));
+    }
+
     // --- CÁC ENDPOINT DÙNG BIẾN CHUNG {ID} ĐỂ CUỐI CÙNG ---
 
     @GetMapping("/{id}")

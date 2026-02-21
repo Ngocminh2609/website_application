@@ -24,6 +24,7 @@ import BaseInput from '../../components/common/BaseInput';
 import { notification } from '../../utils/notification';
 import PersonalizedRecommendations from '../../components/common/PersonalizedRecommendations';
 import RealTimeViewerCount from '../../components/product/RealTimeViewerCount';
+import { useCompare } from '../../hooks/useCompare';
 
 
 
@@ -34,6 +35,7 @@ import RealTimeViewerCount from '../../components/product/RealTimeViewerCount';
 const ProductDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { refreshCart } = useCart();
+    const { addToCompare, removeFromCompare, isComparing } = useCompare();
 
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -335,9 +337,17 @@ const ProductDetailPage: React.FC = () => {
                                         </Col>
                                         <Col span={8}>
                                             <BaseButton
-                                                style={{ width: '100%', height: '54px', borderRadius: '12px', borderColor: 'var(--primary-color)', color: 'var(--primary-color)' }}
+                                                onClick={() => product && (isComparing(product.id) ? removeFromCompare(product.id) : addToCompare(product))}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '54px',
+                                                    borderRadius: '12px',
+                                                    borderColor: isComparing(product.id) ? '#ff4d4f' : 'var(--primary-color)',
+                                                    color: isComparing(product.id) ? '#ff4d4f' : 'var(--primary-color)',
+                                                    background: isComparing(product.id) ? 'rgba(255, 77, 79, 0.1)' : 'transparent'
+                                                }}
                                             >
-                                                LƯU LẠI
+                                                {isComparing(product.id) ? 'XÓA SO SÁNH' : 'SO SÁNH'}
                                             </BaseButton>
                                         </Col>
                                     </Row>

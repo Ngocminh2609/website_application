@@ -25,6 +25,26 @@ export const notification = {
         });
     },
 
+    // Thông báo thông tin
+    info: (msg: string) => {
+        antdNotification.info({
+            message: 'Thông tin',
+            description: msg,
+            placement: 'topRight',
+            duration: 3
+        });
+    },
+
+    // Thông báo cảnh báo
+    warning: (msg: string) => {
+        antdNotification.warning({
+            message: 'Cảnh báo',
+            description: msg,
+            placement: 'topRight',
+            duration: 3
+        });
+    },
+
     // Các hàm helper cho từng nghiệp vụ cụ thể (DRY)
     auth: {
         loginSuccess: () => notification.success('Chào mừng bạn quay trở lại với Tech Nova!'),

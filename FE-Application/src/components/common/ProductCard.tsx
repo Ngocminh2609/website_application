@@ -8,6 +8,8 @@ import { notification } from '../../utils/notification';
 import { cartApi } from '../../api/cartApi';
 import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishlist';
+import { useCompare } from '../../hooks/useCompare';
+import { SwapOutlined } from '@ant-design/icons';
 
 const { Paragraph, Title, Text } = Typography;
 
@@ -54,8 +56,10 @@ export const StarRating: React.FC<{ value: number; size?: number }> = ({ value, 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const { refreshCart } = useCart();
     const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+    const { addToCompare, removeFromCompare, isComparing } = useCompare();
 
     const isFav = isInWishlist(product.id);
+    const isComp = isComparing(product.id);
 
     // Sử dụng % giảm giá từ DB hoặc tự tính toán nếu chưa có
     const discountPercent = product.discountPercent || (product.originalPrice && product.price
@@ -136,6 +140,32 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                                 color: isFav ? '#f43f5e' : 'var(--text-main)'
                             }}
                         />
+                    </div>
+
+                    {/* Nút So Sánh */}
+                    <div style={{ position: 'absolute', top: '56px', right: '12px', zIndex: 3 }}>
+                        <Tooltip title={isComp ? "Xóa khỏi so sánh" : "So sánh sản phẩm"}>
+                            <Button
+                                shape="circle"
+                                icon={<SwapOutlined style={{ transform: 'rotate(90deg)' }} />}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (isComp) {
+                                        removeFromCompare(product.id);
+                                    } else {
+                                        addToCompare(product);
+                                    }
+                                }}
+                                style={{
+                                    background: isComp ? 'var(--primary-color)' : 'var(--glass-bg)',
+                                    border: 'none',
+                                    backdropFilter: 'blur(4px)',
+                                    color: isComp ? '#fff' : 'var(--text-main)',
+                                    boxShadow: isComp ? '0 0 10px var(--primary-color)' : 'none'
+                                }}
+                            />
+                        </Tooltip>
                     </div>
 
                     {/* Badge Best Seller */}

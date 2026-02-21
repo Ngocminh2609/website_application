@@ -42,4 +42,7 @@ export const productApi = {
     deleteProduct: (id: number) => apiClient.fetch<void>(`/products/${id}`, {
         method: 'DELETE',
     }),
+
+    // Lấy danh sách sản phẩm để so sánh
+    getCompareProducts: (ids: number[]) => apiClient.fetch<Product[]>(`/products/compare?ids=${ids.join(',')}`),
 };
