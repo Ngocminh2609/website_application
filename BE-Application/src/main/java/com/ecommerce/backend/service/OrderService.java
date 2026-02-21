@@ -28,7 +28,7 @@ public class OrderService {
      * Tạo đơn hàng từ giỏ hàng hiện tại của người dùng.
      */
     @Transactional
-    public Order createOrderFromCart(User user, String shippingAddress, String phoneNumber, String couponCode) {
+    public Order createOrderFromCart(User user, String shippingAddress, String phoneNumber, String couponCode, String paymentMethod) {
         Cart cart = cartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy giỏ hàng!"));
 
@@ -66,7 +66,7 @@ public class OrderService {
                 .status("PENDING")
                 .shippingAddress(shippingAddress)
                 .phoneNumber(phoneNumber)
-                .paymentMethod("VNPAY")
+                .paymentMethod(paymentMethod != null ? paymentMethod : "VNPAY")
                 .appliedCouponCode(validatedCode)
                 .couponDiscount(discountAmount)
                 .build();
@@ -83,10 +83,23 @@ public class OrderService {
 
         order.setItems(orderItems);
 
-        // Xóa giỏ hàng sau khi tạo đơn hàng (hoặc có thể để dành xóa sau khi thanh toán thành công)
-        // Ở đây tôi chọn xóa sau khi thanh toán thành công để an toàn.
+        // Xóa giỏ hàng luôn nếu là COD
+        if ("COD".equalsIgnoreCase(paymentMethod)) {
+            clearCart(user.getId());
+        }
         
         return orderRepository.save(order);
+    }
+
+    /**
+     * Xóa giỏ hàng của người dùng.
+     */
+    @Transactional
+    public void clearCart(Long userId) {
+        cartRepository.findByUserId(userId).ifPresent(cart -> {
+            cart.getItems().clear();
+            cartRepository.save(cart);
+        });
     }
 
     /**
@@ -106,10 +119,7 @@ public class OrderService {
             order.setStatus("PAID");
             
             // Xóa giỏ hàng của người dùng khi thanh toán thành công
-            cartRepository.findByUserId(order.getUser().getId()).ifPresent(cart -> {
-                cart.getItems().clear();
-                cartRepository.save(cart);
-            });
+            clearCart(order.getUser().getId());
 
             // Gửi thông báo cho khách hàng
             notificationService.sendToUser(
@@ -178,12 +188,12 @@ public class OrderService {
     }
 
     private String getStatusChangeMessage(Long orderId, String status) {
-        switch (status) {
-            case "SHIPPING": return "Đơn hàng #" + orderId + " đang trên đường giao đến bạn.";
-            case "DELIVERED": return "Chúc mừng! Đơn hàng #" + orderId + " đã được giao thành công.";
-            case "CANCELLED": return "Đơn hàng #" + orderId + " đã bị hủy.";
-            default: return "Cập nhật trạng thái mới cho đơn hàng #" + orderId + ": " + status;
-        }
+        return switch (status) {
+            case "SHIPPING" -> "Đơn hàng #" + orderId + " đang trên đường giao đến bạn.";
+            case "DELIVERED" -> "Chúc mừng! Đơn hàng #" + orderId + " đã được giao thành công.";
+            case "CANCELLED" -> "Đơn hàng #" + orderId + " đã bị hủy.";
+            default -> "Cập nhật trạng thái mới cho đơn hàng #" + orderId + ": " + status;
+        };
     }
 
     /**

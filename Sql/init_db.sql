@@ -162,7 +162,24 @@ CREATE TABLE IF NOT EXISTS `chat_messages` (
     INDEX (`created_at`)
 ) ENGINE = InnoDB;
 
--- 11. Bảng Mã giảm giá (Coupons)
+-- 11. Bảng Địa chỉ người dùng (User Addresses)
+CREATE TABLE IF NOT EXISTS `user_addresses` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `full_name` VARCHAR(100) NOT NULL,
+    `phone_number` VARCHAR(20) NOT NULL,
+    `province` VARCHAR(100) NOT NULL,
+    `ward` VARCHAR(100) NOT NULL,
+    `detail_address` VARCHAR(255) NOT NULL,
+    `is_default` TINYINT(1) DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX (`user_id`)
+) ENGINE = InnoDB;
+
+-- 12. Bảng Mã giảm giá (Coupons)
 CREATE TABLE IF NOT EXISTS `coupons` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(50) NOT NULL UNIQUE COMMENT 'Mã code người dùng nhập vào (ví dụ: SALE20)',

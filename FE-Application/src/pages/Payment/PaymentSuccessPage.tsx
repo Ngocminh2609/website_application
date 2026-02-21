@@ -28,18 +28,24 @@ const PaymentSuccessPage: React.FC = () => {
     const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
     const { refreshCart } = useCart();
 
-    // Lấy thông tin từ VNPay trả về trên URL
-    const txnRef = searchParams.get('vnp_TxnRef');
-    const amount = searchParams.get('vnp_Amount');
+    // Lấy thông tin đơn hàng (hỗ trợ cả VNPay và COD)
+    const txnRef = searchParams.get('vnp_TxnRef') || searchParams.get('ORDER_ID');
+    const amount = searchParams.get('vnp_Amount') || searchParams.get('AMOUNT');
 
     useEffect(() => {
         const verify = async () => {
+            // Nếu là COD hoặc đã có tham số báo thành công trực tiếp
+            if (searchParams.get('status') === 'OK') {
+                setStatus('success');
+                await refreshCart(true);
+                return;
+            }
+
             try {
-                // Backend sẽ xác thực chữ ký và cập nhật DB
+                // Backend sẽ xác thực chữ ký VNPay
                 const response = await paymentApi.verifyPayment(location.search);
                 if (response.status === 'OK') {
                     setStatus('success');
-                    // Đồng bộ lại giỏ hàng (Backend đã clear)
                     await refreshCart(true);
                 } else {
                     setStatus('failed');
@@ -50,7 +56,7 @@ const PaymentSuccessPage: React.FC = () => {
         };
 
         verify();
-    }, [location.search, refreshCart]);
+    }, [location.search, refreshCart, searchParams]);
 
     const formatCurrency = (value: string | null) => {
         if (!value) return '0đ';
@@ -67,7 +73,7 @@ const PaymentSuccessPage: React.FC = () => {
     }
 
     return (
-        <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 20px' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '90px 20px 40px' }}>
             <Card className="glass-effect" bordered={false} style={{ boxShadow: 'var(--card-shadow)', borderRadius: 16 }}>
                 {status === 'success' ? (
                     <Result

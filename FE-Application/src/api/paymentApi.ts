@@ -16,9 +16,9 @@ export const paymentApi = {
         });
     },
 
-    createOrderPayment: async (username: string, address: string, phone: string, couponCode?: string): Promise<PaymentResponse> => {
+    createOrderPayment: async (username: string, address: string, phone: string, couponCode?: string, paymentMethod: string = 'VNPAY'): Promise<PaymentResponse> => {
         // Sử dụng POST request để gửi dữ liệu checkout một cách an toàn
-        let url = `/v1/payment/create-order-payment?username=${username}&shippingAddress=${encodeURIComponent(address)}&phoneNumber=${encodeURIComponent(phone)}`;
+        let url = `/v1/payment/create-order-payment?username=${username}&shippingAddress=${encodeURIComponent(address)}&phoneNumber=${encodeURIComponent(phone)}&paymentMethod=${paymentMethod}`;
         if (couponCode) {
             url += `&couponCode=${encodeURIComponent(couponCode)}`;
         }

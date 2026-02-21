@@ -36,21 +36,32 @@ public class PaymentController {
         @RequestParam("username") String username,
         @RequestParam("shippingAddress") String shippingAddress,
         @RequestParam("phoneNumber") String phoneNumber,
-        @RequestParam(value = "couponCode", required = false) String couponCode
+        @RequestParam(value = "couponCode", required = false) String couponCode,
+        @RequestParam(value = "paymentMethod", defaultValue = "VNPAY") String paymentMethod
     ) {
         
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
 
         // 1. Tạo đơn hàng trong DB (Trạng thái PENDING)
-        Order order = orderService.createOrderFromCart(user, shippingAddress, phoneNumber, couponCode);
+        Order order = orderService.createOrderFromCart(user, shippingAddress, phoneNumber, couponCode, paymentMethod);
+        
+        String vnp_TxnRef = String.valueOf(order.getId());
+        long amountWithVnd = order.getTotalAmount().multiply(BigDecimal.valueOf(100)).longValue();
 
-        // 2. Chuẩn bị tham số VNPay
+        // Nếu là COD, trả về thông báo thành công kèm thông tin đơn hàng
+        if ("COD".equalsIgnoreCase(paymentMethod)) {
+            return ResponseEntity.ok(PaymentResponse.builder()
+                .status("OK")
+                .message("Đã nhận đơn hàng (COD). Chúng tôi sẽ liên hệ sớm nhất.")
+                .url("ORDER_ID=" + vnp_TxnRef + "&AMOUNT=" + amountWithVnd)
+                .build());
+        }
+
+        // 2. Chuẩn bị tham số VNPay (Nếu là VNPAY)
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String orderType = "other";
-        long amountWithVnd = order.getTotalAmount().multiply(BigDecimal.valueOf(100)).longValue();
-        String vnp_TxnRef = String.valueOf(order.getId()); // Dùng Order ID làm mã tham chiếu
         String vnp_IpAddr = vnPayConfig.getIpAddress(request);
         String vnp_TmnCode = vnPayConfig.getVnp_TmnCode();
         

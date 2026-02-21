@@ -563,6 +563,7 @@ body {
     transform: translateY(-5px);
   }
 }
+
 /* Compare Bar UX Styles */
 .compare-bar {
   will-change: transform, width, opacity;
@@ -581,17 +582,37 @@ body {
     opacity: 0;
     transform: translate(-50%, 50px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
   }
 }
 
-.compare-actions button {
-  transition: all 0.3s ease;
-}
-
 .compare-actions button:not(:disabled):hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+}
+
+/* Address Selection Styles */
+.address-item-radio .ant-radio {
+  position: absolute;
+  top: 18px;
+  left: 16px;
+}
+
+.address-item-radio.active {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+}
+
+.address-item-radio:hover {
+  border-color: var(--primary-color) !important;
+  background: rgba(99, 102, 241, 0.05) !important;
+}
+
+.address-item-radio .ant-radio-wrapper {
+  padding: 0 !important;
+  margin: 0 !important;
+  white-space: normal !important;
 }
