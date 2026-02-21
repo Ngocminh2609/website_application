@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Layout, Typography, Table, Tag, Space, Card, Spin, Empty, Button } from 'antd';
 import { ShoppingOutlined, ClockCircleOutlined, CarOutlined, CheckCircleOutlined, CloseCircleOutlined, CloseCircleFilled } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 import { orderApi } from '../../api/orderApi';
 import type { Order } from '../../api/orderApi';
 import { notification } from '../../utils/notification';
@@ -12,6 +13,7 @@ const { Title, Text } = Typography;
  * Trang Lịch sử đơn hàng chuyên nghiệp.
  */
 const OrdersPage: React.FC = () => {
+    const location = useLocation();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -32,7 +34,7 @@ const OrdersPage: React.FC = () => {
         };
 
         fetchOrders();
-    }, []);
+    }, [location.key]);
 
     const getStatusTag = (status: string) => {
         switch (status) {
@@ -100,7 +102,7 @@ const OrdersPage: React.FC = () => {
     return (
         <Content className="main-content" style={{ padding: '40px 20px' }}>
             <div style={{ marginBottom: '40px' }}>
-                <Title level={2} style={{ color: '#fff' }}>Lịch sử đơn hàng</Title>
+                <Title level={2} style={{ color: 'var(--text-main)' }}>Lịch sử đơn hàng</Title>
                 <Text style={{ color: 'var(--text-muted)' }}>Theo dõi quá trình vận chuyển đơn hàng của bạn</Text>
             </div>
 

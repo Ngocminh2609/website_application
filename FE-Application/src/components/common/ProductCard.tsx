@@ -1,12 +1,13 @@
 import React from 'react';
-import { Card, Typography, Tag, Tooltip, Space } from 'antd';
-import { ShoppingCartOutlined, FireOutlined, EyeOutlined } from '@ant-design/icons';
+import { Card, Typography, Tag, Tooltip, Space, Button } from 'antd';
+import { ShoppingCartOutlined, FireOutlined, EyeOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import type { Product } from '../../types/product';
 import BaseButton from '../common/BaseButton';
 import { notification } from '../../utils/notification';
 import { cartApi } from '../../api/cartApi';
 import { useCart } from '../../hooks/useCart';
+import { useWishlist } from '../../hooks/useWishlist';
 
 const { Paragraph, Title, Text } = Typography;
 
@@ -52,6 +53,9 @@ export const StarRating: React.FC<{ value: number; size?: number }> = ({ value, 
  */
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const { refreshCart } = useCart();
+    const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+
+    const isFav = isInWishlist(product.id);
 
     // Sử dụng % giảm giá từ DB hoặc tự tính toán nếu chưa có
     const discountPercent = product.discountPercent || (product.originalPrice && product.price
@@ -74,6 +78,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         }
     };
 
+    const toggleWishlist = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isFav) {
+            removeFromWishlist(product.id);
+        } else {
+            addToWishlist(product);
+        }
+    };
+
     const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
         const target = e.target as HTMLImageElement;
 
@@ -89,7 +103,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             hoverable
             className="animate-fade-up product-card"
             cover={
-                <div style={{ position: 'relative', overflow: 'hidden', height: '260px', background: '#0f172a' }}>
+                <div style={{ position: 'relative', overflow: 'hidden', height: '260px', background: 'var(--bg-secondary)' }}>
                     {/* Badge Flash Sale */}
                     {discountPercent > 0 && (
                         <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 2 }}>
@@ -99,8 +113,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                         </div>
                     )}
 
+                    {/* Nút Yêu thích */}
+                    <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 3 }}>
+                        <Button
+                            shape="circle"
+                            icon={isFav ? <HeartFilled style={{ color: '#f43f5e' }} /> : <HeartOutlined />}
+                            onClick={toggleWishlist}
+                            style={{
+                                background: isFav ? 'rgba(255,255,255,0.9)' : 'var(--glass-bg)',
+                                border: 'none',
+                                backdropFilter: 'blur(4px)',
+                                color: isFav ? '#f43f5e' : 'var(--text-main)'
+                            }}
+                        />
+                    </div>
+
                     {/* Badge Best Seller */}
-                    {product.isBestSeller && (
+                    {product.isBestSeller && !isFav && (
                         <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2 }}>
                             <Tag color="#f59e0b" style={{ borderRadius: '6px', fontWeight: 700, padding: '4px 8px', border: 'none' }}>
                                 BÁN CHẠY
@@ -158,7 +187,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                             level={4}
                             style={{
                                 marginBottom: '10px',
-                                color: '#fff',
+                                color: 'inherit',
                                 fontSize: '1.1rem',
                                 height: '1.4em',
                                 overflow: 'hidden',
@@ -191,7 +220,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {/* Footer: Giá & Nút */}
             <div style={{ marginTop: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
-                    <Title level={3} style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>
+                    <Title level={3} style={{ margin: 0, color: 'inherit', fontSize: '1.2rem', fontWeight: 700 }}>
                         {(product.price ?? 0).toLocaleString('vi-VN')} ₫
                     </Title>
                     {product.originalPrice && (
@@ -213,7 +242,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     <Link to={`/product/${product.id}`} style={{ width: '100%' }}>
                         <BaseButton
                             icon={<EyeOutlined />}
-                            style={{ width: '100%', height: '42px', borderRadius: '10px', fontWeight: 600, background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                            style={{
+                                width: '100%',
+                                height: '42px',
+                                borderRadius: '10px',
+                                fontWeight: 600,
+                                background: 'var(--glass-bg)',
+                                borderColor: 'var(--glass-border)',
+                                color: 'var(--text-main)'
+                            }}
                         >
                             Xem Chi Tiết
                         </BaseButton>
@@ -225,3 +262,4 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 };
 
 export default ProductCard;
+

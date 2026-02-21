@@ -43,4 +43,10 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }
+
+    public void updateTheme(String username, String theme) {
+        User user = getProfile(username);
+        user.setThemePreference(theme);
+        userRepository.save(user);
+    }
 }

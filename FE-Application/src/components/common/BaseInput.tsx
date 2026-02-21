@@ -12,9 +12,6 @@ const BaseInput: React.FC<InputProps> & { Password: React.FC<PasswordProps> } = 
             {...props}
             style={{
                 borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#fff',
                 ...props.style
             }}
         />
@@ -30,9 +27,6 @@ BaseInput.Password = (props: PasswordProps) => {
             {...props}
             style={{
                 borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#fff',
                 ...props.style
             }}
         />

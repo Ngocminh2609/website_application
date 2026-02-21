@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Row, Col, Space, Divider, Spin } from 'antd';
 import { ThunderboltFilled, ArrowRightOutlined, StarFilled } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../types/product';
 import ProductCard from '../../components/common/ProductCard';
@@ -15,6 +15,7 @@ const { Title, Text, Paragraph } = Typography;
  */
 const HomePage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const {
         flashSales,
         bestSellers,
@@ -52,18 +53,18 @@ const HomePage: React.FC = () => {
         };
 
         fetchHomeData();
-    }, [initializeHomeData, fetchProductsByBrand]);
+    }, [initializeHomeData, fetchProductsByBrand, location.key]);
 
     if (productLoading || loadingBrands) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-dark)' }}>
-                <Spin size="large" tip={<Text style={{ color: '#fff' }}>Đang khởi tạo không gian mua sắm...</Text>} />
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'transparent' }}>
+                <Spin size="large" tip={<Text style={{ color: 'var(--text-main)' }}>Đang khởi tạo không gian mua sắm...</Text>} />
             </div>
         );
     }
 
     return (
-        <div className="animate-fade-in" style={{ color: '#fff' }}>
+        <div className="animate-fade-in" style={{ color: 'var(--text-main)' }}>
             {/* HERO SECTION - Tối ưu chữ sáng trên nền tối */}
             <section className="hero-section" style={{
                 minHeight: '85vh',
@@ -75,12 +76,12 @@ const HomePage: React.FC = () => {
                 <div className="main-content">
                     <Row gutter={[48, 48]} align="middle">
                         <Col xs={24} lg={14}>
-                            <Title className="hero-title" style={{ color: '#ffffff', marginBottom: '24px', textShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                            <Title className="hero-title" style={{ color: 'var(--text-main)', marginBottom: '24px', textShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                                 TRẢI NGHIỆM <br />
                                 <span style={{ color: 'var(--primary-color)' }}>CÔNG NGHỆ </span>
                                 ĐỈNH CAO
                             </Title>
-                            <Paragraph style={{ color: '#e2e8f0', fontSize: '1.25rem', marginBottom: '48px', lineHeight: 1.8, maxWidth: '600px' }}>
+                            <Paragraph style={{ color: 'var(--text-muted)', fontSize: '1.25rem', marginBottom: '48px', lineHeight: 1.8, maxWidth: '600px' }}>
                                 Chào mừng bạn đến với Tech Nova. Nơi cung cấp những thiết bị điện tử chính hãng,
                                 bảo hành chuẩn quốc tế và trải nghiệm mua sắm không giới hạn.
                             </Paragraph>
@@ -96,7 +97,7 @@ const HomePage: React.FC = () => {
                                 <BaseButton
                                     size="large"
                                     ghost
-                                    style={{ height: '64px', padding: '0 48px', fontSize: '1.1rem', borderRadius: '16px', borderColor: '#fff', color: '#fff' }}
+                                    style={{ height: '64px', padding: '0 48px', fontSize: '1.1rem', borderRadius: '16px', borderColor: 'var(--text-main)', color: 'var(--text-main)' }}
                                 >
                                     Xem Ưu Đãi
                                 </BaseButton>
@@ -104,12 +105,12 @@ const HomePage: React.FC = () => {
 
                             <div style={{ marginTop: '60px', display: 'flex', gap: '40px' }}>
                                 <div>
-                                    <Title level={3} style={{ color: '#fff', margin: 0 }}>50k+</Title>
+                                    <Title level={3} style={{ color: 'var(--text-main)', margin: 0 }}>50k+</Title>
                                     <Text style={{ color: 'var(--text-muted)' }}>Khách hàng tin dùng</Text>
                                 </div>
-                                <Divider type="vertical" style={{ height: '40px', borderColor: 'rgba(255,255,255,0.1)' }} />
+                                <Divider type="vertical" style={{ height: '40px', borderColor: 'var(--glass-border)' }} />
                                 <div>
-                                    <Title level={3} style={{ color: '#fff', margin: 0 }}>200+</Title>
+                                    <Title level={3} style={{ color: 'var(--text-main)', margin: 0 }}>200+</Title>
                                     <Text style={{ color: 'var(--text-muted)' }}>Thương hiệu quốc tế</Text>
                                 </div>
                             </div>
@@ -134,8 +135,8 @@ const HomePage: React.FC = () => {
                                 onClick={() => navigate(`/products?category=${cat.id}`)}
                                 style={{
                                     padding: '18px 40px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    background: 'var(--glass-bg)',
+                                    border: '1px solid var(--glass-border)',
                                     borderRadius: '20px',
                                     cursor: 'pointer',
                                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -143,7 +144,7 @@ const HomePage: React.FC = () => {
                                 }}
                                 className="category-item-hover"
                             >
-                                <Text style={{ color: '#ffffff', fontWeight: 600, fontSize: '1.05rem' }}>{cat.name}</Text>
+                                <Text style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1.05rem' }}>{cat.name}</Text>
                             </div>
                         ))}
                     </div>
@@ -158,7 +159,7 @@ const HomePage: React.FC = () => {
                                     <ThunderboltFilled style={{ color: '#fff', fontSize: '24px' }} />
                                 </div>
                                 <div>
-                                    <Title level={2} style={{ color: '#ffffff', margin: 0 }}>Flash Sale Giờ Vàng</Title>
+                                    <Title level={2} style={{ color: 'var(--text-main)', margin: 0 }}>Flash Sale Giờ Vàng</Title>
                                     <Text style={{ color: '#ef4444', fontWeight: 600 }}>Kết thúc trong: 05:20:15</Text>
                                 </div>
                             </div>
@@ -177,27 +178,28 @@ const HomePage: React.FC = () => {
                 )}
 
                 {/* BEST SELLER - Banner tối nhưng chữ phải phản quang */}
-                <section style={{
-                    marginBottom: '120px',
-                    padding: '80px 60px',
-                    borderRadius: '48px',
-                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-                }}>
+                <section
+                    className="glass-effect"
+                    style={{
+                        marginBottom: '120px',
+                        padding: '80px 60px',
+                        borderRadius: '48px',
+                        boxShadow: 'var(--card-shadow)'
+                    }}
+                >
                     <div style={{ textAlign: 'center', marginBottom: '60px' }}>
                         <Space style={{ marginBottom: '15px' }}>
                             <StarFilled style={{ color: '#fcd34d' }} />
                             <Text style={{ color: '#fcd34d', fontWeight: 600, letterSpacing: '2px' }}>TOP RATED</Text>
                             <StarFilled style={{ color: '#fcd34d' }} />
                         </Space>
-                        <Title level={2} style={{ color: '#ffffff', fontSize: '3rem', fontWeight: 800, margin: 0 }}>Được Ưa Chuộng Nhất</Title>
-                        <Text style={{ color: '#94a3b8', fontSize: '1.2rem', marginTop: '10px', display: 'block' }}>Những lựa chọn hàng đầu từ hàng triệu game thủ và người yêu công nghệ.</Text>
+                        <Title level={2} style={{ color: 'var(--text-main)', fontSize: '3rem', fontWeight: 800, margin: 0 }}>Được Ưa Chuộng Nhất</Title>
+                        <Text style={{ color: 'var(--text-muted)', fontSize: '1.2rem', marginTop: '10px', display: 'block' }}>Những lựa chọn hàng đầu từ hàng triệu game thủ và người yêu công nghệ.</Text>
                     </div>
                     {/* Dùng flexbox thay Row/Col vì Ant Design Grid chia 24 đơn vị không chia hết cho 5, gây xuống dòng */}
-                    <div style={{ display: 'flex', gap: '32px', flexWrap: 'nowrap' }}>
+                    <div style={{ display: 'flex', gap: '32px', flexWrap: 'nowrap', overflowX: 'auto' }} className="no-scrollbar">
                         {bestSellers.slice(0, 5).map(product => (
-                            <div key={product.id} className="premium-hover" style={{ flex: '0 0 calc(20% - 26px)', minWidth: 0 }}>
+                            <div key={product.id} className="premium-hover" style={{ flex: '0 0 calc(20% - 26px)', minWidth: '220px' }}>
                                 <ProductCard product={product} />
                             </div>
                         ))}
@@ -208,9 +210,9 @@ const HomePage: React.FC = () => {
                 {brandsData.map((brand, bIdx) => (
                     <section key={bIdx} style={{ marginBottom: '100px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '48px' }}>
-                            <Title level={2} style={{ color: '#ffffff', margin: 0, whiteSpace: 'nowrap' }}>{brand.name}</Title>
-                            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%)' }}></div>
-                            <BaseButton onClick={() => navigate(`/products?brand=${brand.id}`)} ghost style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}>
+                            <Title level={2} style={{ color: 'var(--text-main)', margin: 0, whiteSpace: 'nowrap' }}>{brand.name}</Title>
+                            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, var(--glass-border) 0%, transparent 100%)' }}></div>
+                            <BaseButton onClick={() => navigate(`/products?brand=${brand.id}`)} ghost style={{ borderColor: 'var(--primary-color)', color: 'var(--primary-color)', fontWeight: 600 }}>
                                 Xem Chi Tiết
                             </BaseButton>
                         </div>
@@ -251,7 +253,7 @@ const HomePage: React.FC = () => {
                                 alignItems: 'center',
                                 padding: '0 24px'
                             }}>
-                                <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Địa chỉ email của bạn...</Text>
+                                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Địa chỉ email của bạn...</Text>
                             </div>
                             <BaseButton style={{
                                 height: '64px',

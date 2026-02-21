@@ -28,4 +28,10 @@ export const userApi = {
             method: 'PUT',
             body: JSON.stringify(data),
         }),
+
+    updateTheme: (theme: 'light' | 'dark') =>
+        apiClient.fetch<{ message: string }>('/users/me/theme', {
+            method: 'PUT',
+            body: JSON.stringify({ theme }),
+        }),
 };

@@ -1,22 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Design Tokens - Premium Palette */
+  /* Common Tokens */
   --primary-color: #6366f1;
   --primary-hover: #4f46e5;
-  --bg-dark: #0f172a;
-  --glass-bg: rgba(30, 41, 59, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
   --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-
-  /* Responsive Spacing Tokens - Optimized for Large Screens */
   --container-padding: 80px;
   --section-margin: 100px;
+  --transition-speed: 0.4s;
+  --transition-cubic: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Media Queries for Global Tokens - Chỉ thu gọn khi thực sự cần thiết cho màn hình nhỏ */
+/* Media Queries for Global Tokens */
 @media (max-width: 1440px) {
   :root {
     --container-padding: 60px;
@@ -43,6 +38,36 @@
   }
 }
 
+/* Dark Theme Variables (Default) */
+[data-theme='dark'] {
+  --bg-main: #0f172a;
+  --bg-secondary: #1e293b;
+  --glass-bg: rgba(30, 41, 59, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+  --input-bg: rgba(0, 0, 0, 0.2);
+  --scrollbar-track: rgba(15, 23, 42, 0.3);
+  --radial-gradient: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.05) 0px, transparent 50%);
+}
+
+/* Light Theme Variables */
+[data-theme='light'] {
+  --bg-main: #f8fafc;
+  --bg-secondary: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  --input-bg: #fff;
+  --scrollbar-track: rgba(241, 245, 249, 1);
+  --radial-gradient: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.03) 0px, transparent 50%);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -51,18 +76,41 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--bg-dark);
+  background-color: var(--bg-main);
   color: var(--text-main);
   min-height: 100vh;
-  background-image:
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.05) 0px, transparent 50%);
+  background-image: var(--radial-gradient);
   background-attachment: fixed;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  /* Smooth transition for theme change - Optimized speed */
+  transition: background-color 0.6s ease-in-out,
+    color 0.4s ease-in-out,
+    background-image 0.6s ease-in-out;
 }
 
-/* Glassmorphism System */
+/* Apply transitions to all theme-affected elements */
+.glass-effect,
+.ant-layout,
+.ant-card,
+.ant-header,
+.ant-footer,
+.logo,
+.main-content,
+.message,
+.chat-window,
+.ant-typography,
+.ant-menu,
+.ant-select-selector,
+.ant-badge,
+.ant-breadcrumb-link {
+  transition: background-color 0.5s ease-in-out,
+    background 0.5s ease-in-out,
+    color 0.4s ease-in-out,
+    border-color 0.5s ease-in-out,
+    box-shadow 0.6s ease-in-out !important;
+}
+
 .glass-effect {
   background: var(--glass-bg) !important;
   backdrop-filter: blur(12px);
@@ -163,6 +211,10 @@ body {
   border-color: var(--primary-color) !important;
   transform: translateY(-5px);
   box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+}
+
+.category-item-hover:hover span {
+  color: #ffffff !important;
 }
 
 .primary-gradient {
@@ -309,8 +361,8 @@ body {
 
 .message-bot {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  background: var(--glass-bg);
+  color: var(--text-main);
   border-bottom-left-radius: 4px;
 }
 
@@ -324,8 +376,7 @@ body {
 .message-admin {
   align-self: flex-start;
   background: rgba(16, 185, 129, 0.15);
-  /* Màu xanh nhẹ cho tin nhắn admin */
-  color: #fff;
+  color: var(--text-main);
   border: 1px solid rgba(16, 185, 129, 0.3);
   border-bottom-left-radius: 4px;
 }
@@ -364,10 +415,13 @@ body {
 }
 
 .chat-input {
+  border-radius: 12px !important;
+}
+
+[data-theme='dark'] .chat-input {
   background: rgba(0, 0, 0, 0.2) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #fff !important;
-  border-radius: 12px !important;
 }
 
 @media (max-width: 480px) {
@@ -402,4 +456,59 @@ body {
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(99, 102, 241, 0.2) transparent;
+}
+
+/* Global Ant Design Input Overrides for Themes */
+[data-theme='dark'] .ant-input,
+[data-theme='dark'] .ant-input-password,
+[data-theme='dark'] .ant-input-affix-wrapper,
+[data-theme='dark'] .ant-input-number,
+[data-theme='dark'] .ant-select-selector,
+[data-theme='dark'] .ant-picker,
+[data-theme='dark'] .ant-input-number-input {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+[data-theme='dark'] .ant-input-affix-wrapper {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme='dark'] .ant-input-affix-wrapper>input.ant-input {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+[data-theme='dark'] .ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Light Theme: Ant Design defaults */
+[data-theme='light'] .ant-input,
+[data-theme='light'] .ant-input-password,
+[data-theme='light'] .ant-input-affix-wrapper,
+[data-theme='light'] .ant-input-number,
+[data-theme='light'] .ant-select-selector,
+[data-theme='light'] .ant-picker {
+  transition: all 0.3s ease;
+}
+
+/* Specific fix for Navbar search to insure default look in light mode */
+[data-theme='light'] .premium-search-input .ant-select-selector {
+  border-color: #d9d9d9 !important;
+  background-color: #fff !important;
+}
+
+[data-theme='light'] .premium-search-input.ant-select-focused .ant-select-selector {
+  border-color: #1677ff !important;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2) !important;
+}
+
+/* Support for 5 columns grid */
+@media (min-width: 1600px) {
+  .grid-5-cols-col {
+    flex: 0 0 20% !important;
+    max-width: 20% !important;
+  }
 }

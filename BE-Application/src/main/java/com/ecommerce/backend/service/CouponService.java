@@ -27,7 +27,7 @@ public class CouponService {
                 .orElseThrow(() -> new RuntimeException("Mã giảm giá không tồn tại"));
 
         // Kiểm tra trạng thái hoạt động
-        if (!coupon.isActive()) {
+        if (coupon.getIsActive() == null || !coupon.getIsActive()) {
             throw new RuntimeException("Mã giảm giá đã bị vô hiệu hóa");
         }
 
@@ -56,6 +56,7 @@ public class CouponService {
             coupon.getDiscountType(),
             coupon.getDiscountValue(),
             discountAmount,
+            coupon.getMaxDiscountAmount(),
             finalAmount,
             "Áp dụng mã giảm giá thành công"
         );
@@ -84,10 +85,10 @@ public class CouponService {
     }
 
     @Transactional
-    public void toggleCouponStatus(Long id) {
+    public void updateCouponStatus(Long id, boolean active) {
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mã giảm giá"));
-        coupon.setActive(!coupon.isActive());
+        coupon.setIsActive(active);
         couponRepository.save(coupon);
     }
 

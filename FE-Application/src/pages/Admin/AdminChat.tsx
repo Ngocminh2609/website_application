@@ -36,11 +36,11 @@ const AdminChat: React.FC = () => {
     const currentMessages = activeSessionId ? conversations[activeSessionId] || [] : [];
 
     return (
-        <div style={{ display: 'flex', height: '600px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', height: '600px', background: 'var(--glass-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
             {/* Sidebar: Danh sách khách hàng đang chat */}
-            <div style={{ width: '300px', borderRight: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                    <Title level={5} style={{ color: '#fff', margin: 0 }}>Hội thoại khách hàng</Title>
+            <div style={{ width: '300px', borderRight: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '20px', borderBottom: '1px solid var(--glass-border)' }}>
+                    <Title level={5} style={{ color: 'var(--text-main)', margin: 0 }}>Hội thoại khách hàng</Title>
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                     <List
@@ -66,7 +66,7 @@ const AdminChat: React.FC = () => {
                                         <Avatar icon={<UserOutlined />} style={{ background: '#6366f1' }} />
                                     </Badge>
                                     <div style={{ display: 'flex', flexDirection: 'column', width: '180px' }}>
-                                        <Text strong style={{ color: '#fff' }}>{item.name}</Text>
+                                        <Text strong style={{ color: 'var(--text-main)' }}>{item.name}</Text>
                                         <Text type="secondary" style={{ fontSize: '12px' }} ellipsis>{item.lastMessage}</Text>
                                     </div>
                                 </Space>
@@ -80,12 +80,12 @@ const AdminChat: React.FC = () => {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 {activeSessionId ? (
                     <>
-                        <div style={{ padding: '15px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ padding: '15px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <Text strong style={{ color: '#fff' }}>Đang chat với: </Text>
-                                <Text style={{ color: '#6366f1' }}>{sessions.find(s => s.id === activeSessionId)?.name}</Text>
+                                <Text strong style={{ color: 'var(--text-main)' }}>Đang chat với: </Text>
+                                <Text style={{ color: 'var(--primary-color)' }}>{sessions.find(s => s.id === activeSessionId)?.name}</Text>
                             </div>
-                            <Badge status={connected ? "success" : "error"} text={connected ? "Máy chủ sẵn sàng" : "Mất kết nối"} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                            <Badge status={connected ? "success" : "error"} text={connected ? "Máy chủ sẵn sàng" : "Mất kết nối"} style={{ color: 'var(--text-muted)' }} />
                         </div>
 
                         <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -99,13 +99,13 @@ const AdminChat: React.FC = () => {
                                     borderBottomRightRadius: msg.senderId === 'admin' ? '2px' : '12px',
                                     borderBottomLeftRadius: msg.senderId === 'admin' ? '12px' : '2px',
                                 }}>
-                                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>{msg.sender}</div>
-                                    <div style={{ color: '#fff' }}>{msg.content}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>{msg.sender}</div>
+                                    <div style={{ color: msg.senderId === 'admin' ? '#fff' : 'var(--text-main)' }}>{msg.content}</div>
                                 </div>
                             ))}
                         </div>
 
-                        <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div style={{ padding: '20px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--glass-border)' }}>
                             <Space.Compact style={{ width: '100%' }}>
                                 <Input
                                     placeholder="Gửi câu trả lời cho khách hàng..."
@@ -119,8 +119,8 @@ const AdminChat: React.FC = () => {
                     </>
                 ) : (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', opacity: 0.5 }}>
-                        <MessageOutlined style={{ fontSize: '48px', color: '#6366f1', marginBottom: '20px' }} />
-                        <Text style={{ color: '#fff' }}>Chọn một khách hàng để bắt đầu tư vấn</Text>
+                        <MessageOutlined style={{ fontSize: '48px', color: 'var(--primary-color)', marginBottom: '20px' }} />
+                        <Text style={{ color: 'var(--text-main)' }}>Chọn một khách hàng để bắt đầu tư vấn</Text>
                     </div>
                 )}
             </div>

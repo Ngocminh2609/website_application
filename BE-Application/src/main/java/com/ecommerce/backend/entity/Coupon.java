@@ -46,7 +46,7 @@ public class Coupon {
     private Integer usedCount = 0;
 
     @Column(name = "is_active", nullable = false)
-    private boolean isActive = true;
+    private Boolean isActive = true;
 
     // Quản lý vòng đời coupon theo thời gian mà không cần can thiệp thủ công
     @Column(name = "expires_at")

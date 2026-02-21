@@ -41,7 +41,7 @@ const StatisticsTab: React.FC = () => {
     return (
         <div style={{ marginTop: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
-                <Title level={4} style={{ color: '#fff', margin: 0 }}>Báo cáo doanh thu & Đơn hàng</Title>
+                <Title level={4} style={{ color: 'var(--text-main)', margin: 0 }}>Báo cáo doanh thu & Đơn hàng</Title>
                 <Select
                     defaultValue="monthly"
                     style={{ width: 200 }}
@@ -63,7 +63,7 @@ const StatisticsTab: React.FC = () => {
                     {/* BIỂU ĐỒ DOANH THU */}
                     <Col span={24}>
                         <Card
-                            title={<Text strong style={{ color: '#fff' }}>Biểu đồ Doanh thu (VND)</Text>}
+                            title={<Text strong style={{ color: 'var(--text-main)' }}>Biểu đồ Doanh thu (VND)</Text>}
                             className="glass-effect"
                             styles={{ body: { padding: '24px 24px 40px 10px' } }}
                         >
@@ -76,7 +76,7 @@ const StatisticsTab: React.FC = () => {
                                                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" />
                                         <XAxis
                                             dataKey="label"
                                             stroke="var(--text-muted)"
@@ -88,7 +88,7 @@ const StatisticsTab: React.FC = () => {
                                             tickFormatter={(val) => `${(val / 1000000).toFixed(1)}M`}
                                         />
                                         <Tooltip
-                                            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                                            contentStyle={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-main)' }}
                                             itemStyle={{ color: '#6366f1' }}
                                             formatter={(value: number | string | undefined) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value || 0)), 'Doanh thu']}
                                         />
@@ -109,14 +109,14 @@ const StatisticsTab: React.FC = () => {
                     {/* BIỂU ĐỒ SỐ LƯỢNG ĐƠN HÀNG */}
                     <Col span={24}>
                         <Card
-                            title={<Text strong style={{ color: '#fff' }}>Thống kê lượng Đơn hàng</Text>}
+                            title={<Text strong style={{ color: 'var(--text-main)' }}>Thống kê lượng Đơn hàng</Text>}
                             className="glass-effect"
                             styles={{ body: { padding: '24px 24px 40px 10px' } }}
                         >
                             <div style={{ width: '100%', height: 350 }}>
                                 <ResponsiveContainer>
                                     <BarChart data={data}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" />
                                         <XAxis
                                             dataKey="label"
                                             stroke="var(--text-muted)"
@@ -127,7 +127,7 @@ const StatisticsTab: React.FC = () => {
                                             tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
                                         />
                                         <Tooltip
-                                            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                                            contentStyle={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'var(--text-main)' }}
                                             itemStyle={{ color: '#a855f7' }}
                                             formatter={(value: number | string | undefined) => [value, 'Đơn hàng']}
                                         />

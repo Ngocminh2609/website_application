@@ -1,6 +1,20 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Space, Dropdown, Avatar, Badge, Drawer, Select, List, Typography } from 'antd';
-import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, MenuOutlined, ShoppingOutlined, SearchOutlined, FireOutlined, BellOutlined, MessageOutlined } from '@ant-design/icons';
+import { Layout, Menu, Space, Dropdown, Avatar, Badge, Drawer, Select, List, Typography, Tooltip } from 'antd';
+import {
+    UserOutlined,
+    LogoutOutlined,
+    DashboardOutlined,
+    ShoppingCartOutlined,
+    MenuOutlined,
+    ShoppingOutlined,
+    SearchOutlined,
+    FireOutlined,
+    BellOutlined,
+    MessageOutlined,
+    HeartOutlined,
+    SunOutlined,
+    MoonOutlined
+} from '@ant-design/icons';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import BaseButton from '../common/BaseButton';
 import type { User } from '../../types/auth';
@@ -11,6 +25,7 @@ import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../types/product';
 import { useNotifications } from '../../context/NotificationContext';
 import { useAdminChat } from '../../context/useAdminChat';
+import { useWishlist } from '../../hooks/useWishlist';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -18,16 +33,19 @@ const { Text } = Typography;
 interface NavbarProps {
     user: User | null;
     onLogout: () => void;
+    isDarkMode: boolean;
+    onToggleTheme: () => void;
 }
 
 /**
- * Thanh điều hướng (Navbar) được tối ưu hóa với công cụ tìm kiếm thông minh.
- * Dọn dẹp các tab thừa và tập trung vào trải nghiệm tìm kiếm của người dùng.
+ * Thanh điều hướng (Navbar) được tối ưu hóa với công cụ tìm kiếm thông minh,
+ * hỗ trợ chuyển đổi giao diện Dark/Light và quản lý danh sách yêu thích.
  */
-const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleTheme }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { cartCount } = useCart();
+    const { wishlistItems } = useWishlist();
     const { bestSellers } = useProducts();
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
     const { totalUnread: chatUnread } = useAdminChat();
@@ -38,9 +56,23 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
     const [searchResults, setSearchResults] = useState<Product[]>([]);
     const [isSearching, setIsSearching] = useState(false);
 
+    // Đồng bộ ô tìm kiếm với URL khi người dùng ở trang search hoặc product detail
+    React.useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const q = params.get('q');
+        if (q) {
+            setSearchValue(q);
+        } else if (location.pathname.startsWith('/product/')) {
+            // Nếu là trang chi tiết, có thể giữ tên sản phẩm nếu nó được set từ onSelect
+        } else {
+            setSearchValue('');
+        }
+    }, [location.search, location.pathname]);
+
     const menuItems: MenuProps['items'] = [
         { key: '/', label: <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Trang Chủ</Link> },
         { key: '/products', label: <Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>Sản Phẩm</Link> },
+        { key: '/wishlist', label: <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)}>Yêu Thích</Link> },
     ];
 
     const userMenuItems: MenuProps['items'] = [
@@ -49,6 +81,12 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             label: 'Hồ sơ cá nhân',
             icon: <UserOutlined />,
             onClick: () => navigate('/profile'),
+        },
+        {
+            key: 'wishlist',
+            label: 'Danh sách yêu thích',
+            icon: <HeartOutlined />,
+            onClick: () => navigate('/wishlist'),
         },
         {
             key: 'orders',
@@ -93,10 +131,21 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
         }
     };
 
+    // Điều hướng đến trang tìm kiếm đầy đủ
+    const goToSearchPage = (query: string) => {
+        if (!query.trim()) return;
+        navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+        // Không xóa searchValue để người dùng thấy từ khóa của mình
+        setSearchResults([]);
+    };
+
     // Chuyển hướng khi chọn sản phẩm từ kết quả tìm kiếm hoặc gợi ý
     const onSelectProduct = (productId: string | number) => {
-        navigate(`/products/${productId}`);
-        setSearchValue('');
+        const product = [...searchResults, ...bestSellers].find(p => String(p.id) === String(productId));
+        if (product) {
+            setSearchValue(product.name);
+        }
+        navigate(`/product/${productId}`);
         setSearchResults([]);
     };
 
@@ -104,20 +153,20 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
     const notificationMenu = (
         <div style={{
             width: '350px',
-            backgroundColor: '#1e293b',
+            backgroundColor: isDarkMode ? '#1e293b' : '#fff',
             borderRadius: '12px',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.05)'}`,
             overflow: 'hidden'
         }}>
             <div style={{
                 padding: '16px',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.05)'}`,
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
             }}>
-                <Text strong style={{ color: '#fff', fontSize: '16px' }}>Thông báo</Text>
+                <Text strong style={{ color: isDarkMode ? '#fff' : '#1e293b', fontSize: '16px' }}>Thông báo</Text>
                 {unreadCount > 0 && (
                     <BaseButton type="text" size="small" onClick={() => markAllAsRead()} style={{ color: 'var(--primary-color)', fontSize: '12px', padding: 0 }}>
                         Đánh dấu tất cả đã đọc
@@ -133,9 +182,9 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                                 onClick={() => !item.isRead && markAsRead(item.id)}
                                 style={{
                                     padding: '12px 16px',
-                                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                                    borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.05)'}`,
                                     cursor: 'pointer',
-                                    backgroundColor: item.isRead ? 'transparent' : 'rgba(99, 102, 241, 0.05)',
+                                    backgroundColor: item.isRead ? 'transparent' : (isDarkMode ? 'rgba(99, 102, 241, 0.05)' : 'rgba(99, 102, 241, 0.02)'),
                                     transition: 'all 0.3s'
                                 }}
                             >
@@ -148,10 +197,10 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                                         marginTop: '6px'
                                     }} />
                                     <div style={{ flex: 1 }}>
-                                        <Text style={{ color: item.isRead ? 'rgba(255,255,255,0.6)' : '#fff', fontSize: '14px', display: 'block' }}>
+                                        <Text style={{ color: item.isRead ? (isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.45)') : (isDarkMode ? '#fff' : '#1e293b'), fontSize: '14px', display: 'block' }}>
                                             {item.message}
                                         </Text>
-                                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                                        <Text style={{ color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)', fontSize: '11px' }}>
                                             {new Date(item.createdAt).toLocaleString('vi-VN')}
                                         </Text>
                                     </div>
@@ -161,19 +210,17 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                     />
                 ) : (
                     <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                        <BellOutlined style={{ fontSize: '32px', color: 'rgba(255,255,255,0.2)', marginBottom: '12px' }} />
-                        <div style={{ color: 'rgba(255,255,255,0.4)' }}>Không có thông báo nào</div>
+                        <BellOutlined style={{ fontSize: '32px', color: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', marginBottom: '12px' }} />
+                        <div style={{ color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)' }}>Không có thông báo nào</div>
                     </div>
                 )}
             </div>
         </div>
     );
 
-    // Thuật toán gợi ý: Nếu chưa nhập gì, hiện các sản phẩm bán chạy nhất.
-    // Nếu đang nhập, hiện kết quả tìm kiếm tương ứng.
     const searchOptions = [
         {
-            label: <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+            label: <span style={{ color: isDarkMode ? 'var(--text-muted)' : 'rgba(0,0,0,0.45)', fontSize: '12px' }}>
                 {!searchValue ? 'GỢI Ý CHO BẠN' : `KẾT QUẢ CHO "${searchValue}"`}
             </span>,
             options: (!searchValue ? bestSellers.slice(0, 5) : searchResults.slice(0, 8)).map(product => ({
@@ -183,17 +230,16 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                         <img
                             src={product.imageUrl}
                             alt={product.name}
-                            style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}
+                            style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}` }}
                             onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                // Tránh vòng lặp vô tận nếu chính ảnh fallback cũng không load được
                                 if (target.dataset.errored === 'true') return;
                                 target.dataset.errored = 'true';
                                 target.src = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800';
                             }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 500, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontWeight: 500, color: isDarkMode ? '#fff' : '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {product.name}
                             </div>
                             <div style={{ fontSize: '12px', color: 'var(--primary-color)' }}>
@@ -204,7 +250,27 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                     </div>
                 )
             }))
-        }
+        },
+        ...(searchValue ? [{
+            label: (
+                <div
+                    onClick={() => goToSearchPage(searchValue)}
+                    style={{
+                        padding: '10px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        color: 'var(--primary-color)',
+                        fontWeight: 600,
+                        borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
+                        marginTop: '4px'
+                    }}
+                >
+                    <SearchOutlined style={{ marginRight: '8px' }} />
+                    Xem tất cả kết quả cho "{searchValue}"
+                </div>
+            ),
+            options: []
+        }] : [])
     ];
 
     return (
@@ -218,11 +284,10 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             padding: '0 var(--container-padding)',
             height: '70px',
             lineHeight: '70px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
         }}>
             <Space size="middle">
                 <div className="mobile-only" onClick={() => setIsMobileMenuOpen(true)}>
-                    <MenuOutlined style={{ fontSize: '20px', color: '#fff', cursor: 'pointer' }} />
+                    <MenuOutlined style={{ fontSize: '20px', color: 'var(--text-main)', cursor: 'pointer' }} />
                 </div>
 
                 <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
@@ -230,53 +295,93 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                 </div>
             </Space>
 
-            {/* Ô tìm kiếm trung tâm thay thế các tab Menu */}
-            <div className="desktop-only" style={{ flex: 1, maxWidth: '600px', margin: '0 40px' }}>
+            {/* Ô tìm kiếm trung tâm */}
+            <div className="desktop-only" style={{ flex: 1, maxWidth: '500px', margin: '0 40px' }}>
                 <Select
                     showSearch
-                    value={searchValue || undefined}
-                    placeholder="Tìm kiếm sản phẩm, thương hiệu..."
+                    searchValue={searchValue}
+                    autoClearSearchValue={false}
+                    value={null}
+                    placeholder="Tìm kiếm sản phẩm..."
                     defaultActiveFirstOption={false}
-                    suffixIcon={<SearchOutlined style={{ color: 'var(--primary-color)', fontSize: '18px' }} />}
+                    suffixIcon={
+                        <SearchOutlined
+                            onClick={() => goToSearchPage(searchValue)}
+                            style={{
+                                color: 'var(--primary-color)',
+                                fontSize: '18px',
+                                cursor: 'pointer'
+                            }}
+                        />
+                    }
                     filterOption={false}
                     onSearch={handleSearch}
-                    onSelect={onSelectProduct}
+                    onSelect={(val: string | number | null) => {
+                        if (val) onSelectProduct(val);
+                    }}
+                    onInputKeyDown={(e) => {
+                        if (e.key === 'Enter' && searchValue) {
+                            goToSearchPage(searchValue);
+                        }
+                    }}
                     options={searchOptions}
                     loading={isSearching}
-                    notFoundContent={searchValue ? "Không tìm thấy sản phẩm" : null}
+                    notFoundContent={searchValue ? "Không tìm thấy" : null}
                     dropdownStyle={{
-                        backgroundColor: '#1e293b',
-                        border: '1px solid rgba(255,255,255,0.1)',
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--glass-border)',
                         padding: '8px',
                         backdropFilter: 'blur(10px)'
                     }}
-                    style={{
-                        width: '100%',
-                    }}
+                    style={{ width: '100%' }}
                     className="premium-search-input"
                 />
             </div>
 
-            <Space size="large">
+            <Space size="large" align="center">
+                <Tooltip title={isDarkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}>
+                    <div
+                        onClick={onToggleTheme}
+                        style={{
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '12px',
+                            backgroundColor: 'var(--glass-border)',
+                            transition: 'all 0.3s'
+                        }}
+                    >
+                        {isDarkMode ? <SunOutlined style={{ fontSize: '20px', color: '#fbbf24' }} /> : <MoonOutlined style={{ fontSize: '20px', color: '#6366f1' }} />}
+                    </div>
+                </Tooltip>
+
                 {user && (
                     <>
+                        <div onClick={() => navigate('/wishlist')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            <Badge count={wishlistItems.length} size="small" offset={[5, 0]} color="#f43f5e">
+                                <HeartOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
+                            </Badge>
+                        </div>
                         {user.role === 'ADMIN' && (
                             <div onClick={() => navigate('/admin#chat')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                 <Badge count={chatUnread} size="small" offset={[5, 0]} color="#6366f1">
-                                    <MessageOutlined style={{ fontSize: '22px', color: '#fff' }} />
+                                    <MessageOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
                                 </Badge>
                             </div>
                         )}
                         <Dropdown dropdownRender={() => notificationMenu} placement="bottomRight" trigger={['click']} arrow>
                             <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                 <Badge count={unreadCount} size="small" offset={[5, 0]} color="#ff4d4f">
-                                    <BellOutlined style={{ fontSize: '22px', color: '#fff' }} />
+                                    <BellOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
                                 </Badge>
                             </div>
                         </Dropdown>
                         <div onClick={() => navigate('/cart')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                             <Badge count={cartCount} size="small" offset={[5, 0]} color="#6366f1">
-                                <ShoppingCartOutlined style={{ fontSize: '22px', color: '#fff' }} />
+                                <ShoppingCartOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
                             </Badge>
                         </div>
                     </>
@@ -290,34 +395,37 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                                 icon={!user.avatarUrl && <UserOutlined />}
                                 style={{ backgroundColor: '#6366f1' }}
                             />
-                            <span className="desktop-only" style={{ color: '#fff', fontWeight: 500 }}>
+                            <span className="desktop-only" style={{ color: 'var(--text-main)', fontWeight: 500 }}>
                                 {user.fullName || user.username}
                             </span>
                         </Space>
                     </Dropdown>
                 ) : (
                     <Space>
-                        <BaseButton type="text" style={{ color: '#fff' }} onClick={() => navigate('/login')} className="desktop-only">
+                        <BaseButton type="text" style={{ color: isDarkMode ? '#fff' : '#1e293b' }} onClick={() => navigate('/login')} className="desktop-only">
                             Đăng Nhập
                         </BaseButton>
                         <BaseButton type="primary" onClick={() => navigate('/register')}>
-                            {window.innerWidth < 480 ? 'Tham gia' : 'Đăng Ký'}
+                            Đăng Ký
                         </BaseButton>
                     </Space>
                 )}
             </Space>
 
             <Drawer
-                title={<div className="logo">TECH NOVA</div>}
+                title={<div className="logo" style={{ color: isDarkMode ? '#fff' : '#1e293b' }}>TECH NOVA</div>}
                 placement="left"
                 onClose={() => setIsMobileMenuOpen(false)}
                 open={isMobileMenuOpen}
                 width={280}
-                styles={{ body: { backgroundColor: '#0f172a', padding: 0 }, header: { backgroundColor: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.1)' } }}
+                styles={{
+                    body: { backgroundColor: isDarkMode ? '#0f172a' : '#fff', padding: 0 },
+                    header: { backgroundColor: isDarkMode ? '#0f172a' : '#fff', borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}` }
+                }}
             >
                 <Menu
                     mode="inline"
-                    theme="dark"
+                    theme={isDarkMode ? 'dark' : 'light'}
                     items={menuItems}
                     selectedKeys={[location.pathname]}
                     style={{ background: 'transparent', borderRight: 'none' }}

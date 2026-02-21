@@ -30,8 +30,8 @@ export const couponApi = {
             body: JSON.stringify(coupon)
         }),
 
-    toggle: (id: number): Promise<void> =>
-        apiClient.fetch(`/coupons/admin/${id}/toggle`, { method: 'PUT' }),
+    updateStatus: (id: number, active: boolean): Promise<void> =>
+        apiClient.fetch(`/coupons/admin/${id}/status?active=${active}`, { method: 'PUT' }),
 
     delete: (id: number): Promise<void> =>
         apiClient.fetch(`/coupons/admin/${id}`, { method: 'DELETE' })

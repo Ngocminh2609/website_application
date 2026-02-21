@@ -38,4 +38,12 @@ public class UserController {
         userService.changePassword(user.getUsername(), request);
         return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công"));
     }
+
+    @PutMapping("/me/theme")
+    public ResponseEntity<Map<String, String>> updateTheme(
+            @AuthenticationPrincipal User user,
+            @RequestBody Map<String, String> request) {
+        userService.updateTheme(user.getUsername(), request.get("theme"));
+        return ResponseEntity.ok(Map.of("message", "Cập nhật giao diện thành công"));
+    }
 }

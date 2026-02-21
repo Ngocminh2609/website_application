@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import vnpayLogo from '../../assets/vnpay-logo.png';
 import { Layout, Typography, Table, Space, InputNumber, Card, Row, Col, Empty, Tag, Modal, Form, Input, Spin } from 'antd';
 import { DeleteOutlined, ShoppingCartOutlined, CreditCardOutlined, EnvironmentOutlined, PhoneOutlined, TagOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 import { cartApi } from '../../api/cartApi';
 import { paymentApi } from '../../api/paymentApi';
 import { couponApi } from '../../api/couponApi';
@@ -20,9 +21,14 @@ const { Title, Text } = Typography;
  */
 const CartPage: React.FC = () => {
     const { cart, loading, refreshCart } = useCart();
+    const location = useLocation();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [form] = Form.useForm();
+
+    useEffect(() => {
+        refreshCart(true);
+    }, [refreshCart, location.key]);
 
     const [couponCode, setCouponCode] = useState('');
     const [couponResult, setCouponResult] = useState<CouponValidateResponse | null>(null);
@@ -148,7 +154,7 @@ const CartPage: React.FC = () => {
             title: 'Tổng',
             key: 'subtotal',
             render: (_, record) => (
-                <Text strong style={{ color: '#6366f1' }}>
+                <Text strong style={{ color: 'var(--primary-color)' }}>
                     {(record.product.price * record.quantity).toLocaleString('vi-VN')}đ
                 </Text>
             ),
@@ -170,7 +176,7 @@ const CartPage: React.FC = () => {
     return (
         <Content className="main-content">
             <div style={{ marginBottom: '40px', textAlign: window.innerWidth < 768 ? 'center' : 'left' }}>
-                <Title level={2} style={{ color: '#fff', margin: 0 }}>Giỏ Hàng</Title>
+                <Title level={2} style={{ color: 'var(--text-main)', margin: 0 }}>Giỏ Hàng</Title>
                 <Text style={{ color: 'var(--text-muted)' }}>Tiến hành checkout sản phẩm của bạn</Text>
             </div>
 
@@ -199,13 +205,13 @@ const CartPage: React.FC = () => {
                     </Col>
                     <Col xs={24} xl={8}>
                         <Card
-                            title={<span style={{ color: '#fff' }}><CreditCardOutlined /> Hóa đơn thanh toán</span>}
+                            title={<span style={{ color: 'var(--text-main)' }}><CreditCardOutlined /> Hóa đơn thanh toán</span>}
                             className="glass-effect"
                         >
                             <Space direction="vertical" style={{ width: '100%' }} size="large">
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <Text style={{ color: 'var(--text-muted)' }}>Tạm tính:</Text>
-                                    <Text style={{ color: '#fff' }}>{calculateTotal().toLocaleString('vi-VN')}đ</Text>
+                                    <Text style={{ color: 'var(--text-main)' }}>{calculateTotal().toLocaleString('vi-VN')}đ</Text>
                                 </div>
 
                                 {/* Khu vực nhập mã giảm giá */}
@@ -225,9 +231,14 @@ const CartPage: React.FC = () => {
                                         }}>
                                             <Space>
                                                 <CheckCircleOutlined style={{ color: '#22c55e' }} />
-                                                <Text style={{ color: '#22c55e', fontWeight: 600 }}>{couponResult.code}</Text>
+                                                <Text style={{ color: '#22c55e', fontWeight: 600 }}>
+                                                    {couponResult.code} {couponResult.discountType === 'PERCENT' ? `(-${couponResult.discountValue}%)` : ''}
+                                                </Text>
                                                 <Text style={{ color: '#22c55e', fontSize: 12 }}>
                                                     -{couponResult.discountAmount.toLocaleString('vi-VN')}đ
+                                                    {couponResult.maxDiscountAmount && couponResult.discountAmount >= couponResult.maxDiscountAmount && (
+                                                        <span style={{ fontSize: '10px', marginLeft: 4 }}>(Tối đa)</span>
+                                                    )}
                                                 </Text>
                                             </Space>
                                             <CloseCircleOutlined
@@ -263,19 +274,19 @@ const CartPage: React.FC = () => {
                                 </div>
                                 {couponResult && (
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Text style={{ color: '#22c55e' }}>Giảm giá:</Text>
+                                        <Text style={{ color: '#22c55e' }}>Giảm giá {couponResult.discountType === 'PERCENT' ? `(${couponResult.discountValue}%)` : ''}:</Text>
                                         <Text style={{ color: '#22c55e', fontWeight: 600 }}>-{couponResult.discountAmount.toLocaleString('vi-VN')}đ</Text>
                                     </div>
                                 )}
-                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between' }}>
-                                    <Text strong style={{ color: '#fff', fontSize: '18px' }}>Tổng cộng:</Text>
+                                <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text strong style={{ color: 'var(--text-main)', fontSize: '18px' }}>Tổng cộng:</Text>
                                     <Text strong style={{ color: 'var(--primary-color)', fontSize: '24px' }}>
                                         {(couponResult ? couponResult.finalAmount : calculateTotal()).toLocaleString('vi-VN')}đ
                                     </Text>
                                 </div>
                                 <BaseButton
                                     type="primary"
-                                    style={{ width: '100%', height: '50px', fontSize: '1.1rem', marginTop: '10px', background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', border: 'none' }}
+                                    style={{ width: '100%', height: '50px', fontSize: '1.1rem', marginTop: '10px', background: 'var(--primary-gradient)', border: 'none' }}
                                     onClick={handlePaymentClick}
                                 >
                                     Thanh Toán VNPay

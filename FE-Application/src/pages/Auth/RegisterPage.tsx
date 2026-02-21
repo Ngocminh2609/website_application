@@ -37,8 +37,8 @@ const RegisterPage: React.FC = () => {
     return (
         <div style={{ maxWidth: '450px', margin: '80px auto', padding: '40px', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', backdropFilter: 'blur(10px)' }}>
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                <Title level={2} style={{ color: '#fff', margin: 0 }}>Tạo Tài Khoản</Title>
-                <Text style={{ color: '#94a3b8' }}>Gia nhập cộng đồng Tech Nova ngay hôm nay</Text>
+                <Title level={2} style={{ color: 'var(--text-main)', margin: 0 }}>Tạo Tài Khoản</Title>
+                <Text style={{ color: 'var(--text-muted)' }}>Gia nhập cộng đồng Tech Nova ngay hôm nay</Text>
             </div>
 
             <Form<RegisterRequest> name="register" onFinish={onFinish} layout="vertical" size="large">
@@ -46,13 +46,13 @@ const RegisterPage: React.FC = () => {
                     name="username"
                     rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
                 >
-                    <BaseInput prefix={<UserOutlined style={{ color: '#6366f1' }} />} placeholder="Tên đăng nhập" />
+                    <BaseInput prefix={<UserOutlined style={{ color: 'var(--primary-color)' }} />} placeholder="Tên đăng nhập" />
                 </Form.Item>
 
                 <Form.Item
                     name="fullName"
                 >
-                    <BaseInput prefix={<IdcardOutlined style={{ color: '#6366f1' }} />} placeholder="Họ và tên" />
+                    <BaseInput prefix={<IdcardOutlined style={{ color: 'var(--primary-color)' }} />} placeholder="Họ và tên" />
                 </Form.Item>
 
                 <Form.Item
@@ -62,7 +62,7 @@ const RegisterPage: React.FC = () => {
                         { type: 'email', message: 'Email không đúng định dạng!' }
                     ]}
                 >
-                    <BaseInput prefix={<MailOutlined style={{ color: '#6366f1' }} />} placeholder="Email" />
+                    <BaseInput prefix={<MailOutlined style={{ color: 'var(--primary-color)' }} />} placeholder="Email" />
                 </Form.Item>
 
                 <Form.Item
@@ -73,7 +73,7 @@ const RegisterPage: React.FC = () => {
                     ]}
                 >
                     <BaseInput.Password
-                        prefix={<LockOutlined style={{ color: '#6366f1' }} />}
+                        prefix={<LockOutlined style={{ color: 'var(--primary-color)' }} />}
                         placeholder="Mật khẩu"
                     />
                 </Form.Item>
@@ -85,8 +85,8 @@ const RegisterPage: React.FC = () => {
                 </Form.Item>
 
                 <div style={{ textAlign: 'center' }}>
-                    <Text style={{ color: '#94a3b8' }}>Đã có tài khoản? </Text>
-                    <span onClick={() => navigate('/login')} style={{ color: '#6366f1', cursor: 'pointer' }}>Đăng nhập</span>
+                    <Text style={{ color: 'var(--text-muted)' }}>Đã có tài khoản? </Text>
+                    <span onClick={() => navigate('/login')} style={{ color: 'var(--primary-color)', cursor: 'pointer' }}>Đăng nhập</span>
                 </div>
             </Form>
         </div>

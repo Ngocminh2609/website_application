@@ -64,7 +64,7 @@ const NotificationManagement: React.FC = () => {
 
     return (
         <div style={{ padding: '20px 0' }}>
-            <Title level={4} style={{ color: '#fff', marginBottom: '24px' }}>
+            <Title level={4} style={{ color: 'var(--text-main)', marginBottom: '24px' }}>
                 <NotificationOutlined style={{ marginRight: '8px' }} />
                 Gửi Thông Báo Hệ Thống
             </Title>
@@ -77,13 +77,12 @@ const NotificationManagement: React.FC = () => {
                 >
                     <Form.Item
                         name="message"
-                        label={<span style={{ color: 'rgba(255,255,255,0.7)' }}>Nội dung thông báo (Ví dụ: Black Friday, Noel, Tết...)</span>}
+                        label={<span style={{ color: 'var(--text-main)' }}>Nội dung thông báo (Ví dụ: Black Friday, Noel, Tết...)</span>}
                         rules={[{ required: true, message: 'Vui lòng nhập nội dung thông báo' }]}
                     >
                         <Input.TextArea
                             rows={4}
                             placeholder="Nhập thông báo bạn muốn gửi đến tất cả khách hàng..."
-                            style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}
                         />
                     </Form.Item>
                     <Form.Item style={{ marginBottom: 0 }}>
@@ -100,7 +99,7 @@ const NotificationManagement: React.FC = () => {
                 </Form>
             </Card>
 
-            <Title level={4} style={{ color: '#fff', marginBottom: '16px' }}>
+            <Title level={4} style={{ color: 'var(--text-main)', marginBottom: '16px' }}>
                 <HistoryOutlined style={{ marginRight: '8px' }} />
                 Lịch sử gửi (Phiên làm việc này)
             </Title>
@@ -115,9 +114,9 @@ const NotificationManagement: React.FC = () => {
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ flex: 1 }}>
-                                <Badge status="processing" text={<Text strong style={{ color: '#fff' }}>{item.message}</Text>} />
+                                <Badge status="processing" text={<Text strong style={{ color: 'var(--text-main)' }}>{item.message}</Text>} />
                                 <div style={{ marginTop: '8px' }}>
-                                    <Text type="secondary" style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+                                    <Text type="secondary" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                                         {new Date(item.createdAt).toLocaleString('vi-VN')}
                                     </Text>
                                 </div>
@@ -126,7 +125,7 @@ const NotificationManagement: React.FC = () => {
                         </div>
                     </Card>
                 )}
-                locale={{ emptyText: <Text style={{ color: 'rgba(255,255,255,0.3)' }}>Chưa có thông báo nào được gửi trong phiên này</Text> }}
+                locale={{ emptyText: <Text style={{ color: 'var(--text-muted)' }}>Chưa có thông báo nào được gửi trong phiên này</Text> }}
             />
         </div>
     );

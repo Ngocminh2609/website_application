@@ -259,7 +259,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     return (
         <div className="chat-widget-container">
             {isOpen && (
-                <div className="chat-window">
+                <div className="chat-window" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)' }}>
                     <div className="chat-header">
                         <AnimatedRobot />
                         <div style={{ flex: 1 }}>

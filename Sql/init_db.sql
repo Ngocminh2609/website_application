@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `avatar_url` VARCHAR(500) DEFAULT NULL,
   `phone` VARCHAR(20) DEFAULT NULL COMMENT 'Số điện thoại liên hệ',
   `role` VARCHAR(20) DEFAULT 'USER',
+  `theme_preference` VARCHAR(10) DEFAULT 'light' COMMENT 'Thiết lập giao diện: light hoặc dark',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
@@ -197,6 +198,19 @@ CREATE TABLE IF NOT EXISTS `product_reviews` (
     INDEX (`is_approved`)
 ) ENGINE = InnoDB;
 
+-- 13. Bảng Danh sách yêu thích (Wishlists)
+CREATE TABLE IF NOT EXISTS `wishlists` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `product_id` BIGINT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_user_product_wishlist` (`user_id`, `product_id`),
+    INDEX (`user_id`)
+) ENGINE = InnoDB;
+
 -- III. CHÈN DỮ LIỆU MẪU (DML - INSERT)
 
 -- 1. Dữ liệu người dùng (Mật khẩu: password123)
@@ -233,7 +247,7 @@ INSERT INTO `notifications` (`recipient_id`, `message`, `type`) VALUES
 INSERT INTO `coupons` (`code`, `discount_type`, `discount_value`, `min_order_amount`, `max_discount_amount`, `usage_limit`, `is_active`, `expires_at`) VALUES
 ('TECHNOVA10', 'PERCENT', 10.00, 1000000.00, 500000.00, 100, 1, DATE_ADD(NOW(), INTERVAL 30 DAY)),
 ('SALE200K', 'FIXED', 200000.00, 2000000.00, NULL, 50, 1, DATE_ADD(NOW(), INTERVAL 15 DAY)),
-('NEWUSER20', 'PERCENT', 20.00, 500000.00, 300000.00, 200, 1, DATE_ADD(NOW(), INTERVAL 90 DAY)),
+('NEWUSER20', 'PERCENT', 20.00, 500000.00, 15000000.00, 200, 1, DATE_ADD(NOW(), INTERVAL 90 DAY)),
 ('FLASH50', 'PERCENT', 50.00, 5000000.00, 1000000.00, 20, 1, DATE_ADD(NOW(), INTERVAL 7 DAY));
 
 -- 6. Đánh giá sản phẩm mẫu

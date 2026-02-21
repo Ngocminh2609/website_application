@@ -20,11 +20,8 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const fetchingPromise = useRef<Promise<Product[]> | null>(null);
     const fetchingHomePromise = useRef<Promise<[Product[], Product[], Category[]]> | null>(null);
     const fetchingBrandPromises = useRef<Map<string, Promise<Product[]>>>(new Map());
-    const isInitialized = useRef<boolean>(false);
-    const isHomeInitialized = useRef<boolean>(false);
 
-    const fetchProducts = useCallback(async (force: boolean = false) => {
-        if (isInitialized.current && !force && products.length > 0) return;
+    const fetchProducts = useCallback(async () => {
         if (fetchingPromise.current) { await fetchingPromise.current; return; }
 
         try {
@@ -32,14 +29,13 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
             fetchingPromise.current = productApi.getAllProducts();
             const data = await fetchingPromise.current;
             setProducts(data);
-            isInitialized.current = true;
         } catch (error) {
             console.error('Lỗi khi tải sản phẩm:', error);
         } finally {
             setLoading(false);
             fetchingPromise.current = null;
         }
-    }, [products.length]);
+    }, []);
 
     const fetchProductsByBrand = useCallback(async (brand: string) => {
         const existingPromise = fetchingBrandPromises.current.get(brand);
@@ -56,8 +52,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
     }, []);
 
-    const initializeHomeData = useCallback(async (force: boolean = false) => {
-        if (isHomeInitialized.current && !force) return;
+    const initializeHomeData = useCallback(async () => {
         if (fetchingHomePromise.current) { await fetchingHomePromise.current; return; }
 
         try {
@@ -72,7 +67,6 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
             setFlashSales(fs);
             setBestSellers(bs);
             setCategories(cats);
-            isHomeInitialized.current = true;
         } catch (error) {
             console.error('Lỗi khi tải dữ liệu trang chủ:', error);
         } finally {

@@ -96,7 +96,7 @@ const ProductDetailPage: React.FC = () => {
     if (!product) {
         return (
             <div style={{ textAlign: 'center', padding: '100px' }}>
-                <Empty description={<span style={{ color: '#fff' }}>Sản phẩm không tồn tại hoặc đã bị xóa</span>} />
+                <Empty description={<span style={{ color: 'var(--text-main)' }}>Sản phẩm không tồn tại hoặc đã bị xóa</span>} />
                 <Link to="/products">
                     <BaseButton icon={<ArrowLeftOutlined />} style={{ marginTop: '20px' }}>Quay lại cửa hàng</BaseButton>
                 </Link>
@@ -165,7 +165,7 @@ const ProductDetailPage: React.FC = () => {
                     items={[
                         { title: <Link to="/" style={{ color: 'var(--text-muted)' }}>Trang chủ</Link> },
                         { title: <Link to="/products" style={{ color: 'var(--text-muted)' }}>Sản phẩm</Link> },
-                        { title: <span style={{ color: '#fff' }}>{product.name}</span> },
+                        { title: <span style={{ color: 'var(--text-main)' }}>{product.name}</span> },
                     ]}
                     style={{ marginBottom: '30px' }}
                 />
@@ -225,7 +225,7 @@ const ProductDetailPage: React.FC = () => {
                         <div style={{ color: '#fff' }}>
                             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                                 {/* Nhãn hiệu & Huy hiệu */}
-                                <Space split={<Divider type="vertical" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />}>
+                                <Space split={<Divider type="vertical" style={{ borderColor: 'var(--glass-border)' }} />}>
                                     <Typography.Text style={{ color: 'var(--primary-color)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>
                                         {product.brand || 'NO BRAND'}
                                     </Typography.Text>
@@ -233,7 +233,7 @@ const ProductDetailPage: React.FC = () => {
                                     {product.isBestSeller && <Tag color="gold" bordered={false} style={{ borderRadius: '4px', fontWeight: 600 }}>BÁN CHẠY</Tag>}
                                 </Space>
 
-                                <Typography.Title level={1} style={{ color: '#fff', fontSize: '2.5rem', marginBottom: '8px' }}>{product.name}</Typography.Title>
+                                <Typography.Title level={1} style={{ color: 'var(--text-main)', fontSize: '2.5rem', marginBottom: '8px' }}>{product.name}</Typography.Title>
 
                                 {/* Rating */}
                                 <Space size="large" style={{ marginBottom: '10px' }}>
@@ -249,7 +249,7 @@ const ProductDetailPage: React.FC = () => {
                                     borderLeft: '4px solid var(--primary-color)'
                                 }}>
                                     <Space align="baseline" size="middle">
-                                        <Typography.Title level={2} style={{ color: '#fff', margin: 0, fontSize: '2rem' }}>
+                                        <Typography.Title level={2} style={{ color: 'var(--text-main)', margin: 0, fontSize: '2rem' }}>
                                             {product.price?.toLocaleString('vi-VN')} ₫
                                         </Typography.Title>
                                         {product.originalPrice && (
@@ -269,25 +269,25 @@ const ProductDetailPage: React.FC = () => {
                                 <div style={{ margin: '20px 0' }}>
                                     <Row gutter={[16, 16]}>
                                         <Col span={12}>
-                                            <Space><RocketOutlined style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: '#fff' }}>Giao hàng nhanh 2h</Typography.Text></Space>
+                                            <Space><RocketOutlined style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: 'var(--text-main)' }}>Giao hàng nhanh 2h</Typography.Text></Space>
                                         </Col>
                                         <Col span={12}>
-                                            <Space><SafetyCertificateOutlined style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: '#fff' }}>Bảo hành 24 tháng</Typography.Text></Space>
+                                            <Space><SafetyCertificateOutlined style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: 'var(--text-main)' }}>Bảo hành 24 tháng</Typography.Text></Space>
                                         </Col>
                                         <Col span={12}>
-                                            <Space><SwapOutlined style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: '#fff' }}>Lỗi 1 đổi 1 trong 30 ngày</Typography.Text></Space>
+                                            <Space><SwapOutlined style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: 'var(--text-main)' }}>Lỗi 1 đổi 1 trong 30 ngày</Typography.Text></Space>
                                         </Col>
                                         <Col span={12}>
-                                            <Space><CheckCircleFilled style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: '#fff' }}>Cam kết 100% chính hãng</Typography.Text></Space>
+                                            <Space><CheckCircleFilled style={{ color: 'var(--primary-color)' }} /> <Typography.Text style={{ color: 'var(--text-main)' }}>Cam kết 100% chính hãng</Typography.Text></Space>
                                         </Col>
                                     </Row>
                                 </div>
 
-                                <Divider style={{ borderColor: 'rgba(255,255,255,0.05)' }} />
+                                <Divider style={{ borderColor: 'var(--glass-border)' }} />
 
                                 {/* Mô tả ngắn */}
                                 <div>
-                                    <Typography.Title level={5} style={{ color: '#fff' }}>Mô tả sản phẩm</Typography.Title>
+                                    <Typography.Title level={5} style={{ color: 'var(--text-main)' }}>Mô tả sản phẩm</Typography.Title>
                                     <Typography.Paragraph style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.8' }}>
                                         {product.description}
                                     </Typography.Paragraph>
@@ -331,7 +331,7 @@ const ProductDetailPage: React.FC = () => {
                     <Row gutter={[48, 48]}>
                         {/* THÔNG SỐ KỸ THUẬT */}
                         <Col xs={24} md={12}>
-                            <Typography.Title level={3} style={{ color: '#fff', marginBottom: '30px' }}>Thông số kỹ thuật</Typography.Title>
+                            <Typography.Title level={3} style={{ color: 'var(--text-main)', marginBottom: '30px' }}>Thông số kỹ thuật</Typography.Title>
                             {specs.length > 0 ? (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                     {specs.map((spec, index) => {
@@ -342,10 +342,10 @@ const ProductDetailPage: React.FC = () => {
                                                 display: 'flex',
                                                 justifyContent: 'space-between',
                                                 padding: '12px 0',
-                                                borderBottom: '1px solid rgba(255,255,255,0.03)'
+                                                borderBottom: '1px solid var(--glass-border)'
                                             }}>
                                                 <Typography.Text style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label.trim()}</Typography.Text>
-                                                <Typography.Text style={{ color: '#fff', fontWeight: 600 }}>{value ? value.trim() : ''}</Typography.Text>
+                                                <Typography.Text style={{ color: 'var(--text-main)', fontWeight: 600 }}>{value ? value.trim() : ''}</Typography.Text>
                                             </div>
                                         );
                                     })}
@@ -357,18 +357,18 @@ const ProductDetailPage: React.FC = () => {
 
                         {/* ĐÁNH GIÁ SẢN PHẨM */}
                         <Col xs={24} md={12}>
-                            <Typography.Title level={3} style={{ color: '#fff', marginBottom: '30px' }}>Đánh giá từ khách hàng</Typography.Title>
+                            <Typography.Title level={3} style={{ color: 'var(--text-main)', marginBottom: '30px' }}>Đánh giá từ khách hàng</Typography.Title>
 
                             {/* Tổng quan rating */}
                             <div style={{
-                                background: 'rgba(255,255,255,0.03)',
+                                background: 'var(--bg-secondary)',
                                 borderRadius: 16,
                                 padding: '24px',
                                 marginBottom: 24
                             }}>
                                 <Row gutter={24} align="middle">
                                     <Col xs={8} style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: '3rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{avgRating}</div>
+                                        <div style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{avgRating}</div>
                                         <StarRating value={parseFloat(avgRating)} size={14} />
                                         <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>{reviews.length} đánh giá</div>
                                     </Col>
@@ -377,7 +377,7 @@ const ProductDetailPage: React.FC = () => {
                                             <div key={star} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                                                 <Typography.Text style={{ color: 'var(--text-muted)', fontSize: 12, width: 10 }}>{star}</Typography.Text>
                                                 <StarFilled style={{ color: '#fadb14', fontSize: 12 }} />
-                                                <Progress percent={percent} showInfo={false} strokeColor="#fadb14" trailColor="rgba(255,255,255,0.05)" style={{ flex: 1, margin: 0 }} />
+                                                <Progress percent={percent} showInfo={false} strokeColor="#fadb14" trailColor="var(--glass-border)" style={{ flex: 1, margin: 0 }} />
                                                 <Typography.Text style={{ color: 'var(--text-muted)', fontSize: 12, width: 20 }}>{count}</Typography.Text>
                                             </div>
                                         ))}
@@ -394,7 +394,7 @@ const ProductDetailPage: React.FC = () => {
                                     padding: 20,
                                     marginBottom: 24
                                 }}>
-                                    <Typography.Text style={{ color: '#fff', display: 'block', marginBottom: 12, fontWeight: 600 }}>Viết đánh giá của bạn</Typography.Text>
+                                    <Typography.Text style={{ color: 'var(--text-main)', display: 'block', marginBottom: 12, fontWeight: 600 }}>Viết đánh giá của bạn</Typography.Text>
                                     <Rate value={userRating} onChange={setUserRating} style={{ marginBottom: 12 }} />
                                     <BaseInput
                                         placeholder="Nhập nhận xét của bạn..."
@@ -435,7 +435,7 @@ const ProductDetailPage: React.FC = () => {
                                                     <Avatar src={review.user.avatarUrl} icon={<UserOutlined />} size={36} />
                                                     <div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                            <Typography.Text style={{ color: '#fff', fontWeight: 600 }}>
+                                                            <Typography.Text style={{ color: 'var(--text-main)', fontWeight: 600 }}>
                                                                 {review.user.fullName || review.user.username}
                                                             </Typography.Text>
                                                             {review.isVerifiedPurchase && (

@@ -33,9 +33,9 @@ const VoucherManagement: React.FC = () => {
         fetchCoupons();
     }, []);
 
-    const handleToggle = async (id: number) => {
+    const handleStatusChange = async (id: number, active: boolean) => {
         try {
-            await couponApi.toggle(id);
+            await couponApi.updateStatus(id, active);
             notification.success('Đã cập nhật trạng thái');
             fetchCoupons();
         } catch {
@@ -114,7 +114,7 @@ const VoucherManagement: React.FC = () => {
                             <span>Tiến độ:</span>
                             <span>{record.usedCount}/{record.usageLimit}</span>
                         </div>
-                        <div style={{ height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 2 }}>
+                        <div style={{ height: 4, background: 'var(--glass-border)', borderRadius: 2 }}>
                             <div style={{
                                 height: '100%',
                                 width: `${Math.min(100, (record.usedCount / (record.usageLimit || 1)) * 100)}%`,
@@ -132,7 +132,7 @@ const VoucherManagement: React.FC = () => {
             render: (_, record: Coupon) => (
                 <Select
                     value={record.isActive}
-                    onChange={() => handleToggle(record.id)}
+                    onChange={(val) => handleStatusChange(record.id, val)}
                     size="small"
                     style={{ width: 110 }}
                     options={[
@@ -157,7 +157,7 @@ const VoucherManagement: React.FC = () => {
         <div style={{ padding: '10px 0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <div>
-                    <h3 style={{ color: '#fff', margin: 0 }}>Quản lý Chương trình Ưu đãi</h3>
+                    <h3 style={{ color: 'var(--text-main)', margin: 0 }}>Quản lý Chương trình Ưu đãi</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>Tạo và điều chỉnh các mã giảm giá cho khách hàng</p>
                 </div>
                 <BaseButton type="primary" icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>

@@ -7,6 +7,7 @@ export interface CouponValidateResponse {
     discountType: 'PERCENT' | 'FIXED';
     discountValue: number;
     discountAmount: number;
+    maxDiscountAmount?: number;
     finalAmount: number;
     message: string;
 }

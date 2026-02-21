@@ -9,6 +9,7 @@ export interface User {
     avatarUrl?: string;
     phone?: string;
     role: 'USER' | 'ADMIN';
+    themePreference?: 'light' | 'dark';
     createdAt?: string;
 }
 

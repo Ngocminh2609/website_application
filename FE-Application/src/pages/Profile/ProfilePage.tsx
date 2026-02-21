@@ -9,6 +9,7 @@ import type { UploadProps } from 'antd';
 import type { User } from '../../types/auth';
 import { userApi } from '../../api/userApi';
 import { fileApi } from '../../api/fileApi';
+import { useLocation } from 'react-router-dom';
 import { notification } from '../../utils/notification';
 import BaseButton from '../../components/common/BaseButton';
 
@@ -25,6 +26,7 @@ interface ProfilePageProps {
 const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
     const [profileForm] = Form.useForm();
     const [passwordForm] = Form.useForm();
+    const location = useLocation();
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [savingProfile, setSavingProfile] = useState(false);
@@ -51,7 +53,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
             }
         };
         fetchProfile();
-    }, [profileForm]);
+    }, [profileForm, location.key]);
 
     const handleSaveProfile = async (values: { fullName: string; email: string; phone: string }) => {
         setSavingProfile(true);
@@ -133,32 +135,29 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
     }
 
     const cardStyle: React.CSSProperties = {
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--glass-bg)',
+        border: '1px solid var(--glass-border)',
         borderRadius: '24px',
         padding: '40px',
         backdropFilter: 'blur(10px)',
     };
 
     const inputStyle: React.CSSProperties = {
-        background: 'rgba(255,255,255,0.06)',
-        border: '1px solid rgba(255,255,255,0.12)',
         borderRadius: '10px',
-        color: '#fff',
         height: '46px',
     };
 
     return (
         <div
             className="main-content animate-fade-in"
-            style={{ paddingTop: '100px', paddingBottom: '80px', color: '#fff' }}
+            style={{ paddingTop: '100px', paddingBottom: '80px', color: 'var(--text-main)' }}
         >
             {/* Header */}
             <div style={{ marginBottom: '48px' }}>
                 <Text style={{ color: 'var(--primary-color)', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.85rem' }}>
                     TÀI KHOẢN CỦA TÔI
                 </Text>
-                <Title level={2} style={{ color: '#fff', margin: '8px 0 0', fontWeight: 800 }}>
+                <Title level={2} style={{ color: 'var(--text-main)', margin: '8px 0 0', fontWeight: 800 }}>
                     Hồ Sơ Cá Nhân
                 </Title>
             </div>
@@ -201,12 +200,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                             </Upload>
                         </div>
 
-                        <Title level={4} style={{ color: '#fff', margin: '0 0 4px' }}>
+                        <Title level={4} style={{ color: 'var(--text-main)', margin: '0 0 4px' }}>
                             {user?.fullName || user?.username}
                         </Title>
                         <Text style={{ color: 'var(--text-muted)' }}>{user?.email}</Text>
 
-                        <Divider style={{ borderColor: 'rgba(255,255,255,0.08)', margin: '24px 0' }} />
+                        <Divider style={{ borderColor: 'var(--glass-border)', margin: '24px 0' }} />
 
                         <div style={{ textAlign: 'left' }}>
                             {[
@@ -216,7 +215,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                             ].map(item => (
                                 <div key={item.label} style={{ marginBottom: '16px' }}>
                                     <Text style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block' }}>{item.label}</Text>
-                                    <Text style={{ color: '#fff', fontWeight: 500 }}>{item.value}</Text>
+                                    <Text style={{ color: 'var(--text-main)', fontWeight: 500 }}>{item.value}</Text>
                                 </div>
                             ))}
                         </div>
@@ -227,9 +226,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                 style={{
                                     width: '100%',
                                     marginTop: '8px',
-                                    background: 'rgba(255,255,255,0.06)',
-                                    borderColor: 'rgba(255,255,255,0.12)',
-                                    color: '#fff',
+                                    background: 'var(--glass-bg)',
+                                    borderColor: 'var(--glass-border)',
+                                    color: 'var(--text-main)',
                                     height: '42px',
                                     borderRadius: '10px'
                                 }}
@@ -265,7 +264,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                             <Row gutter={[24, 0]}>
                                                 <Col xs={24} md={12}>
                                                     <Form.Item
-                                                        label={<Text style={{ color: 'rgba(255,255,255,0.7)' }}>Tên đầy đủ</Text>}
+                                                        label={<Text style={{ color: 'var(--text-main)' }}>Tên đầy đủ</Text>}
                                                         name="fullName"
                                                         rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
                                                     >
@@ -274,7 +273,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                 </Col>
                                                 <Col xs={24} md={12}>
                                                     <Form.Item
-                                                        label={<Text style={{ color: 'rgba(255,255,255,0.7)' }}>Tên đăng nhập</Text>}
+                                                        label={<Text style={{ color: 'var(--text-main)' }}>Tên đăng nhập</Text>}
                                                         name="username"
                                                     >
                                                         <Input style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }} disabled />
@@ -282,7 +281,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                 </Col>
                                                 <Col xs={24} md={12}>
                                                     <Form.Item
-                                                        label={<Text style={{ color: 'rgba(255,255,255,0.7)' }}>Email</Text>}
+                                                        label={<Text style={{ color: 'var(--text-main)' }}>Email</Text>}
                                                         name="email"
                                                         rules={[
                                                             { required: true, message: 'Vui lòng nhập email' },
@@ -294,7 +293,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                 </Col>
                                                 <Col xs={24} md={12}>
                                                     <Form.Item
-                                                        label={<Text style={{ color: 'rgba(255,255,255,0.7)' }}>Số điện thoại</Text>}
+                                                        label={<Text style={{ color: 'var(--text-main)' }}>Số điện thoại</Text>}
                                                         name="phone"
                                                         rules={[
                                                             { pattern: /^[0-9]{9,11}$/, message: 'Số điện thoại không hợp lệ' }
@@ -334,7 +333,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                             style={{ marginTop: '24px', maxWidth: '480px' }}
                                         >
                                             <Form.Item
-                                                label={<Text style={{ color: 'rgba(255,255,255,0.7)' }}>Mật khẩu hiện tại</Text>}
+                                                label={<Text style={{ color: 'var(--text-main)' }}>Mật khẩu hiện tại</Text>}
                                                 name="currentPassword"
                                                 rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
                                             >
@@ -342,7 +341,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                             </Form.Item>
 
                                             <Form.Item
-                                                label={<Text style={{ color: 'rgba(255,255,255,0.7)' }}>Mật khẩu mới</Text>}
+                                                label={<Text style={{ color: 'var(--text-main)' }}>Mật khẩu mới</Text>}
                                                 name="newPassword"
                                                 rules={[
                                                     { required: true, message: 'Vui lòng nhập mật khẩu mới' },
@@ -353,7 +352,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                             </Form.Item>
 
                                             <Form.Item
-                                                label={<Text style={{ color: 'rgba(255,255,255,0.7)' }}>Xác nhận mật khẩu mới</Text>}
+                                                label={<Text style={{ color: 'var(--text-main)' }}>Xác nhận mật khẩu mới</Text>}
                                                 name="confirmPassword"
                                                 rules={[{ required: true, message: 'Vui lòng xác nhận mật khẩu' }]}
                                             >

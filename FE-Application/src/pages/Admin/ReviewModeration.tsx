@@ -69,7 +69,7 @@ const ReviewModeration: React.FC = () => {
                         style={{ border: '1px solid rgba(255,255,255,0.1)' }}
                     />
                     <div>
-                        <Text strong style={{ display: 'block', color: '#fff' }}>{record.user.fullName || record.user.username}</Text>
+                        <Text strong style={{ display: 'block', color: 'var(--text-main)' }}>{record.user.fullName || record.user.username}</Text>
                         <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</Text>
                     </div>
                 </Space>
@@ -92,7 +92,7 @@ const ReviewModeration: React.FC = () => {
             render: (_, record: ProductReview) => (
                 <div>
                     <Rate disabled defaultValue={record.rating} style={{ fontSize: 12, marginBottom: 4 }} />
-                    <div style={{ color: '#e2e8f0', fontSize: 13, lineHeight: '1.4' }}>{record.comment}</div>
+                    <div style={{ color: 'var(--text-main)', fontSize: 13, lineHeight: '1.4' }}>{record.comment}</div>
                     <Space style={{ marginTop: 8 }}>
                         {record.isVerifiedPurchase && <Tag color="green" style={{ fontSize: 10, borderRadius: 4 }}>✓ ĐÃ MUA HÀNG</Tag>}
                         {!record.isApproved && <Tag color="warning" style={{ fontSize: 10, borderRadius: 4 }}>ĐANG CHỜ DUYỆT</Tag>}
@@ -144,7 +144,7 @@ const ReviewModeration: React.FC = () => {
     return (
         <div style={{ padding: '10px 0' }}>
             <div style={{ marginBottom: 24 }}>
-                <h3 style={{ color: '#fff', margin: 0 }}>Phê duyệt & Kiểm duyệt Đánh giá</h3>
+                <h3 style={{ color: 'var(--text-main)', margin: 0 }}>Phê duyệt & Kiểm duyệt Đánh giá</h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>Đảm bảo chất lượng trải nghiệm khách hàng thông qua kiểm soát nội dung</p>
             </div>
 

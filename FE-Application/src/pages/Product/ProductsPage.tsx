@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Layout, Typography, Row, Col, Checkbox, Slider, Space, Card, Tag, Empty, Spin } from 'antd';
 import { FilterOutlined, RocketOutlined } from '@ant-design/icons';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import ProductCard from '../../components/common/ProductCard';
 
@@ -13,6 +13,7 @@ const { Title, Text } = Typography;
  */
 const ProductsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const location = useLocation();
     const {
         products,
         categories,
@@ -59,7 +60,7 @@ const ProductsPage: React.FC = () => {
             }
         };
         loadInitialData();
-    }, [fetchProducts, initializeHomeData]);
+    }, [fetchProducts, initializeHomeData, location.key]);
 
     const brands = useMemo(() => {
         const uniqueBrands = new Set(products.map(p => p.brand).filter(Boolean) as string[]);
@@ -87,7 +88,7 @@ const ProductsPage: React.FC = () => {
                     <Col xs={24} lg={6}>
                         <div style={{ position: 'sticky', top: '100px' }}>
                             <Card
-                                title={<Title level={4} style={{ margin: 0, color: '#fff' }}><FilterOutlined /> BỘ LỌC TÌM KIẾM</Title>}
+                                title={<Title level={4} style={{ margin: 0, color: 'var(--text-main)' }}><FilterOutlined /> BỘ LỌC TÌM KIẾM</Title>}
                                 style={{
                                     background: 'var(--glass-bg)',
                                     border: '1px solid var(--glass-border)',
@@ -98,7 +99,7 @@ const ProductsPage: React.FC = () => {
                             >
                                 <Space direction="vertical" size="large" style={{ width: '100%' }}>
                                     <div>
-                                        <Text strong style={{ color: '#fff', display: 'block', marginBottom: '15px' }}>THƯƠNG HIỆU</Text>
+                                        <Text strong style={{ color: 'var(--text-main)', display: 'block', marginBottom: '15px' }}>THƯƠNG HIỆU</Text>
                                         <Checkbox.Group
                                             options={brands}
                                             value={selectedBrands}
@@ -108,7 +109,7 @@ const ProductsPage: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <Text strong style={{ color: '#fff', display: 'block', marginBottom: '15px' }}>CHUYÊN MỤC</Text>
+                                        <Text strong style={{ color: 'var(--text-main)', display: 'block', marginBottom: '15px' }}>CHUYÊN MỤC</Text>
                                         <Checkbox.Group
                                             value={selectedCategories}
                                             onChange={(vals) => setSelectedCategories(vals as number[])}
@@ -123,7 +124,7 @@ const ProductsPage: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <Text strong style={{ color: '#fff', display: 'block', marginBottom: '15px' }}>KHOẢNG GIÁ (VND)</Text>
+                                        <Text strong style={{ color: 'var(--text-main)', display: 'block', marginBottom: '15px' }}>KHOẢNG GIÁ (VND)</Text>
                                         <Slider
                                             range
                                             min={0}
@@ -156,7 +157,7 @@ const ProductsPage: React.FC = () => {
                     <Col xs={24} lg={18}>
                         <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <Title level={2} style={{ color: '#fff', margin: 0 }}>Kho Siêu Phẩm</Title>
+                                <Title level={2} style={{ color: 'var(--text-main)', margin: 0 }}>Kho Siêu Phẩm</Title>
                                 <Text style={{ color: 'var(--text-muted)' }}>Tìm thấy {filteredProducts.length} sản phẩm phù hợp</Text>
                             </div>
                             <Space>
@@ -175,7 +176,7 @@ const ProductsPage: React.FC = () => {
                             </Row>
                         ) : (
                             <div style={{ padding: '100px', textAlign: 'center', background: 'var(--glass-bg)', borderRadius: '20px' }}>
-                                <Empty description={<span style={{ color: '#fff' }}>Không tìm thấy sản phẩm nào khớp với bộ lọc của bạn</span>} />
+                                <Empty description={<span style={{ color: 'var(--text-main)' }}>Không tìm thấy sản phẩm nào khớp với bộ lọc của bạn</span>} />
                             </div>
                         )}
                     </Col>

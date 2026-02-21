@@ -16,15 +16,18 @@ public class CouponValidateResponse {
     private String discountType;
     private BigDecimal discountValue;
     private BigDecimal discountAmount;   // Số tiền thực tế được giảm theo đơn hiện tại
+    private BigDecimal maxDiscountAmount; // Giới hạn giảm tối đa
     private BigDecimal finalAmount;      // Số tiền thực tế phải thanh toán
     private String message;
 
     public CouponValidateResponse(String code, String discountType, BigDecimal discountValue,
-                                   BigDecimal discountAmount, BigDecimal finalAmount, String message) {
+                                   BigDecimal discountAmount, BigDecimal maxDiscountAmount,
+                                   BigDecimal finalAmount, String message) {
         this.code = code;
         this.discountType = discountType;
         this.discountValue = discountValue;
         this.discountAmount = discountAmount;
+        this.maxDiscountAmount = maxDiscountAmount;
         this.finalAmount = finalAmount;
         this.message = message;
     }

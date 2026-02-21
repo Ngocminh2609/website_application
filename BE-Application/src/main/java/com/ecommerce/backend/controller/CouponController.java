@@ -45,11 +45,11 @@ public class CouponController {
     }
 
     /**
-     * ADMIN: Bật/tắt trạng thái coupon thay vì xóa để giữ lại lịch sử sử dụng.
+     * ADMIN: Cập nhật trạng thái coupon (Kích hoạt/Tạm dừng).
      */
-    @PutMapping("/admin/{id}/toggle")
-    public ResponseEntity<String> toggleStatus(@PathVariable Long id) {
-        couponService.toggleCouponStatus(id);
+    @PutMapping("/admin/{id}/status")
+    public ResponseEntity<String> updateStatus(@PathVariable Long id, @RequestParam boolean active) {
+        couponService.updateCouponStatus(id, active);
         return ResponseEntity.ok("Cập nhật trạng thái thành công");
     }
 

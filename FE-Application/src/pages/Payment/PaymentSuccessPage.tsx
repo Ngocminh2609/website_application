@@ -68,19 +68,19 @@ const PaymentSuccessPage: React.FC = () => {
 
     return (
         <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 20px' }}>
-            <Card bordered={false} style={{ boxShadow: '0 10px 25px rgba(0,0,0,0.1)', borderRadius: 16 }}>
+            <Card className="glass-effect" bordered={false} style={{ boxShadow: 'var(--card-shadow)', borderRadius: 16 }}>
                 {status === 'success' ? (
                     <Result
                         status="success"
                         icon={<CheckCircleFilled style={{ color: '#52c41a' }} />}
-                        title={<Title level={2}>Thanh Toán Thành Công!</Title>}
+                        title={<Title level={2} style={{ color: 'var(--text-main)' }}>Thanh Toán Thành Công!</Title>}
                         subTitle={
                             <Space direction="vertical" style={{ width: '100%' }}>
-                                <Text type="secondary">Cảm ơn bạn đã tin tưởng lựa chọn sản phẩm của chúng tôi.</Text>
-                                <Card size="small" style={{ background: '#f6ffed', border: '1px solid #b7eb8f', marginTop: 16 }}>
-                                    <Space split={<Divider type="vertical" />}>
-                                        <Text>Mã đơn hàng: <b>#{txnRef}</b></Text>
-                                        <Text>Số tiền: <b style={{ color: '#cf1322' }}>{formatCurrency(amount)}</b></Text>
+                                <Text style={{ color: 'var(--text-muted)' }}>Cảm ơn bạn đã tin tưởng lựa chọn sản phẩm của chúng tôi.</Text>
+                                <Card size="small" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', marginTop: 16 }}>
+                                    <Space split={<Divider type="vertical" />} wrap>
+                                        <Text style={{ color: 'var(--text-main)' }}>Mã đơn hàng: <b style={{ color: 'var(--primary-color)' }}>#{txnRef}</b></Text>
+                                        <Text style={{ color: 'var(--text-main)' }}>Số tiền: <b style={{ color: '#ef4444' }}>{formatCurrency(amount)}</b></Text>
                                     </Space>
                                 </Card>
                             </Space>
@@ -90,25 +90,25 @@ const PaymentSuccessPage: React.FC = () => {
                     <Result
                         status="error"
                         icon={<CloseCircleFilled style={{ color: '#ff4d4f' }} />}
-                        title={<Title level={2}>Thanh Toán Không Thành Công</Title>}
-                        subTitle="Giao dịch của bạn đã bị hủy hoặc gặp lỗi trong quá trình xử lý. Vui lòng thử lại hoặc liên hệ hỗ trợ."
+                        title={<Title level={2} style={{ color: 'var(--text-main)' }}>Thanh Toán Không Thành Công</Title>}
+                        subTitle={<Text style={{ color: 'var(--text-muted)' }}>Giao dịch của bạn đã bị hủy hoặc gặp lỗi trong quá trình xử lý. Vui lòng thử lại hoặc liên hệ hỗ trợ.</Text>}
                     />
                 )}
 
                 {status === 'success' && (
                     <div style={{ marginTop: 40, padding: '0 20px' }}>
-                        <Divider>Hành trình đơn hàng</Divider>
+                        <Divider style={{ borderColor: 'var(--glass-border)', color: 'var(--text-main)' }}>Hành trình đơn hàng</Divider>
                         <Steps
                             current={1}
                             items={[
-                                { title: 'Đã thanh toán', icon: <CheckCircleFilled /> },
-                                { title: 'Đang xử lý', icon: <SolutionOutlined /> },
-                                { title: 'Giao hàng', icon: <TruckOutlined /> },
-                                { title: 'Hoàn thành', icon: <SmileOutlined /> },
+                                { title: <span style={{ color: 'var(--text-main)' }}>Đã thanh toán</span>, icon: <CheckCircleFilled /> },
+                                { title: <span style={{ color: 'var(--text-main)' }}>Đang xử lý</span>, icon: <SolutionOutlined /> },
+                                { title: <span style={{ color: 'var(--text-main)' }}>Giao hàng</span>, icon: <TruckOutlined /> },
+                                { title: <span style={{ color: 'var(--text-main)' }}>Hoàn thành</span>, icon: <SmileOutlined /> },
                             ]}
                         />
-                        <div style={{ marginTop: 24, padding: 16, background: '#fafafa', borderRadius: 8 }}>
-                            <Text italic type="secondary">
+                        <div style={{ marginTop: 24, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--glass-border)' }}>
+                            <Text italic style={{ color: 'var(--text-muted)' }}>
                                 * Lưu ý: Đơn hàng sẽ bắt đầu được đóng gói và bàn giao cho đơn vị vận chuyển trong vòng 24h tới. Bạn có thể theo dõi trạng thái tại mục Đơn hàng của tôi.
                             </Text>
                         </div>
@@ -122,7 +122,7 @@ const PaymentSuccessPage: React.FC = () => {
                             size="large"
                             icon={<HistoryOutlined />}
                             onClick={() => navigate('/orders')}
-                            style={{ borderRadius: 8, height: 48, padding: '0 32px', background: '#1890ff', border: 'none' }}
+                            style={{ borderRadius: 8, height: 48, padding: '0 32px', background: 'var(--primary-color)', border: 'none' }}
                         >
                             Xem đơn hàng
                         </Button>
@@ -130,7 +130,7 @@ const PaymentSuccessPage: React.FC = () => {
                             size="large"
                             icon={<ShoppingOutlined />}
                             onClick={() => navigate('/products')}
-                            style={{ borderRadius: 8, height: 48, padding: '0 32px' }}
+                            style={{ borderRadius: 8, height: 48, padding: '0 32px', background: 'var(--glass-bg)', borderColor: 'var(--glass-border)', color: 'var(--text-main)' }}
                         >
                             Tiếp tục mua sắm
                         </Button>
@@ -138,7 +138,7 @@ const PaymentSuccessPage: React.FC = () => {
                             size="large"
                             icon={<HomeOutlined />}
                             onClick={() => navigate('/')}
-                            style={{ borderRadius: 8, height: 48, padding: '0 32px' }}
+                            style={{ borderRadius: 8, height: 48, padding: '0 32px', background: 'var(--glass-bg)', borderColor: 'var(--glass-border)', color: 'var(--text-main)' }}
                         >
                             Trang chủ
                         </Button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Typography, Row, Col, Card, Table, Space, Tag, Modal, Form, Input, InputNumber, Select, Upload, Tabs, Tooltip, Badge } from 'antd';
 import type { UploadFile } from 'antd';
+import { useLocation } from 'react-router-dom';
 import {
     TeamOutlined,
     ShoppingOutlined,
@@ -49,6 +50,7 @@ const { Title, Text } = Typography;
  */
 const AdminDashboard: React.FC = () => {
     const { totalUnread } = useAdminChat();
+    const location = useLocation();
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
@@ -96,7 +98,7 @@ const AdminDashboard: React.FC = () => {
         if (hash) {
             setActiveTab(hash);
         }
-    }, []);
+    }, [location.pathname, location.search, activeTab]); // Gọi lại load khi đổi route hoặc đổi tab
 
     const handleAddProduct = () => {
         setEditingId(null);
@@ -238,7 +240,7 @@ const AdminDashboard: React.FC = () => {
                         )}
                     </div>
                     <div>
-                        <Text strong style={{ display: 'block', fontSize: '15px', color: '#fff' }}>{record.name}</Text>
+                        <Text strong style={{ display: 'block', fontSize: '15px', color: 'var(--text-main)' }}>{record.name}</Text>
                         <Space>
                             <Tag color="blue" style={{ borderRadius: 4, margin: 0 }}>{record.brand || 'No Brand'}</Tag>
                             <Tag color="purple" style={{ borderRadius: 4, margin: 0 }}>{record.category?.name}</Tag>
@@ -308,7 +310,7 @@ const AdminDashboard: React.FC = () => {
             title: 'Tổng tiền',
             dataIndex: 'totalAmount',
             key: 'totalAmount',
-            render: (amt: number) => <Text strong style={{ color: '#ee636e' }}>{amt.toLocaleString('vi-VN')}đ</Text>,
+            render: (amt: number) => <Text strong style={{ color: 'var(--primary-color)' }}>{amt.toLocaleString('vi-VN')}đ</Text>,
         },
         {
             title: 'Trạng thái',
@@ -378,7 +380,7 @@ const AdminDashboard: React.FC = () => {
                 gap: '20px'
             }}>
                 <div>
-                    <Title level={1} style={{ color: '#fff', margin: 0 }}>Quản Trị Hệ Thống</Title>
+                    <Title level={1} style={{ color: 'var(--text-main)', margin: 0 }}>Quản Trị Hệ Thống</Title>
                     <Text style={{ color: 'var(--text-muted)' }}>Cửa hàng của bạn đang có {orders.length} đơn hàng cần theo dõi</Text>
                 </div>
             </div>
@@ -388,7 +390,7 @@ const AdminDashboard: React.FC = () => {
                     <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
                         <Space direction="vertical" size="small">
                             <Text style={{ color: 'var(--text-muted)' }}><ShoppingOutlined /> Kho hàng</Text>
-                            <Title level={2} style={{ margin: 0, color: '#fff' }}>{products.length} <Text style={{ fontSize: 14 }}>Sản phẩm</Text></Title>
+                            <Title level={2} style={{ margin: 0, color: 'var(--text-main)' }}>{products.length} <Text style={{ fontSize: 14 }}>Sản phẩm</Text></Title>
                         </Space>
                     </Card>
                 </Col>
@@ -396,7 +398,7 @@ const AdminDashboard: React.FC = () => {
                     <Card className="glass-effect" styles={{ body: { padding: '24px' } }}>
                         <Space direction="vertical" size="small">
                             <Text style={{ color: 'var(--text-muted)' }}><HistoryOutlined /> Đơn hàng</Text>
-                            <Title level={2} style={{ margin: 0, color: '#fff' }}>{orders.length} <Text style={{ fontSize: 14 }}>Yêu cầu</Text></Title>
+                            <Title level={2} style={{ margin: 0, color: 'var(--text-main)' }}>{orders.length} <Text style={{ fontSize: 14 }}>Yêu cầu</Text></Title>
                         </Space>
                     </Card>
                 </Col>
@@ -414,6 +416,7 @@ const AdminDashboard: React.FC = () => {
                 <Tabs
                     activeKey={activeTab}
                     onChange={setActiveTab}
+                    destroyInactiveTabPane={true}
                     items={[
                         {
                             key: 'products',
@@ -527,7 +530,7 @@ const AdminDashboard: React.FC = () => {
                         </Col>
                         <Col span={10}>
                             <div style={{
-                                background: 'rgba(99, 102, 241, 0.05)',
+                                background: 'var(--bg-secondary)',
                                 padding: '12px 16px',
                                 borderRadius: 12,
                                 marginTop: 30,
