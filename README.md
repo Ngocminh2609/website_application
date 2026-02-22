@@ -64,6 +64,7 @@ Hệ thống giao tiếp theo mô hình:
 | Biểu đồ | Recharts | 3.x |
 | Google OAuth | @react-oauth/google | 0.13.x |
 | WebSocket client | @stomp/stompjs + SockJS-client | 7.x / 1.6.x |
+| PWA Support | vite-plugin-pwa | 0.21.x |
 | Styling | Vanilla CSS (Glassmorphism) | - |
 | Deploy | Vercel | - |
 
@@ -136,6 +137,13 @@ Database sử dụng `utf8mb4 / utf8mb4_unicode_ci`, engine `InnoDB`, có đầy
 - **Quản lý đơn hàng**: Xem toàn bộ, cập nhật trạng thái (SHIPPING, DELIVERED, CANCELLED), xóa đơn.
 - **Chat admin**: Nhận và trả lời tin nhắn từ khách hàng theo thời gian thực, badge thông báo chưa đọc.
 - **Thông báo popup**: Hiển thị popup cho admin khi có đơn hàng mới hoặc chat mới.
+
+### Tính năng PWA (Progressive Web App)
+
+- **Cài đặt như App**: Hỗ trợ cài đặt trực tiếp vào màn hình chính trên Android, iOS và Desktop.
+- **Hoạt động ngoại tuyến**: Sử dụng Service Worker để cache dữ liệu, hình ảnh và script, giúp truy cập nhanh và xem được một số nội dung khi không có internet.
+- **Trang Offline**: Giao diện chuyên nghiệp thay thế lỗi trình duyệt khi mất kết nối.
+- **Cập nhật thông minh**: Thông báo cho người dùng khi có phiên bản website mới mà không làm gián đoạn trải nghiệm.
 
 ---
 

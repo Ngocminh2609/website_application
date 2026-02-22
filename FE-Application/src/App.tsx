@@ -28,6 +28,7 @@ import { CompareProvider } from './context/CompareContext';
 import { userApi } from './api/userApi';
 import CompareBar from './components/common/CompareBar';
 import ComparePage from './pages/Product/ComparePage';
+import ReloadPrompt from './components/pwa/ReloadPrompt';
 
 // Thay thế bằng Client ID của bạn từ Google Cloud Console
 const GOOGLE_CLIENT_ID = "1051116450325-qneacpielnd6acgajc3kftfpk9nkjkqj.apps.googleusercontent.com";
@@ -166,6 +167,7 @@ const App: React.FC = () => {
                           <Footer />
                           <ChatWidget key={user ? String(user.id) : 'guest'} user={user} />
                           <CompareBar />
+                          <ReloadPrompt />
                         </Layout>
                       </AdminChatProvider>
                     </NotificationProvider>
