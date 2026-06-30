@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Row, Col, Space, Divider, Spin } from 'antd';
 import { ThunderboltFilled, ArrowRightOutlined, StarFilled } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../types/product';
 import ProductCard from '../../components/common/ProductCard';
@@ -16,7 +16,6 @@ const { Title, Text, Paragraph } = Typography;
  */
 const HomePage: React.FC = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const {
         flashSales,
         bestSellers,
@@ -54,7 +53,8 @@ const HomePage: React.FC = () => {
         };
 
         fetchHomeData();
-    }, [initializeHomeData, fetchProductsByBrand, location.key]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Chỉ chạy 1 lần khi mount - initializeHomeData & fetchProductsByBrand là useCallback ổn định
 
     if (productLoading || loadingBrands) {
         return (

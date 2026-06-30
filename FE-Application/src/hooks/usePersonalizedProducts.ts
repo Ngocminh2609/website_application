@@ -20,7 +20,8 @@ export const usePersonalizedProducts = (limit: number = 6) => {
             fetchProducts();
             initializeHomeData();
         }
-    }, [products.length, loading, fetchProducts, initializeHomeData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [products.length, loading]); // fetchProducts & initializeHomeData là useCallback ổn định, không cần trong deps
 
     useEffect(() => {
         const fetchPersonalized = async () => {
