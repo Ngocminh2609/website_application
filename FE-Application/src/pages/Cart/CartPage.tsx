@@ -241,13 +241,13 @@ const CartPage: React.FC = () => {
 
         try {
             setCheckoutLoading(true);
-            const response = await paymentApi.createOrderPayment(
-                user.username,
-                fullAddressString,
-                selectedAddr.phoneNumber,
-                couponResult?.code,
+            const response = await paymentApi.createOrderPayment({
+                username: user.username,
+                address: fullAddressString,
+                phone: selectedAddr.phoneNumber,
+                couponCode: couponResult?.code,
                 paymentMethod
-            );
+            });
 
             if (paymentMethod === 'VNPAY' && response.url) {
                 window.location.href = response.url;

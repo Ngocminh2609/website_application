@@ -2,6 +2,7 @@ import React from 'react';
 import { Input } from 'antd';
 import type { InputProps } from 'antd';
 import type { PasswordProps } from 'antd/es/input';
+import { BASE_INPUT_STYLE } from '../../styles/commonStyles';
 
 /**
  * Thành phần Input dùng chung được tùy chỉnh từ Ant Design.
@@ -10,10 +11,7 @@ const BaseInput: React.FC<InputProps> & { Password: React.FC<PasswordProps> } = 
     return (
         <Input
             {...props}
-            style={{
-                borderRadius: '8px',
-                ...props.style
-            }}
+            style={{ ...BASE_INPUT_STYLE, ...props.style }}
         />
     );
 };
@@ -25,10 +23,7 @@ BaseInput.Password = (props: PasswordProps) => {
     return (
         <Input.Password
             {...props}
-            style={{
-                borderRadius: '8px',
-                ...props.style
-            }}
+            style={{ ...BASE_INPUT_STYLE, ...props.style }}
         />
     );
 };

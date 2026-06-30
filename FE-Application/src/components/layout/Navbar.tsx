@@ -30,6 +30,42 @@ import { useWishlist } from '../../hooks/useWishlist';
 const { Header } = Layout;
 const { Text } = Typography;
 
+import {
+    FALLBACK_IMAGE,
+    ICON_WRAPPER_STYLE,
+    themeText,
+    themeBorder,
+    getNavbarNotificationMenuStyle
+} from '../../styles/commonStyles';
+
+const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    if (target.dataset.errored === 'true') return;
+    target.dataset.errored = 'true';
+    target.src = FALLBACK_IMAGE;
+};
+
+// ─── NavIconBadge Sub-component ──────────────────────────────────────────────
+interface NavIconBadgeProps {
+    count: number | string;
+    color: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+    id?: string;
+    title: string;
+}
+
+const NavIconBadge: React.FC<NavIconBadgeProps> = ({ count, color, icon, onClick, id, title }) => (
+    <Tooltip title={title}>
+        <div id={id} onClick={onClick} style={ICON_WRAPPER_STYLE}>
+            <Badge count={count} size="small" offset={[5, 0]} color={color} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {icon}
+            </Badge>
+        </div>
+    </Tooltip>
+);
+
+// ─── Navbar Component ─────────────────────────────────────────────────────────
 interface NavbarProps {
     user: User | null;
     onLogout: () => void;
@@ -62,54 +98,28 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
         const q = params.get('q');
         if (q) {
             setSearchValue(q);
-        } else if (location.pathname.startsWith('/product/')) {
-            // Nếu là trang chi tiết, có thể giữ tên sản phẩm nếu nó được set từ onSelect
-        } else {
+        } else if (!location.pathname.startsWith('/product/')) {
             setSearchValue('');
         }
     }, [location.search, location.pathname]);
 
+    const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
     const menuItems: MenuProps['items'] = [
-        { key: '/', label: <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Trang Chủ</Link> },
-        { key: '/products', label: <Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>Sản Phẩm</Link> },
-        { key: '/wishlist', label: <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)}>Yêu Thích</Link> },
+        { key: '/', label: <Link to="/" onClick={closeMobileMenu}>Trang Chủ</Link> },
+        { key: '/products', label: <Link to="/products" onClick={closeMobileMenu}>Sản Phẩm</Link> },
+        { key: '/wishlist', label: <Link to="/wishlist" onClick={closeMobileMenu}>Yêu Thích</Link> },
     ];
 
     const userMenuItems: MenuProps['items'] = [
-        {
-            key: 'profile',
-            label: 'Hồ sơ cá nhân',
-            icon: <UserOutlined />,
-            onClick: () => navigate('/profile'),
-        },
-        {
-            key: 'wishlist',
-            label: 'Danh sách yêu thích',
-            icon: <HeartOutlined />,
-            onClick: () => navigate('/wishlist'),
-        },
-        {
-            key: 'orders',
-            label: 'Đơn hàng của tôi',
-            icon: <ShoppingOutlined />,
-            onClick: () => navigate('/orders'),
-        },
+        { key: 'profile', label: 'Hồ sơ cá nhân', icon: <UserOutlined />, onClick: () => navigate('/profile') },
+        { key: 'wishlist', label: 'Danh sách yêu thích', icon: <HeartOutlined />, onClick: () => navigate('/wishlist') },
+        { key: 'orders', label: 'Đơn hàng của tôi', icon: <ShoppingOutlined />, onClick: () => navigate('/orders') },
         ...(user?.role === 'ADMIN' ? [
-            {
-                key: 'admin',
-                label: 'Quản trị hệ thống',
-                icon: <DashboardOutlined />,
-                onClick: () => navigate('/admin'),
-            }
+            { key: 'admin', label: 'Quản trị hệ thống', icon: <DashboardOutlined />, onClick: () => navigate('/admin') }
         ] : []),
         { type: 'divider' },
-        {
-            key: 'logout',
-            label: 'Đăng xuất',
-            icon: <LogoutOutlined />,
-            onClick: onLogout,
-            danger: true,
-        },
+        { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, onClick: onLogout, danger: true },
     ];
 
     // Xử lý tìm kiếm sản phẩm theo từ khóa
@@ -119,7 +129,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
             setSearchResults([]);
             return;
         }
-
         setIsSearching(true);
         try {
             const results = await productApi.searchProducts(value);
@@ -135,40 +144,35 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
     const goToSearchPage = (query: string) => {
         if (!query.trim()) return;
         navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-        // Không xóa searchValue để người dùng thấy từ khóa của mình
         setSearchResults([]);
     };
 
     // Chuyển hướng khi chọn sản phẩm từ kết quả tìm kiếm hoặc gợi ý
     const onSelectProduct = (productId: string | number) => {
         const product = [...searchResults, ...bestSellers].find(p => String(p.id) === String(productId));
-        if (product) {
-            setSearchValue(product.name);
-        }
+        if (product) setSearchValue(product.name);
         navigate(`/product/${productId}`);
         setSearchResults([]);
     };
 
     // Nội dung dropdown thông báo
     const notificationMenu = (
-        <div style={{
-            width: '350px',
-            backgroundColor: isDarkMode ? '#1e293b' : '#fff',
-            borderRadius: '12px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.05)'}`,
-            overflow: 'hidden'
-        }}>
+        <div style={getNavbarNotificationMenuStyle(isDarkMode)}>
             <div style={{
                 padding: '16px',
-                borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.05)'}`,
+                borderBottom: `1px solid ${themeBorder(isDarkMode)}`,
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
             }}>
-                <Text strong style={{ color: isDarkMode ? '#fff' : '#1e293b', fontSize: '16px' }}>Thông báo</Text>
+                <Text strong style={{ color: themeText(isDarkMode), fontSize: '16px' }}>Thông báo</Text>
                 {unreadCount > 0 && (
-                    <BaseButton type="text" size="small" onClick={() => markAllAsRead()} style={{ color: 'var(--primary-color)', fontSize: '12px', padding: 0 }}>
+                    <BaseButton
+                        type="text"
+                        size="small"
+                        onClick={() => markAllAsRead()}
+                        style={{ color: 'var(--primary-color)', fontSize: '12px', padding: 0 }}
+                    >
                         Đánh dấu tất cả đã đọc
                     </BaseButton>
                 )}
@@ -182,9 +186,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                                 onClick={() => !item.isRead && markAsRead(item.id)}
                                 style={{
                                     padding: '12px 16px',
-                                    borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.05)'}`,
+                                    borderBottom: `1px solid ${themeBorder(isDarkMode)}`,
                                     cursor: 'pointer',
-                                    backgroundColor: item.isRead ? 'transparent' : (isDarkMode ? 'rgba(99, 102, 241, 0.05)' : 'rgba(99, 102, 241, 0.02)'),
+                                    backgroundColor: item.isRead
+                                        ? 'transparent'
+                                        : (isDarkMode ? 'rgba(99, 102, 241, 0.05)' : 'rgba(99, 102, 241, 0.02)'),
                                     transition: 'all 0.3s'
                                 }}
                             >
@@ -197,7 +203,13 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                                         marginTop: '6px'
                                     }} />
                                     <div style={{ flex: 1 }}>
-                                        <Text style={{ color: item.isRead ? (isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.45)') : (isDarkMode ? '#fff' : '#1e293b'), fontSize: '14px', display: 'block' }}>
+                                        <Text style={{
+                                            color: item.isRead
+                                                ? (isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.45)')
+                                                : themeText(isDarkMode),
+                                            fontSize: '14px',
+                                            display: 'block'
+                                        }}>
                                             {item.message}
                                         </Text>
                                         <Text style={{ color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)', fontSize: '11px' }}>
@@ -220,9 +232,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
 
     const searchOptions = [
         {
-            label: <span style={{ color: isDarkMode ? 'var(--text-muted)' : 'rgba(0,0,0,0.45)', fontSize: '12px' }}>
-                {!searchValue ? 'GỢI Ý CHO BẠN' : `KẾT QUẢ CHO "${searchValue}"`}
-            </span>,
+            label: (
+                <span style={{ color: isDarkMode ? 'var(--text-muted)' : 'rgba(0,0,0,0.45)', fontSize: '12px' }}>
+                    {!searchValue ? 'GỢI Ý CHO BẠN' : `KẾT QUẢ CHO "${searchValue}"`}
+                </span>
+            ),
             options: (!searchValue ? bestSellers.slice(0, 5) : searchResults.slice(0, 8)).map(product => ({
                 value: product.id,
                 label: (
@@ -230,16 +244,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                         <img
                             src={product.imageUrl}
                             alt={product.name}
-                            style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}` }}
-                            onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                if (target.dataset.errored === 'true') return;
-                                target.dataset.errored = 'true';
-                                target.src = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800';
-                            }}
+                            style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px', border: `1px solid ${themeBorder(isDarkMode)}` }}
+                            onError={handleImgError}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 500, color: isDarkMode ? '#fff' : '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontWeight: 500, color: themeText(isDarkMode), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {product.name}
                             </div>
                             <div style={{ fontSize: '12px', color: 'var(--primary-color)' }}>
@@ -257,11 +266,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                     onClick={() => goToSearchPage(searchValue)}
                     style={{
                         padding: '10px',
-                        textAlign: 'center',
+                        textAlign: 'center' as const,
                         cursor: 'pointer',
                         color: 'var(--primary-color)',
                         fontWeight: 600,
-                        borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
+                        borderTop: `1px solid ${themeBorder(isDarkMode)}`,
                         marginTop: '4px'
                     }}
                 >
@@ -289,7 +298,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                 <div className="mobile-only" onClick={() => setIsMobileMenuOpen(true)}>
                     <MenuOutlined style={{ fontSize: '20px', color: 'var(--text-main)', cursor: 'pointer' }} />
                 </div>
-
                 <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
                     TECH NOVA
                 </div>
@@ -307,26 +315,16 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                     suffixIcon={
                         <SearchOutlined
                             onClick={() => goToSearchPage(searchValue)}
-                            style={{
-                                color: 'var(--primary-color)',
-                                fontSize: '18px',
-                                cursor: 'pointer'
-                            }}
+                            style={{ color: 'var(--primary-color)', fontSize: '18px', cursor: 'pointer' }}
                         />
                     }
                     filterOption={false}
                     onSearch={handleSearch}
-                    onSelect={(val: string | number | null) => {
-                        if (val) onSelectProduct(val);
-                    }}
-                    onInputKeyDown={(e) => {
-                        if (e.key === 'Enter' && searchValue) {
-                            goToSearchPage(searchValue);
-                        }
-                    }}
+                    onSelect={(val: string | number | null) => { if (val) onSelectProduct(val); }}
+                    onInputKeyDown={(e) => { if (e.key === 'Enter' && searchValue) goToSearchPage(searchValue); }}
                     options={searchOptions}
                     loading={isSearching}
-                    notFoundContent={searchValue ? "Không tìm thấy" : null}
+                    notFoundContent={searchValue ? 'Không tìm thấy' : null}
                     dropdownStyle={{
                         backgroundColor: 'var(--bg-secondary)',
                         border: '1px solid var(--glass-border)',
@@ -342,48 +340,49 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                 <Tooltip title={isDarkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}>
                     <div
                         onClick={onToggleTheme}
-                        style={{
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            backgroundColor: 'var(--glass-border)',
-                            transition: 'all 0.3s'
-                        }}
+                        style={{ ...ICON_WRAPPER_STYLE, backgroundColor: 'var(--glass-border)' }}
                     >
-                        {isDarkMode ? <SunOutlined style={{ fontSize: '20px', color: '#fbbf24' }} /> : <MoonOutlined style={{ fontSize: '20px', color: '#6366f1' }} />}
+                        {isDarkMode
+                            ? <SunOutlined style={{ fontSize: '20px', color: '#fbbf24' }} />
+                            : <MoonOutlined style={{ fontSize: '20px', color: '#6366f1' }} />}
                     </div>
                 </Tooltip>
 
                 {user && (
                     <>
-                        <div onClick={() => navigate('/wishlist')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                            <Badge count={wishlistItems.length} size="small" offset={[5, 0]} color="#f43f5e">
-                                <HeartOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
-                            </Badge>
-                        </div>
+                        <NavIconBadge
+                            count={wishlistItems.length}
+                            color="#f43f5e"
+                            icon={<HeartOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />}
+                            onClick={() => navigate('/wishlist')}
+                            title="Danh sách yêu thích"
+                        />
                         {user.role === 'ADMIN' && (
-                            <div onClick={() => navigate('/admin#chat')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                                <Badge count={chatUnread} size="small" offset={[5, 0]} color="#6366f1">
-                                    <MessageOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
-                                </Badge>
-                            </div>
+                            <NavIconBadge
+                                count={chatUnread}
+                                color="#6366f1"
+                                icon={<MessageOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />}
+                                onClick={() => navigate('/admin#chat')}
+                                title="Tin nhắn hỗ trợ"
+                            />
                         )}
-                        <Dropdown dropdownRender={() => notificationMenu} placement="bottomRight" trigger={['click']} arrow>
-                            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                                <Badge count={unreadCount} size="small" offset={[5, 0]} color="#ff4d4f">
-                                    <BellOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
-                                </Badge>
-                            </div>
-                        </Dropdown>
-                        <div id="cart-icon" onClick={() => navigate('/cart')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                            <Badge count={cartCount} size="small" offset={[5, 0]} color="#6366f1">
-                                <ShoppingCartOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
-                            </Badge>
-                        </div>
+                        <Tooltip title="Thông báo">
+                            <Dropdown dropdownRender={() => notificationMenu} placement="bottomRight" trigger={['click']} arrow>
+                                <div style={ICON_WRAPPER_STYLE}>
+                                    <Badge count={unreadCount} size="small" offset={[5, 0]} color="#ff4d4f" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <BellOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
+                                    </Badge>
+                                </div>
+                            </Dropdown>
+                        </Tooltip>
+                        <NavIconBadge
+                            id="cart-icon"
+                            count={cartCount}
+                            color="#6366f1"
+                            icon={<ShoppingCartOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />}
+                            onClick={() => navigate('/cart')}
+                            title="Giỏ hàng"
+                        />
                     </>
                 )}
 
@@ -402,7 +401,12 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                     </Dropdown>
                 ) : (
                     <Space>
-                        <BaseButton type="text" style={{ color: isDarkMode ? '#fff' : '#1e293b' }} onClick={() => navigate('/login')} className="desktop-only">
+                        <BaseButton
+                            type="text"
+                            style={{ color: themeText(isDarkMode) }}
+                            onClick={() => navigate('/login')}
+                            className="desktop-only"
+                        >
                             Đăng Nhập
                         </BaseButton>
                         <BaseButton type="primary" onClick={() => navigate('/register')}>
@@ -413,14 +417,14 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
             </Space>
 
             <Drawer
-                title={<div className="logo" style={{ color: isDarkMode ? '#fff' : '#1e293b' }}>TECH NOVA</div>}
+                title={<div className="logo" style={{ color: themeText(isDarkMode) }}>TECH NOVA</div>}
                 placement="left"
-                onClose={() => setIsMobileMenuOpen(false)}
+                onClose={closeMobileMenu}
                 open={isMobileMenuOpen}
                 width={280}
                 styles={{
                     body: { backgroundColor: isDarkMode ? '#0f172a' : '#fff', padding: 0 },
-                    header: { backgroundColor: isDarkMode ? '#0f172a' : '#fff', borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}` }
+                    header: { backgroundColor: isDarkMode ? '#0f172a' : '#fff', borderBottom: `1px solid ${themeBorder(isDarkMode)}` }
                 }}
             >
                 <Menu

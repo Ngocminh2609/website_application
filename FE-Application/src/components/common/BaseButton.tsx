@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from 'antd';
 import type { ButtonProps } from 'antd';
+import { BASE_BUTTON_STYLE } from '../../styles/commonStyles';
 
 /**
  * Thành phần Button dùng chung được tùy chỉnh từ Ant Design.
@@ -11,13 +12,7 @@ const BaseButton: React.FC<ButtonProps> = (props) => {
         <Button
             {...props}
             style={{
-                borderRadius: '8px',
-                fontWeight: 600,
-                height: 'auto',
-                padding: '8px 24px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                ...BASE_BUTTON_STYLE,
                 ...props.style
             }}
         >

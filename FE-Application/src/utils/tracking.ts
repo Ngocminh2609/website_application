@@ -49,7 +49,7 @@ export const trackingUtils = {
         try {
             if (!categoryName) return;
             const raw = localStorage.getItem(CATEGORY_INTEREST_KEY);
-            let interests: CategoryInterest[] = raw ? JSON.parse(raw) : [];
+            const interests: CategoryInterest[] = raw ? JSON.parse(raw) : [];
 
             const index = interests.findIndex(i => i.categoryName === categoryName);
             if (index > -1) {

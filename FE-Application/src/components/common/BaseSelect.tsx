@@ -1,6 +1,7 @@
 import React from 'react';
 import { Select } from 'antd';
 import type { SelectProps } from 'antd';
+import { BASE_SELECT_STYLE, BASE_SELECT_DROPDOWN_STYLE } from '../../styles/commonStyles';
 
 /**
  * Thành phần Select dùng chung.
@@ -10,8 +11,8 @@ const BaseSelect: React.FC<SelectProps> = (props) => {
     return (
         <Select
             {...props}
-            style={{ width: '100%', ...props.style }}
-            dropdownStyle={{ backgroundColor: '#1e293b' }}
+            style={{ ...BASE_SELECT_STYLE, ...props.style }}
+            dropdownStyle={BASE_SELECT_DROPDOWN_STYLE}
         />
     );
 };

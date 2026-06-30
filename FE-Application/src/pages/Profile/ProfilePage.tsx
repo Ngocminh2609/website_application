@@ -12,6 +12,7 @@ import { fileApi } from '../../api/fileApi';
 import { useLocation } from 'react-router-dom';
 import { notification } from '../../utils/notification';
 import BaseButton from '../../components/common/BaseButton';
+import { PROFILE_CARD_STYLE, PROFILE_INPUT_STYLE } from '../../styles/commonStyles';
 
 const { Title, Text } = Typography;
 
@@ -134,19 +135,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
         );
     }
 
-    const cardStyle: React.CSSProperties = {
-        background: 'var(--glass-bg)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: '24px',
-        padding: '40px',
-        backdropFilter: 'blur(10px)',
-    };
-
-    const inputStyle: React.CSSProperties = {
-        borderRadius: '10px',
-        height: '46px',
-    };
-
     return (
         <div
             className="main-content animate-fade-in"
@@ -165,7 +153,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
             <Row gutter={[48, 48]}>
                 {/* Cột trái: Avatar + thông tin nhanh */}
                 <Col xs={24} lg={7}>
-                    <div style={{ ...cardStyle, textAlign: 'center' }}>
+                    <div style={{ ...PROFILE_CARD_STYLE, textAlign: 'center' }}>
                         <div style={{ position: 'relative', display: 'inline-block', marginBottom: '24px' }}>
                             <Avatar
                                 size={120}
@@ -242,7 +230,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
 
                 {/* Cột phải: Tabs form */}
                 <Col xs={24} lg={17}>
-                    <div style={cardStyle}>
+                    <div style={PROFILE_CARD_STYLE}>
                         <Tabs
                             defaultActiveKey="profile"
                             items={[
@@ -268,7 +256,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                         name="fullName"
                                                         rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
                                                     >
-                                                        <Input style={inputStyle} placeholder="Nguyễn Văn A" />
+                                                        <Input style={PROFILE_INPUT_STYLE} placeholder="Nguyễn Văn A" />
                                                     </Form.Item>
                                                 </Col>
                                                 <Col xs={24} md={12}>
@@ -276,7 +264,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                         label={<Text style={{ color: 'var(--text-main)' }}>Tên đăng nhập</Text>}
                                                         name="username"
                                                     >
-                                                        <Input style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }} disabled />
+                                                        <Input style={{ ...PROFILE_INPUT_STYLE, opacity: 0.5, cursor: 'not-allowed' }} disabled />
                                                     </Form.Item>
                                                 </Col>
                                                 <Col xs={24} md={12}>
@@ -288,7 +276,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                             { type: 'email', message: 'Email không hợp lệ' }
                                                         ]}
                                                     >
-                                                        <Input style={inputStyle} placeholder="example@email.com" />
+                                                        <Input style={PROFILE_INPUT_STYLE} placeholder="example@email.com" />
                                                     </Form.Item>
                                                 </Col>
                                                 <Col xs={24} md={12}>
@@ -299,7 +287,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                             { pattern: /^[0-9]{9,11}$/, message: 'Số điện thoại không hợp lệ' }
                                                         ]}
                                                     >
-                                                        <Input style={inputStyle} placeholder="0901234567" />
+                                                        <Input style={PROFILE_INPUT_STYLE} placeholder="0901234567" />
                                                     </Form.Item>
                                                 </Col>
                                             </Row>
@@ -337,7 +325,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                 name="currentPassword"
                                                 rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
                                             >
-                                                <Input.Password style={inputStyle} placeholder="Nhập mật khẩu hiện tại" />
+                                                <Input.Password style={PROFILE_INPUT_STYLE} placeholder="Nhập mật khẩu hiện tại" />
                                             </Form.Item>
 
                                             <Form.Item
@@ -348,7 +336,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                     { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
                                                 ]}
                                             >
-                                                <Input.Password style={inputStyle} placeholder="Tối thiểu 6 ký tự" />
+                                                <Input.Password style={PROFILE_INPUT_STYLE} placeholder="Tối thiểu 6 ký tự" />
                                             </Form.Item>
 
                                             <Form.Item
@@ -356,7 +344,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                                                 name="confirmPassword"
                                                 rules={[{ required: true, message: 'Vui lòng xác nhận mật khẩu' }]}
                                             >
-                                                <Input.Password style={inputStyle} placeholder="Nhập lại mật khẩu mới" />
+                                                <Input.Password style={PROFILE_INPUT_STYLE} placeholder="Nhập lại mật khẩu mới" />
                                             </Form.Item>
 
                                             <BaseButton

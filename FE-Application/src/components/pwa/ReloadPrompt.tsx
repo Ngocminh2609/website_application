@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button, notification } from 'antd';
 import { CloudDownloadOutlined, CloseOutlined } from '@ant-design/icons';
@@ -22,12 +22,12 @@ const ReloadPrompt: React.FC = () => {
         },
     });
 
-    const close = () => {
+    const close = useCallback(() => {
         setOfflineReady(false);
         setNeedRefresh(false);
-    };
+    }, [setOfflineReady, setNeedRefresh]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (offlineReady) {
             notification.success({
                 message: 'Trình duyệt ngoại tuyến',
@@ -38,7 +38,7 @@ const ReloadPrompt: React.FC = () => {
         }
     }, [offlineReady]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (needRefresh) {
             const key = `open${Date.now()}`;
             const btn = (
@@ -70,7 +70,7 @@ const ReloadPrompt: React.FC = () => {
                 }} />,
             });
         }
-    }, [needRefresh, updateServiceWorker]);
+    }, [close, needRefresh, updateServiceWorker]);
 
     return null; // Component này không render UI trực tiếp mà dùng Ant Design Notification
 };

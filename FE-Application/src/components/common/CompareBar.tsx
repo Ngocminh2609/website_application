@@ -4,6 +4,8 @@ import { Button, Badge, Tooltip } from 'antd';
 import { SwapOutlined, CloseOutlined, DeleteOutlined, ArrowsAltOutlined, ShrinkOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
+import { FALLBACK_IMAGE, COMPARE_BAR_CONTAINER_STYLE, COMPARE_BAR_CONTENT_STYLE } from '../../styles/commonStyles';
+
 /**
  * CompareBar - UX độc đáo: Thanh so sánh nổi phía dưới màn hình với hiệu ứng mượt mà.
  */
@@ -11,13 +13,12 @@ const CompareBar: React.FC = () => {
     const { compareItems, removeFromCompare, clearCompare } = useCompare();
     const [isExpanded, setIsExpanded] = useState(true);
     const navigate = useNavigate();
-    const fallbackImage = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800';
 
     const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
         const target = e.target as HTMLImageElement;
         if (target.dataset.errored === 'true') return;
         target.dataset.errored = 'true';
-        target.src = fallbackImage;
+        target.src = FALLBACK_IMAGE;
     };
 
     if (compareItems.length === 0) return null;
@@ -26,27 +27,13 @@ const CompareBar: React.FC = () => {
         <div
             className={`compare-bar ${isExpanded ? 'expanded' : 'collapsed'}`}
             style={{
-                position: 'fixed',
-                bottom: '24px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 1000,
-                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                width: isExpanded ? 'max-content' : '60px',
-                maxWidth: '90vw'
+                ...COMPARE_BAR_CONTAINER_STYLE,
+                width: isExpanded ? 'max-content' : '60px'
             }}
         >
             <div style={{
-                background: 'rgba(20, 20, 20, 0.85)',
-                backdropFilter: 'blur(12px)',
-                borderRadius: '24px',
-                padding: isExpanded ? '12px 24px' : '12px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '20px',
-                overflow: 'hidden'
+                ...COMPARE_BAR_CONTENT_STYLE,
+                padding: isExpanded ? '12px 24px' : '12px'
             }}>
                 {/* Nút Thu gọn/Mở rộng */}
                 <Button

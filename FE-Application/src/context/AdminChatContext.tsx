@@ -30,7 +30,7 @@ export const AdminChatProvider: React.FC<{ children: React.ReactNode; isAdmin: b
     });
 
     const [typingSessions, setTypingSessions] = useState<Record<string, boolean>>({});
-    const typingTimeoutRefs = useRef<Record<string, any>>({});
+    const typingTimeoutRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
     const [connected, setConnected] = useState(false);
     const stompClientRef = useRef<Client | null>(null);

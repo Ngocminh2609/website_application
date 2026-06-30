@@ -1,4 +1,6 @@
-import { apiClient } from "./apiClient";
+import { apiClient } from './apiClient';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface OrderItem {
     id: number;
@@ -23,28 +25,43 @@ export interface Order {
     items: OrderItem[];
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const BASE_PATH = '/v1/orders';
+const ADMIN_PATH = `${BASE_PATH}/admin`;
+
+// ─── API ─────────────────────────────────────────────────────────────────────
+
 export const orderApi = {
-    getUserOrders: async (username: string): Promise<Order[]> => {
-        return apiClient.fetch<Order[]>(`/v1/orders/user?username=${encodeURIComponent(username)}`, {
-            method: 'GET'
-        });
-    },
+    /**
+     * Lấy danh sách đơn hàng của người dùng.
+     * @param username - Tên người dùng cần lấy đơn hàng.
+     * @returns Danh sách `Order`.
+     */
+    getUserOrders: (username: string): Promise<Order[]> =>
+        apiClient.fetch<Order[]>(`${BASE_PATH}/user?username=${encodeURIComponent(username)}`),
 
-    getAllOrders: async (): Promise<Order[]> => {
-        return apiClient.fetch<Order[]>('/v1/orders/admin/all', {
-            method: 'GET'
-        });
-    },
+    /**
+     * Lấy tất cả đơn hàng. (Yêu cầu quyền ADMIN)
+     * @returns Danh sách `Order`.
+     */
+    getAllOrders: (): Promise<Order[]> =>
+        apiClient.fetch<Order[]>(`${ADMIN_PATH}/all`),
 
-    updateOrderStatus: async (orderId: number, status: string): Promise<string> => {
-        return apiClient.fetch<string>(`/v1/orders/admin/${orderId}/status?status=${status}`, {
-            method: 'PUT'
-        });
-    },
+    /**
+     * Cập nhật trạng thái đơn hàng. (Yêu cầu quyền ADMIN)
+     * @param orderId - ID của đơn hàng.
+     * @param status - Trạng thái mới.
+     * @returns Thông báo kết quả.
+     */
+    updateOrderStatus: (orderId: number, status: string): Promise<string> =>
+        apiClient.fetch<string>(`${ADMIN_PATH}/${orderId}/status?status=${status}`, { method: 'PUT' }),
 
-    deleteOrder: async (orderId: number): Promise<string> => {
-        return apiClient.fetch<string>(`/v1/orders/admin/${orderId}`, {
-            method: 'DELETE'
-        });
-    }
+    /**
+     * Xóa đơn hàng. (Yêu cầu quyền ADMIN)
+     * @param orderId - ID của đơn hàng cần xóa.
+     * @returns Thông báo kết quả.
+     */
+    deleteOrder: (orderId: number): Promise<string> =>
+        apiClient.fetch<string>(`${ADMIN_PATH}/${orderId}`, { method: 'DELETE' }),
 };

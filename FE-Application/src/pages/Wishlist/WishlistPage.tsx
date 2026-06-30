@@ -5,6 +5,7 @@ import { useWishlist } from '../../hooks/useWishlist';
 import type { Product } from '../../types/product';
 import ProductCard from '../../components/common/ProductCard';
 import { Link, useLocation } from 'react-router-dom';
+import { WISHLIST_EMPTY_CARD_STYLE } from '../../styles/commonStyles';
 
 const { Title, Text } = Typography;
 
@@ -37,7 +38,7 @@ const WishlistPage: React.FC = () => {
             </div>
 
             {wishlistItems.length === 0 ? (
-                <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '24px', padding: '100px 60px', textAlign: 'center' }}>
+                <div style={WISHLIST_EMPTY_CARD_STYLE}>
                     <Empty
                         image={Empty.PRESENTED_IMAGE_DEFAULT}
                         description={

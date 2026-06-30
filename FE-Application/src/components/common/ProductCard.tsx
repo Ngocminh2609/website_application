@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Typography, Tag, Tooltip, Space, Button } from 'antd';
-import { ShoppingCartOutlined, FireOutlined, EyeOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons';
+import { ShoppingCartOutlined, FireOutlined, EyeOutlined, HeartOutlined, HeartFilled, SwapOutlined, StarFilled } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import type { Product } from '../../types/product';
 import BaseButton from '../common/BaseButton';
@@ -9,11 +9,10 @@ import { cartApi } from '../../api/cartApi';
 import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishlist';
 import { useCompare } from '../../hooks/useCompare';
-import { SwapOutlined } from '@ant-design/icons';
+
+import { FALLBACK_IMAGE, PRODUCT_CARD_STYLE, PRODUCT_CARD_BODY_STYLE, PRODUCT_CARD_BRAND_STYLE, PRODUCT_CARD_TITLE_STYLE, PRODUCT_CARD_DESC_STYLE } from '../../styles/commonStyles';
 
 const { Paragraph, Title, Text } = Typography;
-
-import { StarFilled } from '@ant-design/icons';
 
 interface ProductCardProps {
     product: Product;
@@ -104,12 +103,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
     const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
         const target = e.target as HTMLImageElement;
-
         // Tránh vòng lặp vô tận nếu chính ảnh fallback cũng không load được
         if (target.dataset.errored === 'true') return;
         target.dataset.errored = 'true';
-
-        target.src = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800';
+        target.src = FALLBACK_IMAGE;
     };
 
     return (
@@ -189,30 +186,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     </Link>
                 </div>
             }
-            style={{
-                borderRadius: '20px',
-                overflow: 'hidden',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                background: 'var(--glass-bg)',
-                border: '1px solid var(--glass-border)',
-                backdropFilter: 'blur(10px)'
-            }}
+            style={PRODUCT_CARD_STYLE}
             styles={{
-                body: {
-                    padding: '20px',
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                }
+                body: PRODUCT_CARD_BODY_STYLE
             }}
         >
             <div>
                 {/* Brand & Rating */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <Text style={{ color: 'var(--primary-color)', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    <Text style={PRODUCT_CARD_BRAND_STYLE}>
                         {product.brand || 'TECH'}
                     </Text>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -226,14 +208,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     <Link to={`/product/${product.id}`}>
                         <Title
                             level={4}
-                            style={{
-                                marginBottom: '10px',
-                                color: 'inherit',
-                                fontSize: '1.1rem',
-                                height: '1.4em',
-                                overflow: 'hidden',
-                                fontWeight: 600
-                            }}
+                            style={PRODUCT_CARD_TITLE_STYLE}
                             ellipsis={{ rows: 1 }}
                         >
                             {product.name}
@@ -244,14 +219,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 {/* Mô tả */}
                 <Paragraph
                     type="secondary"
-                    style={{
-                        marginBottom: '16px',
-                        color: 'var(--text-muted)',
-                        height: '3.2em',
-                        lineHeight: '1.6em',
-                        overflow: 'hidden',
-                        fontSize: '0.9rem'
-                    }}
+                    style={PRODUCT_CARD_DESC_STYLE}
                     ellipsis={{ rows: 2 }}
                 >
                     {product.description}

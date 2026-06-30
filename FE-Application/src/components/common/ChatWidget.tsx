@@ -50,6 +50,15 @@ const createMessageObject = (text: string, sender: 'user' | 'bot' | 'admin'): Me
     };
 };
 
+/** Tìm câu trả lời bot dựa trên text người dùng nhập. */
+const findBotAnswer = (text: string) => {
+    const lowerText = text.toLowerCase();
+    return DEFAULT_QUESTIONS.find(item =>
+        lowerText.includes(item.q.toLowerCase()) ||
+        item.q.toLowerCase().includes(lowerText)
+    );
+};
+
 interface ChatWidgetProps {
     user?: User | null;
 }
@@ -63,7 +72,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const stompClientRef = useRef<Client | null>(null);
     const lastTypingTime = useRef<number>(0);
-    const adminTypingTimeoutRef = useRef<any>(null);
+    const adminTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // 1. Init Session (Support Props & LocalStorage Fallback)
     const [chatSession] = useState(() => {
@@ -100,7 +109,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             if (!lastAdminTime) return false;
             const diff = Date.now() - Number(lastAdminTime);
             return diff < 3600000;
-        } catch (e) { return false; }
+        } catch { return false; }
     });
 
     // 2. Init Messages (Load History)
@@ -145,17 +154,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     const simulateBotResponse = useCallback((userText: string) => {
         if (isAdminActive) return;
 
-        const lowerText = userText.toLowerCase();
-        const found = DEFAULT_QUESTIONS.find(item =>
-            lowerText.includes(item.q.toLowerCase()) ||
-            item.q.toLowerCase().includes(lowerText)
-        );
+        const found = findBotAnswer(userText);
 
         setIsTyping(true);
         setTimeout(() => {
             setIsTyping(false);
-            if (isAdminActive) return;
-
             const response = found ? found.a : "Tôi chưa biết câu trả lời này. Đã gửi yêu cầu tới Admin, bạn chờ một chút nhé!";
             const botMsg = createMessageObject(response, 'bot');
             setMessages(prev => [...prev, botMsg]);
@@ -163,6 +166,22 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
 
         return found !== undefined;
     }, [isAdminActive]);
+
+    const publishChatMessage = useCallback((text: string, type: 'CHAT' | 'TYPING' = 'CHAT') => {
+        if (!stompClientRef.current?.connected) return;
+        stompClientRef.current.publish({
+            destination: '/app/chat.sendMessage',
+            body: JSON.stringify({
+                sender: chatSession.name,
+                senderId: chatSession.id,
+                email: chatSession.email,
+                fullName: chatSession.fullName,
+                content: text,
+                type,
+                isBotResponse: false
+            })
+        });
+    }, [chatSession]);
 
     const handleSend = (text: string, sender: 'user' | 'bot' = 'user') => {
         if (!text.trim()) return;
@@ -174,47 +193,13 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             setInputValue('');
 
             if (!isAdminActive) {
-                const lowerText = text.toLowerCase();
-                const found = DEFAULT_QUESTIONS.find(item =>
-                    lowerText.includes(item.q.toLowerCase()) ||
-                    item.q.toLowerCase().includes(lowerText)
-                );
-
-                const isBotResponse = found !== undefined;
-
-                if (!isBotResponse && stompClientRef.current && stompClientRef.current.connected) {
-                    stompClientRef.current.publish({
-                        destination: '/app/chat.sendMessage',
-                        body: JSON.stringify({
-                            sender: chatSession.name,
-                            senderId: chatSession.id,
-                            email: chatSession.email,
-                            fullName: chatSession.fullName,
-                            content: text,
-                            type: 'CHAT',
-                            isBotResponse: false
-                        })
-                    });
+                const found = findBotAnswer(text);
+                if (!found) {
+                    publishChatMessage(text);
                 }
-
-                setTimeout(() => {
-                    simulateBotResponse(text);
-                }, 1000);
+                setTimeout(() => { simulateBotResponse(text); }, 1000);
             } else {
-                if (stompClientRef.current && stompClientRef.current.connected) {
-                    stompClientRef.current.publish({
-                        destination: '/app/chat.sendMessage',
-                        body: JSON.stringify({
-                            sender: chatSession.name,
-                            senderId: chatSession.id,
-                            email: chatSession.email,
-                            fullName: chatSession.fullName,
-                            content: text,
-                            type: 'CHAT',
-                            isBotResponse: false
-                        })
-                    });
-                }
+                publishChatMessage(text);
             }
         }
     };
@@ -356,19 +341,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
                             onChange={(e) => {
                                 setInputValue(e.target.value);
                                 const now = Date.now();
-                                if (now - lastTypingTime.current > 2000 && stompClientRef.current?.connected) {
-                                    stompClientRef.current.publish({
-                                        destination: '/app/chat.sendMessage',
-                                        body: JSON.stringify({
-                                            sender: chatSession.name,
-                                            senderId: chatSession.id,
-                                            email: chatSession.email,
-                                            fullName: chatSession.fullName,
-                                            content: 'typing...',
-                                            type: 'TYPING',
-                                            isBotResponse: false
-                                        })
-                                    });
+                                if (now - lastTypingTime.current > 2000) {
+                                    publishChatMessage('typing...', 'TYPING');
                                     lastTypingTime.current = now;
                                 }
                             }}

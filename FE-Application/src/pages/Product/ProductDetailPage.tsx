@@ -147,7 +147,7 @@ const ProductDetailPage: React.FC = () => {
         if (!id) return;
         try {
             setSubmitLoading(true);
-            await reviewApi.create(parseInt(id), userRating, userComment);
+            await reviewApi.create(parseInt(id), { rating: userRating, comment: userComment });
             notification.success('Gửi đánh giá thành công!');
             setUserComment('');
             setUserRating(5);

@@ -8,6 +8,7 @@ import BaseInput from '../../components/common/BaseInput';
 import { authApi } from '../../api/authApi';
 import { notification } from '../../utils/notification';
 import type { LoginRequest, AuthResponse } from '../../types/auth';
+import { LOGIN_CARD_STYLE } from '../../styles/commonStyles';
 
 const { Title, Text } = Typography;
 
@@ -66,7 +67,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     };
 
     return (
-        <div style={{ maxWidth: '400px', margin: '140px auto', padding: '40px', background: 'var(--glass-bg)', borderRadius: '24px', border: '1px solid var(--glass-border)', backdropFilter: 'blur(15px)' }} className="animate-fade-up">
+        <div style={LOGIN_CARD_STYLE} className="animate-fade-up">
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                 <Title level={2} style={{ color: 'var(--text-main)', margin: 0, fontWeight: 700 }}>CHÀO MỪNG TRỞ LẠI</Title>
                 <Text style={{ color: 'var(--text-muted)' }}>Vui lòng đăng nhập để tiếp tục</Text>

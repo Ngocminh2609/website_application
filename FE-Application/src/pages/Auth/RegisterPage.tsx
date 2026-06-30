@@ -7,6 +7,7 @@ import BaseInput from '../../components/common/BaseInput';
 import { authApi } from '../../api/authApi';
 import { notification } from '../../utils/notification';
 import type { RegisterRequest } from '../../types/auth';
+import { REGISTER_CARD_STYLE } from '../../styles/commonStyles';
 
 const { Title, Text } = Typography;
 
@@ -35,7 +36,7 @@ const RegisterPage: React.FC = () => {
     };
 
     return (
-        <div style={{ maxWidth: '450px', margin: '80px auto', padding: '40px', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', backdropFilter: 'blur(10px)' }}>
+        <div style={REGISTER_CARD_STYLE}>
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                 <Title level={2} style={{ color: 'var(--text-main)', margin: 0 }}>Tạo Tài Khoản</Title>
                 <Text style={{ color: 'var(--text-muted)' }}>Gia nhập cộng đồng Tech Nova ngay hôm nay</Text>

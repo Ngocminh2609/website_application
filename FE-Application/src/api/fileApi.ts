@@ -1,18 +1,29 @@
 import { apiClient } from './apiClient';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type ImageBucketType = 'product' | 'category' | 'user';
+
+export interface UploadImageResponse {
+    url: string;
+}
+
+// ─── API ─────────────────────────────────────────────────────────────────────
+
 export const fileApi = {
     /**
      * Tải lên hình ảnh lên MinIO.
-     * @param file Tệp tin từ Input.
-     * @param type Loại bucket (product, category, user).
+     * @param file - Tệp tin từ Input.
+     * @param type - Loại bucket (product, category, user).
+     * @returns URL của hình ảnh sau khi tải lên.
      */
-    uploadImage: async (file: File, type: 'product' | 'category' | 'user'): Promise<{ url: string }> => {
+    uploadImage: (file: File, type: ImageBucketType): Promise<UploadImageResponse> => {
         const formData = new FormData();
         formData.append('file', file);
 
-        return apiClient.fetch<{ url: string }>(`/upload/${type}`, {
+        return apiClient.fetch<UploadImageResponse>(`/upload/${type}`, {
             method: 'POST',
             body: formData,
         });
-    }
+    },
 };
