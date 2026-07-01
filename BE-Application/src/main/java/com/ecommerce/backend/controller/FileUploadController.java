@@ -24,6 +24,9 @@ public class FileUploadController {
     @Value("${minio.bucket.user}")
     private String userBucket;
 
+    @Value("${minio.bucket.banner:products-image}")
+    private String bannerBucket;
+
     @Autowired
     public FileUploadController(MinioService minioService) {
         this.minioService = minioService;
@@ -48,8 +51,11 @@ public class FileUploadController {
             case "user":
                 bucketName = userBucket;
                 break;
+            case "banner":
+                bucketName = bannerBucket;
+                break;
             default:
-                return ResponseEntity.badRequest().body(Map.of("message", "Loại hình ảnh không hợp lệ (hỗ trợ: product, category, user)"));
+                return ResponseEntity.badRequest().body(Map.of("message", "Loại hình ảnh không hợp lệ (hỗ trợ: product, category, user, banner)"));
         }
 
         try {

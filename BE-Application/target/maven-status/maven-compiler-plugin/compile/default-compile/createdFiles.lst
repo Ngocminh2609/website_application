@@ -1,0 +1,4 @@
+com\ecommerce\backend\service\BannerService.class
+com\ecommerce\backend\entity\Banner.class
+com\ecommerce\backend\repository\BannerRepository.class
+com\ecommerce\backend\controller\BannerController.class

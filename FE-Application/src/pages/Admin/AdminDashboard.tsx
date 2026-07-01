@@ -23,7 +23,8 @@ import {
     FireFilled,
     AppstoreOutlined,
     GiftOutlined,
-    StarOutlined
+    StarOutlined,
+    PictureOutlined
 } from '@ant-design/icons';
 import AdminChat from './AdminChat';
 import { useAdminChat } from '../../context/useAdminChat';
@@ -40,6 +41,7 @@ import StatisticsTab from './StatisticsTab';
 import NotificationManagement from './NotificationManagement';
 import VoucherManagement from './VoucherManagement';
 import ReviewModeration from './ReviewModeration';
+import BannerManagement from './BannerManagement';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -496,6 +498,11 @@ const AdminDashboard: React.FC = () => {
                             key: 'reviews',
                             label: <span style={{ fontSize: 16, color: 'var(--text-main)' }}><StarOutlined /> Kiểm duyệt đánh giá</span>,
                             children: <ReviewModeration />
+                        },
+                        {
+                            key: 'banners',
+                            label: <span style={{ fontSize: 16, color: 'var(--text-main)' }}><PictureOutlined /> Quản lý banner</span>,
+                            children: <BannerManagement />
                         }
                     ]}
                 />

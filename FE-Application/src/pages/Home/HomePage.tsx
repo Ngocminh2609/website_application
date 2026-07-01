@@ -1,14 +1,60 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Row, Col, Space, Divider, Spin } from 'antd';
+import { Typography, Row, Col, Space, Divider, Spin, Carousel } from 'antd';
 import { ThunderboltFilled, ArrowRightOutlined, StarFilled } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../types/product';
+import type { Banner } from '../../types/banner';
+import { bannerApi } from '../../api/bannerApi';
 import ProductCard from '../../components/common/ProductCard';
 import BaseButton from '../../components/common/BaseButton';
 import PersonalizedRecommendations from '../../components/common/PersonalizedRecommendations';
+import { FALLBACK_IMAGE } from '../../styles/commonStyles';
 
 const { Title, Text, Paragraph } = Typography;
+
+const createDefaultProducts = (categoryName: string, count: number = 4): Product[] => {
+    return Array.from({ length: count }).map((_, index) => ({
+        id: -100 - index,
+        name: `${categoryName} Default ${index + 1}`,
+        description: `Mô tả sản phẩm ${categoryName} ${index + 1} mặc định của cửa hàng Tech Nova. Trải nghiệm hiệu năng cao và thiết kế tinh tế đẳng cấp.`,
+        price: 990000 + (index * 500000),
+        originalPrice: 1290000 + (index * 500000),
+        stockQuantity: 10,
+        imageUrl: FALLBACK_IMAGE,
+        brand: categoryName,
+        rating: 4.5,
+        reviewCount: 12,
+        discountPercent: 20
+    }));
+};
+
+const DEFAULT_BANNERS: Banner[] = [
+    {
+        id: -1,
+        title: 'Trải Nghiệm Công Nghệ Đỉnh Cao cùng Tech Nova',
+        imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200&h=400',
+        linkUrl: '/products',
+        sortOrder: 1,
+        isActive: true
+    },
+    {
+        id: -2,
+        title: 'Khám Phá Hệ Sinh Thái Apple Ecosystem',
+        imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=1200&h=400',
+        linkUrl: '/products?brand=Apple',
+        sortOrder: 2,
+        isActive: true
+    },
+    {
+        id: -3,
+        title: 'Ưu Đãi Lớn Cho Các Dòng Laptop & SmartPhone',
+        imageUrl: 'https://images.unsplash.com/photo-1468436139062-f60a71c5c892?auto=format&fit=crop&q=80&w=1200&h=400',
+        linkUrl: '/products',
+        sortOrder: 3,
+        isActive: true
+    }
+];
 
 /**
  * Trang chủ Tech Nova - Phiên bản nâng cấp tối ưu tương phản và thân thiện người dùng.
@@ -25,7 +71,11 @@ const HomePage: React.FC = () => {
         fetchProductsByBrand
     } = useProducts();
     const [brandsData, setBrandsData] = useState<{ id: string, name: string, products: Product[] }[]>([]);
+    const [banners, setBanners] = useState<Banner[]>([]);
     const [loadingBrands, setLoadingBrands] = useState<boolean>(true);
+
+    const displayFlashSales = flashSales.length > 0 ? flashSales : createDefaultProducts('Flash Sale');
+    const displayBestSellers = bestSellers.length > 0 ? bestSellers : createDefaultProducts('Bán Chạy', 5);
 
     useEffect(() => {
         const fetchHomeData = async () => {
@@ -35,15 +85,24 @@ const HomePage: React.FC = () => {
                 await initializeHomeData();
 
                 // Sử dụng hàm từ context để đảm bảo cơ chế Single Flight (không gọi trùng lặp Apple/Samsung)
-                const [apple, samsung] = await Promise.all([
+                const [apple, samsung, activeBanners] = await Promise.all([
                     fetchProductsByBrand('Apple'),
-                    fetchProductsByBrand('Samsung')
+                    fetchProductsByBrand('Samsung'),
+                    bannerApi.getActiveBanners().catch(err => {
+                        console.error("Lỗi khi tải banners:", err);
+                        return [];
+                    })
                 ]);
 
                 setBrandsData([
-                    { id: 'Apple', name: 'Apple Ecosystem', products: apple.slice(0, 4) },
-                    { id: 'Samsung', name: 'Samsung Galaxy', products: samsung.slice(0, 4) }
+                    { id: 'Apple', name: 'Apple Ecosystem', products: apple.length > 0 ? apple.slice(0, 4) : createDefaultProducts('Apple') },
+                    { id: 'Samsung', name: 'Samsung Galaxy', products: samsung.length > 0 ? samsung.slice(0, 4) : createDefaultProducts('Samsung') }
                 ]);
+                if (activeBanners && activeBanners.length > 0) {
+                    setBanners(activeBanners);
+                } else {
+                    setBanners(DEFAULT_BANNERS);
+                }
 
             } catch (error) {
                 console.error("Lỗi khi tải trang chủ:", error);
@@ -68,15 +127,15 @@ const HomePage: React.FC = () => {
         <div className="animate-fade-in" style={{ color: 'var(--text-main)' }}>
             {/* HERO SECTION - Tối ưu chữ sáng trên nền tối */}
             <section className="hero-section" style={{
-                minHeight: '85vh',
+                minHeight: '80vh',
                 display: 'flex',
                 alignItems: 'center',
-                padding: '120px 0',
+                padding: '80px 0',
                 background: 'radial-gradient(circle at 70% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%)'
             }}>
                 <div className="main-content">
                     <Row gutter={[48, 48]} align="middle">
-                        <Col xs={24} lg={14}>
+                        <Col xs={24} lg={13}>
                             <Title className="hero-title" style={{ color: 'var(--text-main)', marginBottom: '24px', textShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                                 TRẢI NGHIỆM <br />
                                 <span style={{ color: 'var(--primary-color)' }}>CÔNG NGHỆ </span>
@@ -116,8 +175,39 @@ const HomePage: React.FC = () => {
                                 </div>
                             </div>
                         </Col>
-                        <Col xs={0} lg={10}>
-                            {/* Chỗ này có thể thêm hình ảnh Decor hoặc Graphic abstract để thêm phần sinh động */}
+                        <Col xs={24} lg={11}>
+                            {/* Slide Banner đặt bên phải để lấp đầy khoảng trống hero section */}
+                            {banners.length > 0 && (
+                                <div style={{ borderRadius: '24px', overflow: 'hidden', boxShadow: 'var(--card-shadow)', border: '1px solid var(--glass-border)' }}>
+                                    <Carousel key={banners.map(b => b.id).join(',')} autoplay effect="fade" speed={800} autoplaySpeed={4000}>
+                                        {banners.map((banner) => (
+                                            <div 
+                                                key={banner.id} 
+                                                onClick={() => banner.linkUrl && navigate(banner.linkUrl)}
+                                                style={{ cursor: banner.linkUrl ? 'pointer' : 'default' }}
+                                            >
+                                                <div style={{
+                                                    height: '420px',
+                                                    backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 40%, rgba(0, 0, 0, 0.7) 100%), url(${banner.imageUrl})`,
+                                                    backgroundSize: 'cover',
+                                                    backgroundPosition: 'center',
+                                                    borderRadius: '24px',
+                                                    display: 'flex',
+                                                    alignItems: 'flex-end',
+                                                    padding: '30px 40px',
+                                                    position: 'relative'
+                                                }}>
+                                                    {banner.title && (
+                                                        <Title level={3} style={{ color: '#ffffff', margin: 0, textShadow: '0 2px 10px rgba(0,0,0,0.6)', fontWeight: 700 }}>
+                                                            {banner.title}
+                                                        </Title>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </Carousel>
+                                </div>
+                            )}
                         </Col>
                     </Row>
                 </div>
@@ -158,7 +248,7 @@ const HomePage: React.FC = () => {
                 />
 
                 {/* FLASH SALE - Chữ sáng, nền nhấn đỏ */}
-                {flashSales.length > 0 && (
+                {displayFlashSales.length > 0 && (
                     <section style={{ marginBottom: '120px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '50px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -175,7 +265,7 @@ const HomePage: React.FC = () => {
                             </BaseButton>
                         </div>
                         <Row gutter={[32, 32]}>
-                            {flashSales.slice(0, 4).map(product => (
+                            {displayFlashSales.slice(0, 4).map(product => (
                                 <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
                                     <ProductCard product={product} />
                                 </Col>
@@ -205,7 +295,7 @@ const HomePage: React.FC = () => {
                     </div>
                     {/* Dùng flexbox thay Row/Col vì Ant Design Grid chia 24 đơn vị không chia hết cho 5, gây xuống dòng */}
                     <div style={{ display: 'flex', gap: '32px', flexWrap: 'nowrap', overflowX: 'auto' }} className="no-scrollbar">
-                        {bestSellers.slice(0, 5).map(product => (
+                        {displayBestSellers.slice(0, 5).map(product => (
                             <div key={product.id} className="premium-hover" style={{ flex: '0 0 calc(20% - 26px)', minWidth: '220px' }}>
                                 <ProductCard product={product} />
                             </div>

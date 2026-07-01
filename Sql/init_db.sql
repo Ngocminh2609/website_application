@@ -288,3 +288,25 @@ CREATE TABLE IF NOT EXISTS `user_product_views` (
     INDEX (`last_viewed_at`)
 ) ENGINE = InnoDB;
 
+-- 15. Bảng Banner quảng cáo (Banners)
+CREATE TABLE IF NOT EXISTS `banners` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `title` VARCHAR(255) COMMENT 'Tiêu đề banner',
+    `image_url` VARCHAR(500) NOT NULL COMMENT 'Đường dẫn ảnh banner trên MinIO',
+    `link_url` VARCHAR(500) COMMENT 'Đường dẫn liên kết khi click vào banner',
+    `sort_order` INT DEFAULT 0 COMMENT 'Thứ tự hiển thị',
+    `is_active` TINYINT(1) DEFAULT 1 COMMENT '1: Hoạt động, 0: Tạm ẩn',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (`is_active`),
+    INDEX (`sort_order`)
+) ENGINE=InnoDB;
+
+-- Chèn dữ liệu banner mẫu
+INSERT INTO `banners` (`id`, `title`, `image_url`, `link_url`, `sort_order`, `is_active`) VALUES
+(1, 'Siêu Phẩm iPhone 15 Pro Max', 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&q=80&w=1200&h=400', '/products?brand=Apple', 1, 1),
+(2, 'MacBook Air M2 Siêu Mỏng Nhẹ', 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=1200&h=400', '/products?brand=Apple', 2, 1),
+(3, 'Đồng Hồ Thông Minh Apple Watch S9', 'https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?auto=format&fit=crop&q=80&w=1200&h=400', '/products?brand=Apple', 3, 1)
+ON DUPLICATE KEY UPDATE title=VALUES(title), image_url=VALUES(image_url), link_url=VALUES(link_url);
+
+

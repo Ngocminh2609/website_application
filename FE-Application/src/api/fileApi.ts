@@ -2,7 +2,7 @@ import { apiClient } from './apiClient';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ImageBucketType = 'product' | 'category' | 'user';
+type ImageBucketType = 'product' | 'category' | 'user' | 'banner';
 
 export interface UploadImageResponse {
     url: string;

@@ -37,6 +37,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/banners").permitAll()
+                        .requestMatchers("/api/banners/admin", "/api/banners/admin/**").hasRole("ADMIN")
 
                         // Chỉ ADMIN mới có quyền thay đổi dữ liệu (POST, PUT, DELETE)
                         .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
@@ -54,7 +56,7 @@ public class SecurityConfig {
 
                         // Coupon: validate cần đăng nhập, các endpoint admin cần ADMIN role
                         .requestMatchers(HttpMethod.GET, "/api/coupons/validate").authenticated()
-                        .requestMatchers("/api/coupons/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/coupons/admin", "/api/coupons/admin/**").hasRole("ADMIN")
 
                         .requestMatchers("/api/notifications/broadcast").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
