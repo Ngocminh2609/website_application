@@ -40,6 +40,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 5000000,
         // Cấu hình caching nâng cao
         runtimeCaching: [
           {

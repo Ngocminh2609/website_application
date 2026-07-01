@@ -3,11 +3,11 @@ package com.ecommerce.backend.controller;
 import com.ecommerce.backend.dto.ReviewRequest;
 import com.ecommerce.backend.entity.ProductReview;
 import com.ecommerce.backend.entity.User;
+import com.ecommerce.backend.security.JwtUserResolver;
 import com.ecommerce.backend.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +18,7 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final JwtUserResolver jwtUserResolver;
 
     /**
      * Lấy danh sách review đã duyệt của sản phẩm - public endpoint.
@@ -34,8 +35,8 @@ public class ReviewController {
     @PostMapping("/product/{productId}")
     public ResponseEntity<ProductReview> createReview(
             @PathVariable Long productId,
-            @Valid @RequestBody ReviewRequest request,
-            @AuthenticationPrincipal User currentUser) {
+            @Valid @RequestBody ReviewRequest request) {
+        User currentUser = jwtUserResolver.getCurrentUser();
         return ResponseEntity.ok(reviewService.createReview(productId, currentUser.getId(), request));
     }
 
@@ -58,12 +59,10 @@ public class ReviewController {
 
     /**
      * Xóa review - chủ review hoặc Admin.
-     * Role được lấy từ JWT để tránh FE tự khai quyền.
      */
     @DeleteMapping("/{reviewId}")
-    public ResponseEntity<String> deleteReview(
-            @PathVariable Long reviewId,
-            @AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<String> deleteReview(@PathVariable Long reviewId) {
+        User currentUser = jwtUserResolver.getCurrentUser();
         reviewService.deleteReview(reviewId, currentUser.getId(), currentUser.getRole());
         return ResponseEntity.ok("Xóa đánh giá thành công");
     }

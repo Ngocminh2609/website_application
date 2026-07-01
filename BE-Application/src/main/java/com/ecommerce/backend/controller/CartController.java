@@ -2,10 +2,10 @@ package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.User;
+import com.ecommerce.backend.security.JwtUserResolver;
 import com.ecommerce.backend.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -20,13 +20,14 @@ import java.util.Map;
 public class CartController {
 
     private final CartService cartService;
+    private final JwtUserResolver jwtUserResolver;
 
     /**
      * Lấy thông tin giỏ hàng của người dùng đang đăng nhập.
-     * @AuthenticationPrincipal để lấy entity User từ SecurityContext.
      */
     @GetMapping
-    public ResponseEntity<Cart> getCart(@AuthenticationPrincipal User user) {
+    public ResponseEntity<Cart> getCart() {
+        User user = jwtUserResolver.getCurrentUser();
         return ResponseEntity.ok(cartService.getCartByUser(user));
     }
 
@@ -34,10 +35,8 @@ public class CartController {
      * Thêm sản phẩm vào giỏ hàng.
      */
     @PostMapping("/add")
-    public ResponseEntity<Cart> addToCart(
-            @AuthenticationPrincipal User user,
-            @RequestBody Map<String, Object> payload
-    ) {
+    public ResponseEntity<Cart> addToCart(@RequestBody Map<String, Object> payload) {
+        User user = jwtUserResolver.getCurrentUser();
         Long productId = Long.valueOf(payload.get("productId").toString());
         Integer quantity = Integer.valueOf(payload.get("quantity").toString());
         return ResponseEntity.ok(cartService.addItemToCart(user, productId, quantity));
@@ -48,10 +47,10 @@ public class CartController {
      */
     @PutMapping("/update/{itemId}")
     public ResponseEntity<Cart> updateQuantity(
-            @AuthenticationPrincipal User user,
             @PathVariable Long itemId,
             @RequestBody Map<String, Integer> payload
     ) {
+        User user = jwtUserResolver.getCurrentUser();
         Integer quantity = payload.get("quantity");
         return ResponseEntity.ok(cartService.updateItemQuantity(user, itemId, quantity));
     }
@@ -60,10 +59,8 @@ public class CartController {
      * Xóa một mục khỏi giỏ hàng.
      */
     @DeleteMapping("/item/{itemId}")
-    public ResponseEntity<Cart> removeItem(
-            @AuthenticationPrincipal User user,
-            @PathVariable Long itemId
-    ) {
+    public ResponseEntity<Cart> removeItem(@PathVariable Long itemId) {
+        User user = jwtUserResolver.getCurrentUser();
         return ResponseEntity.ok(cartService.removeItemFromCart(user, itemId));
     }
 }

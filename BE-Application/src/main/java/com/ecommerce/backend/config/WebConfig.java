@@ -1,31 +1,63 @@
 package com.ecommerce.backend.config;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * Cấu hình Web tập trung cho toàn bộ ứng dụng.
- * Việc thiết lập CORS toàn cục giúp đảm bảo mọi Endpoint (bao gồm cả các trang lỗi) 
- * đều có thể giao tiếp mượt mà với Frontend TypeScript.
+ * Cấu hình CORS tập trung cho toàn bộ ứng dụng.
+ * Expose CorsConfigurationSource bean để cả Spring MVC lẫn Spring Security
+ * dùng chung — tránh xung đột giữa 2 tầng CORS filter.
+ *
+ * Tham chiếu Spring Security 6.x best practice:
+ * https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html
  */
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
+public class WebConfig {
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        // Áp dụng cho toàn bộ các API bắt đầu bằng /api/
-        registry.addMapping("/api/**")
-                // Trong thực tế nên giới hạn Domain cụ thể (ví dụ: http://localhost:5173)
-                // Hiện tại đặt "*" để thuận tiện cho việc phát triển Local
-                .allowedOrigins("*")
-                // Cho phép đầy đủ các phương thức HTTP cần thiết
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH")
-                // Cho phép các Headers phổ biến
-                .allowedHeaders("*")
-                // Không yêu cầu gửi Credentials (Cookies/Auth Headers) trong giai đoạn này
-                .allowCredentials(false)
-                // Cache kết quả Preflight request trong 1 giờ để tăng hiệu năng
-                .maxAge(3600);
+    /**
+     * Danh sách origins được phép, phân cách bằng dấu phẩy.
+     * Local dev default: http://localhost:5173,http://localhost:3000
+     * Production: set biến môi trường CORS_ALLOWED_ORIGINS=https://yourdomain.com
+     */
+    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+    private String allowedOriginsConfig;
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        // Parse danh sách origins từ config — không bao giờ dùng wildcard "*"
+        List<String> allowedOrigins = Arrays.asList(allowedOriginsConfig.split(","));
+        config.setAllowedOrigins(allowedOrigins);
+
+        config.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"
+        ));
+
+        config.setAllowedHeaders(Arrays.asList(
+                "Authorization", "Content-Type", "Accept",
+                "X-Requested-With", "Cache-Control"
+        ));
+
+        // Bật credentials để hỗ trợ Authorization header / cookie
+        // LƯU Ý: Khi allowCredentials=true, allowedOrigins KHÔNG được chứa "*"
+        config.setAllowCredentials(true);
+
+        // Cache preflight request trong 1 giờ
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // Áp dụng cho toàn bộ API và WebSocket
+        source.registerCorsConfiguration("/api/**", config);
+        source.registerCorsConfiguration("/ws-chat/**", config);
+
+        return source;
     }
 }

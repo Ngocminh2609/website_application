@@ -1,0 +1,4 @@
+# Docker Compose environment file — credentials, KHÔNG commit!
+.env
+*.env.local
+*.env.*.local

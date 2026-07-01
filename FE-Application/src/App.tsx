@@ -54,6 +54,68 @@ const App: React.FC = () => {
     return savedTheme ? savedTheme === 'dark' : true; // Mặc định dark theo yêu cầu aesthetics
   });
 
+  // Xử lý OAuth2 redirect code từ Keycloak (cho Google Login hoặc User Registration)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      const exchangeCode = async () => {
+        try {
+          const params = new URLSearchParams();
+          params.append('grant_type', 'authorization_code');
+          params.append('client_id', 'ecommerce-backend');
+          params.append('client_secret', 'ecommerce-backend-secret-placeholder');
+          params.append('code', code);
+          params.append('redirect_uri', 'http://localhost:5173');
+
+          const response = await fetch('http://localhost:8180/realms/ecommerce/protocol/openid-connect/token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString(),
+          });
+
+          if (response.ok) {
+            const tokenData = await response.json();
+            const accessToken = tokenData.access_token;
+
+            // Giải mã token để lấy thông tin User (hỗ trợ UTF-8 tiếng Việt)
+            const base64Url = accessToken.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const utf8String = decodeURIComponent(
+              window.atob(base64)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+            );
+            const payload = JSON.parse(utf8String);
+
+            const isAdmin = payload.realm_access?.roles?.includes('ADMIN') || false;
+            const newUser: User = {
+              id: 1,
+              username: payload.preferred_username || payload.sub,
+              email: payload.email || '',
+              fullName: payload.name || payload.preferred_username || 'User',
+              role: isAdmin ? 'ADMIN' : 'USER',
+            };
+
+            localStorage.setItem('token', accessToken);
+            localStorage.setItem('user', JSON.stringify(newUser));
+            setUser(newUser);
+            notification.auth.loginSuccess();
+
+            // Xóa query parameters trên thanh địa chỉ mà không reload trang
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (err) {
+          console.error('Lỗi khi đổi code lấy token từ Keycloak:', err);
+        }
+      };
+      exchangeCode();
+    }
+  }, []);
+
   // Đồng bộ theme khi thông tin người dùng được tải lần đầu hoặc khi đăng nhập
   useEffect(() => {
     if (user?.themePreference) {

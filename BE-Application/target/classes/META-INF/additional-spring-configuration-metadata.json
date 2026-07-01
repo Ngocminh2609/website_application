@@ -1,0 +1,82 @@
+{
+  "properties": [
+    {
+      "name": "minio.endpoint",
+      "type": "java.lang.String",
+      "description": "MinIO/S3-compatible storage endpoint URL (internal, dùng cho S3Client kết nối)."
+    },
+    {
+      "name": "minio.access-key",
+      "type": "java.lang.String",
+      "description": "Access key để xác thực với MinIO hoặc Backblaze B2."
+    },
+    {
+      "name": "minio.secret-key",
+      "type": "java.lang.String",
+      "description": "Secret key để xác thực với MinIO hoặc Backblaze B2."
+    },
+    {
+      "name": "minio.region",
+      "type": "java.lang.String",
+      "description": "AWS region hoặc region tương thích (ví dụ: us-east-1).",
+      "defaultValue": "us-east-1"
+    },
+    {
+      "name": "minio.url.external",
+      "type": "java.lang.String",
+      "description": "URL public để truy cập file từ bên ngoài (khác với internal endpoint, dùng khi Backblaze B2 có domain riêng)."
+    },
+    {
+      "name": "minio.bucket.product",
+      "type": "java.lang.String",
+      "description": "Tên bucket lưu ảnh sản phẩm."
+    },
+    {
+      "name": "minio.bucket.category",
+      "type": "java.lang.String",
+      "description": "Tên bucket lưu ảnh danh mục."
+    },
+    {
+      "name": "minio.bucket.user",
+      "type": "java.lang.String",
+      "description": "Tên bucket lưu ảnh avatar người dùng."
+    },
+    {
+      "name": "minio.bucket.banner",
+      "type": "java.lang.String",
+      "description": "Tên bucket lưu ảnh banner."
+    },
+    {
+      "name": "app.base-url",
+      "type": "java.lang.String",
+      "description": "URL public của backend, dùng để tạo proxy URL cho file (phải khớp domain trên Render/Railway).",
+      "defaultValue": "http://localhost:8080"
+    },
+    {
+      "name": "google.client.id",
+      "type": "java.lang.String",
+      "description": "Google OAuth2 Client ID để xác thực Google Login."
+    },
+    {
+      "name": "vnp.tmnCode",
+      "type": "java.lang.String",
+      "description": "VNPAY Terminal ID (TMN Code)."
+    },
+    {
+      "name": "vnp.hashSecret",
+      "type": "java.lang.String",
+      "description": "VNPAY Hash Secret để ký request."
+    },
+    {
+      "name": "vnp.payUrl",
+      "type": "java.lang.String",
+      "description": "VNPAY payment gateway URL."
+    },
+    {
+      "name": "vnp.returnUrl",
+      "type": "java.lang.String",
+      "description": "URL callback sau khi thanh toán VNPAY hoàn tất.",
+      "defaultValue": "http://localhost:5173/payment-success"
+    }
+  ]
+}

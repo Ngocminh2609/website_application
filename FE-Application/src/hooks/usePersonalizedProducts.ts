@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useProducts } from './useProducts';
 import { trackingUtils } from '../utils/tracking';
 import type { Product } from '../types/product';
@@ -15,8 +15,11 @@ export const usePersonalizedProducts = (limit: number = 6) => {
     const [personalized, setPersonalized] = useState<Product[]>([]);
     const [isFetchingServer, setIsFetchingServer] = useState(false);
 
+    const hasAttempted = useRef(false);
+
     useEffect(() => {
-        if (products.length === 0 && !loading) {
+        if (products.length === 0 && !loading && !hasAttempted.current) {
+            hasAttempted.current = true;
             fetchProducts();
             initializeHomeData();
         }

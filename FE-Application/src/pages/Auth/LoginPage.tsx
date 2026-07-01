@@ -105,7 +105,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     <GoogleLogin
                         onSuccess={handleGoogleSuccess}
                         onError={() => notification.error('Lỗi kết nối với Google')}
-                        useOneTap
                         theme="filled_blue"
                         shape="pill"
                         text="signin_with"

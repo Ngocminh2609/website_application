@@ -1,0 +1,6 @@
+com\ecommerce\files\FileServiceApplication.class
+com\ecommerce\files\service\MinioService.class
+com\ecommerce\files\controller\FileProxyController.class
+com\ecommerce\files\controller\FileUploadController.class
+com\ecommerce\files\config\MinioConfig.class
+com\ecommerce\files\config\SecurityConfig.class
