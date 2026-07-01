@@ -1,4 +1,4 @@
-import type { AuthResponse, LoginRequest } from '../types/auth';
+import type { AuthResponse, LoginRequest, RegisterRequest } from '../types/auth';
 
 /**
  * Service quản lý các yêu cầu xác thực tích hợp trực tiếp với Keycloak.
@@ -7,7 +7,7 @@ export const authApi = {
     /**
      * Đăng ký tài khoản mới: gọi API BE để tạo user trong Keycloak + đồng bộ DB.
      */
-    register: async (data: { username: string; email: string; password: string; fullName?: string }): Promise<any> => {
+    register: async (data: RegisterRequest): Promise<{ message: string }> => {
         const response = await fetch('http://localhost:8080/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -89,7 +89,7 @@ export const authApi = {
      * Đăng nhập bằng Google.
      * Chuyển hướng người dùng qua luồng đăng nhập mạng xã hội của Keycloak.
      */
-    googleLogin: async (_token?: string): Promise<any> => {
+    googleLogin: async (): Promise<void> => {
         const googleLoginUrl = `http://localhost:8180/realms/ecommerce/protocol/openid-connect/auth` +
             `?client_id=ecommerce-backend` +
             `&response_type=code` +

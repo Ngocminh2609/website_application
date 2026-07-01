@@ -46,6 +46,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
             productsFetched.current = true;
         } catch (error) {
             console.error('Lỗi khi tải sản phẩm:', error);
+            productsFetched.current = true; // Tránh loop gọi liên tục khi lỗi
         } finally {
             updateLoading(-1);
             fetchingPromise.current = null;
@@ -86,6 +87,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
             homeDataFetched.current = true;
         } catch (error) {
             console.error('Lỗi khi tải dữ liệu trang chủ:', error);
+            homeDataFetched.current = true; // Tránh loop gọi liên tục khi lỗi
         } finally {
             updateLoading(-1);
             fetchingHomePromise.current = null;

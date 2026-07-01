@@ -34,6 +34,15 @@ export const apiClient = {
             headers: headers,
         });
 
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+                return {} as T; // Dừng xử lý tiếp theo
+            }
+        }
+
         if (!response.ok) {
             // Ném lỗi chi tiết để các thành phần UI có thể xử lý (như hiện thông báo antd)
             const errorData = await response.json().catch(() => ({}));
