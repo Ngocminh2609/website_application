@@ -2,6 +2,7 @@ package com.ecommerce.files.controller;
 
 import com.ecommerce.files.service.MinioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,21 +11,35 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @RestController
 @RequestMapping("/api/files")
 public class FileProxyController {
 
     private final MinioService minioService;
+    private final Set<String> allowedBuckets;
 
     @Autowired
-    public FileProxyController(MinioService minioService) {
+    public FileProxyController(
+            MinioService minioService,
+            @Value("${minio.bucket.product}") String productBucket,
+            @Value("${minio.bucket.category}") String categoryBucket,
+            @Value("${minio.bucket.user}") String userBucket,
+            @Value("${minio.bucket.banner:products-image}") String bannerBucket) {
         this.minioService = minioService;
+        this.allowedBuckets = new HashSet<>(List.of(productBucket, categoryBucket, userBucket, bannerBucket));
     }
 
     @GetMapping("/{bucket}/{objectName}")
     public ResponseEntity<StreamingResponseBody> proxyFile(
             @PathVariable String bucket,
             @PathVariable String objectName) {
+        if (!allowedBuckets.contains(bucket)) {
+            return ResponseEntity.notFound().build();
+        }
         try {
             ResponseInputStream<GetObjectResponse> objectResponse = minioService.getObject(bucket, objectName);
             String contentType = objectResponse.response().contentType();

@@ -1,5 +1,7 @@
 package com.ecommerce.files.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,8 @@ import java.util.UUID;
 @Service
 public class MinioService {
 
+    private static final Logger log = LoggerFactory.getLogger(MinioService.class);
+
     private final S3Client s3Client;
 
     @Value("${app.base-url:http://localhost:8080}")
@@ -29,7 +33,7 @@ public class MinioService {
         try {
             ensureBucketExists(bucketName);
 
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String fileName = UUID.randomUUID() + "_" + sanitizeFileName(file.getOriginalFilename());
 
             s3Client.putObject(
                     PutObjectRequest.builder()
@@ -68,8 +72,17 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            System.err.println("Lỗi khi xóa tệp từ storage: " + e.getMessage());
+            log.warn("Lỗi khi xóa tệp từ storage: {}", e.getMessage());
         }
+    }
+
+    private String sanitizeFileName(String originalFileName) {
+        if (originalFileName == null || originalFileName.isBlank()) {
+            return "file";
+        }
+        String baseName = originalFileName.replace("\\", "/");
+        baseName = baseName.substring(baseName.lastIndexOf('/') + 1);
+        return baseName.replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 
     private void ensureBucketExists(String bucketName) {
