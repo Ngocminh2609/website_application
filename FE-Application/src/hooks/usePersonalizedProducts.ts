@@ -3,6 +3,9 @@ import { useProducts } from './useProducts';
 import { trackingUtils } from '../utils/tracking';
 import type { Product } from '../types/product';
 
+// Cache để chống gọi API trùng lặp trong các render đồng thời (hoặc React Strict Mode)
+let activeFetchPromise: Promise<Product[]> | null = null;
+
 /**
  * Hook cung cấp danh sách sản phẩm được cá nhân hóa cho người dùng.
  * Thuật toán kết hợp:
@@ -16,6 +19,7 @@ export const usePersonalizedProducts = (limit: number = 6) => {
     const [isFetchingServer, setIsFetchingServer] = useState(false);
 
     const hasAttempted = useRef(false);
+    const hasFetchedServer = useRef(false);
 
     useEffect(() => {
         if (products.length === 0 && !loading && !hasAttempted.current) {
@@ -28,14 +32,21 @@ export const usePersonalizedProducts = (limit: number = 6) => {
 
     useEffect(() => {
         const fetchPersonalized = async () => {
-            if (loading || (products.length === 0 && bestSellers.length === 0)) return;
-
             const token = localStorage.getItem('token');
             if (token) {
+                if (hasFetchedServer.current) return;
                 try {
                     setIsFetchingServer(true);
+                    hasFetchedServer.current = true;
                     const { recommendationApi } = await import('../api/recommendationApi');
-                    const serverData = await recommendationApi.getPersonalized(limit);
+                    
+                    // Nếu chưa có request nào đang chạy, tạo mới. Nếu có rồi, dùng chung.
+                    if (!activeFetchPromise) {
+                        activeFetchPromise = recommendationApi.getPersonalized(limit);
+                    }
+                    
+                    const serverData = await activeFetchPromise;
+                    
                     if (serverData && serverData.length > 0) {
                         setPersonalized(serverData);
                         setIsFetchingServer(false);
@@ -44,11 +55,16 @@ export const usePersonalizedProducts = (limit: number = 6) => {
                 } catch (e) {
                     console.error('Lỗi khi lấy gợi ý từ server:', e);
                 } finally {
+                    // Xóa cache sau 2 giây để các lần render/remount tiếp theo (nếu có) dùng chung,
+                    // đồng thời vẫn cho phép fetch lại data mới ở các lần truy cập trang sau.
+                    setTimeout(() => {
+                        activeFetchPromise = null;
+                    }, 2000);
                     setIsFetchingServer(false);
                 }
             }
 
-            // Fallback sang logic local
+            if (loading || (products.length === 0 && bestSellers.length === 0)) return;
             const recentlyViewedIds = trackingUtils.getRecentlyViewedIds();
             const topCategoryNames = trackingUtils.getTopInterests();
 

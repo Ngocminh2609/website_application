@@ -61,7 +61,13 @@ public class JwtUserResolver {
                     }
                     newUser.setRole(role);
 
-                    return userRepository.save(newUser);
+                    try {
+                        return userRepository.save(newUser);
+                    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                        log.warn("User '{}' was concurrently created. Fetching the existing record.", finalUsername);
+                        return userRepository.findByUsername(finalUsername)
+                                .orElseThrow(() -> new RuntimeException("Lỗi đồng bộ hóa dữ liệu người dùng", e));
+                    }
                 });
     }
 }

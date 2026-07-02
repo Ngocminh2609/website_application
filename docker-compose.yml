@@ -122,6 +122,10 @@ services:
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
       KC_LOG_LEVEL: INFO
+      # Google OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      JAVA_OPTS_APPEND: "-Dkeycloak.migration.replace-placeholders=true"
     ports:
       - "8180:8080"   # Admin Console: http://localhost:8180/admin
     volumes:

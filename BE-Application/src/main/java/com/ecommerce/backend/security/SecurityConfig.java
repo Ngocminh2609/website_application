@@ -1,6 +1,7 @@
 package com.ecommerce.backend.security;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -27,6 +28,7 @@ import java.util.Collection;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
     // Inject bean tường minh từ WebConfig — đảm bảo Spring Security
@@ -105,30 +107,37 @@ public class SecurityConfig {
             username = jwt.getClaimAsString("sub");
         }
         if (username != null) {
-            if (!userRepository.existsByUsername(username)) {
-                User user = new User();
-                user.setUsername(username);
-                user.setEmail(jwt.getClaimAsString("email"));
-                
-                String fullName = jwt.getClaimAsString("name");
-                if (fullName == null) {
-                    fullName = username;
-                }
-                user.setFullName(fullName);
-                
-                // Mật khẩu placeholder cho tài khoản OAuth2 (JPA yêu cầu @NotBlank)
-                user.setPassword(passwordEncoder().encode("KEYCLOAK_OAUTH2_PLACEHOLDER_" + java.util.UUID.randomUUID()));
-                
-                // Xác định vai trò từ Keycloak token
-                java.util.Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-                String role = "USER";
-                if (realmAccess != null && realmAccess.get("roles") instanceof Collection<?> roles) {
-                    if (roles.contains("ADMIN")) {
-                        role = "ADMIN";
+            try {
+                if (!userRepository.existsByUsername(username)) {
+                    User user = new User();
+                    user.setUsername(username);
+                    user.setEmail(jwt.getClaimAsString("email"));
+                    
+                    String fullName = jwt.getClaimAsString("name");
+                    if (fullName == null) {
+                        fullName = username;
                     }
+                    user.setFullName(fullName);
+                    
+                    // Mật khẩu placeholder cho tài khoản OAuth2 (JPA yêu cầu @NotBlank)
+                    user.setPassword(passwordEncoder().encode("KEYCLOAK_OAUTH2_PLACEHOLDER_" + java.util.UUID.randomUUID()));
+                    
+                    // Xác định vai trò từ Keycloak token
+                    java.util.Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+                    String role = "USER";
+                    if (realmAccess != null && realmAccess.get("roles") instanceof Collection<?> roles) {
+                        if (roles.contains("ADMIN")) {
+                            role = "ADMIN";
+                        }
+                    }
+                    user.setRole(role);
+                    userRepository.save(user);
                 }
-                user.setRole(role);
-                userRepository.save(user);
+            } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                // Trùng lặp do request đồng thời - bỏ qua vì user đã được tạo ở thread khác
+                log.warn("User '{}' already exists (duplicate key during sync), skipping insert.", username);
+            } catch (Exception e) {
+                log.error("Lỗi khi sync user từ JWT token: ", e);
             }
         }
     }

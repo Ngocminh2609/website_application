@@ -27,9 +27,7 @@ public class RecommendationService {
      * Ghi nhận lượt xem sản phẩm của người dùng.
      */
     @Transactional
-    public void trackProductView(String username, Long productId) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+    public void trackProductView(User user, Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
 
@@ -49,9 +47,7 @@ public class RecommendationService {
      * Lấy danh sách sản phẩm gợi ý cá nhân hóa.
      * Thuật toán: Kết hợp sản phẩm đã xem gần đây và sản phẩm thuộc danh mục quan tâm nhất.
      */
-    public List<Product> getPersonalizedRecommendations(String username, int limit) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+    public List<Product> getPersonalizedRecommendations(User user, int limit) {
 
         // 1. Lấy sản phẩm đã xem gần nhất (khoảng 1/2 limit)
         List<Product> recentlyViewed = viewRepository.findRecentlyViewedProductsByUser(user, PageRequest.of(0, limit / 2));
