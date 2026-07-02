@@ -18,6 +18,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import com.ecommerce.backend.repository.UserRepository;
 import com.ecommerce.backend.entity.User;
 
+import java.util.Collection;
+
 /**
  * Cấu hình bảo mật chính (FilterChain).
  * Kết hợp CORS, Keycloak Resource Server và phân quyền Endpoint chi tiết cho USER/ADMIN.
@@ -90,13 +92,10 @@ public class SecurityConfig {
         JwtAuthenticationConverter delegate = new JwtAuthenticationConverter();
         delegate.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
         
-        return new Converter<Jwt, AbstractAuthenticationToken>() {
-            @Override
-            public AbstractAuthenticationToken convert(Jwt jwt) {
-                AbstractAuthenticationToken token = delegate.convert(jwt);
-                syncUser(jwt);
-                return token;
-            }
+        return jwt -> {
+            AbstractAuthenticationToken token = delegate.convert(jwt);
+            syncUser(jwt);
+            return token;
         };
     }
 
@@ -123,8 +122,7 @@ public class SecurityConfig {
                 // Xác định vai trò từ Keycloak token
                 java.util.Map<String, Object> realmAccess = jwt.getClaim("realm_access");
                 String role = "USER";
-                if (realmAccess != null && realmAccess.get("roles") instanceof java.util.Collection) {
-                    java.util.Collection<?> roles = (java.util.Collection<?>) realmAccess.get("roles");
+                if (realmAccess != null && realmAccess.get("roles") instanceof Collection<?> roles) {
                     if (roles.contains("ADMIN")) {
                         role = "ADMIN";
                     }
