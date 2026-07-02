@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Typography, Divider } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import BaseButton from '../../components/common/BaseButton';
 import BaseInput from '../../components/common/BaseInput';
 import { authApi } from '../../api/authApi';
@@ -38,19 +38,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     };
 
     // Xử lý sau khi Google cấp Token
-    const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
-        if (!credentialResponse.credential) {
-            notification.error('Không tìm thấy thông tin xác thực từ Google.');
-            return;
-        }
-
+    const handleGoogleSuccess = async () => {
         setLoading(true);
         try {
-            const response = await authApi.googleLogin(credentialResponse.credential);
-            handleAuthResponse(response);
+            await authApi.googleLogin();
         } catch {
             notification.error('Đăng nhập Google thất bại. Vui lòng thử lại.');
-        } finally {
             setLoading(false);
         }
     };
