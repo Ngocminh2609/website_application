@@ -58,7 +58,7 @@ interface NavIconBadgeProps {
 const NavIconBadge: React.FC<NavIconBadgeProps> = ({ count, color, icon, onClick, id, title }) => (
     <Tooltip title={title}>
         <div id={id} onClick={onClick} style={ICON_WRAPPER_STYLE}>
-            <Badge count={count} size="small" offset={[5, 0]} color={color} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Badge count={count} size="small" offset={[5, 0]} color={color}>
                 {icon}
             </Badge>
         </div>
@@ -369,7 +369,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, isDarkMode, onToggleThe
                         <Tooltip title="Thông báo">
                             <Dropdown dropdownRender={() => notificationMenu} placement="bottomRight" trigger={['click']} arrow>
                                 <div style={ICON_WRAPPER_STYLE}>
-                                    <Badge count={unreadCount} size="small" offset={[5, 0]} color="#ff4d4f" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Badge count={unreadCount} size="small" offset={[5, 0]} color="#ff4d4f">
                                         <BellOutlined style={{ fontSize: '22px', color: 'var(--text-main)' }} />
                                     </Badge>
                                 </div>
