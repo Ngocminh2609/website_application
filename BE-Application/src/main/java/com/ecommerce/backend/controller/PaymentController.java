@@ -92,22 +92,18 @@ public class PaymentController {
         Collections.sort(fieldNames);
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
+        for (String fieldName : fieldNames) {
             String fieldValue = vnp_Params.get(fieldName);
             if ((fieldValue != null) && (!fieldValue.isEmpty())) {
-                hashData.append(fieldName);
-                hashData.append('=');
-                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                String encodedKey = URLEncoder.encode(fieldName, StandardCharsets.UTF_8).replace("+", "%20");
+                String encodedValue = URLEncoder.encode(fieldValue, StandardCharsets.UTF_8).replace("+", "%20");
                 
-                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII));
-                query.append('=');
-                query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                if (itr.hasNext()) {
-                    query.append('&');
+                if (!hashData.isEmpty()) {
                     hashData.append('&');
+                    query.append('&');
                 }
+                hashData.append(encodedKey).append('=').append(encodedValue);
+                query.append(encodedKey).append('=').append(encodedValue);
             }
         }
         String queryUrl = query.toString();
@@ -140,17 +136,16 @@ public class PaymentController {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
         StringBuilder hashData = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
+        for (String fieldName : fieldNames) {
             String fieldValue = fields.get(fieldName);
             if ((fieldValue != null) && (!fieldValue.isEmpty())) {
-                hashData.append(fieldName);
-                hashData.append('=');
-                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                if (itr.hasNext()) {
+                String encodedKey = URLEncoder.encode(fieldName, StandardCharsets.UTF_8).replace("+", "%20");
+                String encodedValue = URLEncoder.encode(fieldValue, StandardCharsets.UTF_8).replace("+", "%20");
+                
+                if (!hashData.isEmpty()) {
                     hashData.append('&');
                 }
+                hashData.append(encodedKey).append('=').append(encodedValue);
             }
         }
 
