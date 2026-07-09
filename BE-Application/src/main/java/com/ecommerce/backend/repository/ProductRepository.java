@@ -1,7 +1,10 @@
 package com.ecommerce.backend.repository;
 
 import com.ecommerce.backend.entity.Product;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,10 +20,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByBrandAndCategoryIdAndIsActiveTrue(String brand, Long categoryId);
     
     // Hỗ trợ gợi ý cá nhân hóa
-    @org.springframework.data.jpa.repository.Query("SELECT p FROM Product p WHERE p.category.name IN :names AND p.isActive = true")
-    List<Product> findByCategoryNameIn(@org.springframework.data.repository.query.Param("names") List<String> names, org.springframework.data.domain.Pageable pageable);
+    @Query("SELECT p FROM Product p WHERE p.category.name IN :names AND p.isActive = true")
+    List<Product> findByCategoryNameIn(@Param("names") List<String> names, Pageable pageable);
     
-    List<Product> findByIsBestSellerTrue(org.springframework.data.domain.Pageable pageable);
+    List<Product> findByIsBestSellerTrue(Pageable pageable);
 
     // --- ADMIN (QUẢN TRỊ) ---
     List<Product> findAllByOrderByCreatedAtDesc();

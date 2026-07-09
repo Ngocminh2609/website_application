@@ -22,18 +22,22 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, Lo
     Optional<ProductReview> findByProductIdAndUserId(Long productId, Long userId);
 
     // Tính rating trung bình từ các review đã duyệt để cập nhật lại trường rating của Product
-    @Query("SELECT AVG(r.rating) FROM ProductReview r WHERE r.product.id = :productId AND r.isApproved = true")
+    @Query(value = """
+            SELECT AVG(r.rating) FROM product_reviews r
+            WHERE r.product_id = :productId AND r.is_approved = true
+            """, nativeQuery = true)
     Double calculateAverageRating(@Param("productId") Long productId);
 
     // Đếm số lượng review đã duyệt để cập nhật lại reviewCount của Product
     long countByProductIdAndIsApprovedTrue(Long productId);
 
     // Kiểm tra user đã mua sản phẩm này chưa (xác nhận đơn hàng PAID) để cấp nhãn verified
-    @Query("""
-            SELECT COUNT(oi) > 0 FROM OrderItem oi
-            WHERE oi.product.id = :productId
-            AND oi.order.user.id = :userId
-            AND oi.order.status IN ('PAID', 'SHIPPING', 'DELIVERED')
-            """)
+    @Query(value = """
+            SELECT COUNT(oi.id) > 0 FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            WHERE oi.product_id = :productId
+            AND o.user_id = :userId
+            AND o.status IN ('PAID', 'SHIPPING', 'DELIVERED')
+            """, nativeQuery = true)
     boolean hasUserPurchasedProduct(@Param("productId") Long productId, @Param("userId") Long userId);
 }

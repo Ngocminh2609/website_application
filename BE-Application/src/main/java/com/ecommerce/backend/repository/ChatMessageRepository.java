@@ -14,13 +14,11 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessageEntity, 
     /**
      * Lấy lịch sử hội thoại giữa admin và một client dựa trên email hoặc senderId.
      */
-    @Query("SELECT c FROM ChatMessageEntity c WHERE " +
-           "(c.email = :clientKey OR c.senderId = :clientKey OR c.recipientId = :clientKey) " +
-           "ORDER BY c.createdAt ASC")
+    @Query(value = """
+            SELECT * FROM chat_messages c
+            WHERE (c.email = :clientKey OR c.sender_id = :clientKey OR c.recipient_id = :clientKey)
+            ORDER BY c.created_at
+            """, nativeQuery = true)
     List<ChatMessageEntity> findChatHistory(@Param("clientKey") String clientKey);
 
-    /**
-     * Lấy danh sách các tin nhắn mới nhất để hiển thị thông báo offline.
-     */
-    List<ChatMessageEntity> findTop100ByOrderByCreatedAtDesc();
 }

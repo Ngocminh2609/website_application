@@ -25,12 +25,6 @@ public class KeycloakAdminService {
     @Value("${keycloak.admin.realm:ecommerce}")
     private String realm;
 
-    @Value("${keycloak.admin.client-id:ecommerce-backend}")
-    private String clientId;
-
-    @Value("${keycloak.admin.client-secret:ecommerce-backend-secret-placeholder}")
-    private String clientSecret;
-
     @Value("${keycloak.admin.username:admin}")
     private String adminUsername;
 
@@ -59,9 +53,10 @@ public class KeycloakAdminService {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
+            ResponseEntity<?> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                return (String) response.getBody().get("access_token");
+                Map<?, ?> body = (Map<?, ?>) response.getBody();
+                return (String) body.get("access_token");
             }
         } catch (Exception e) {
             log.error("Không thể lấy admin token từ Keycloak: {}", e.getMessage());
@@ -71,7 +66,6 @@ public class KeycloakAdminService {
 
     /**
      * Tạo người dùng mới trong Keycloak realm.
-     * @return true nếu tạo thành công, ném exception nếu thất bại.
      */
     public void createUser(String username, String email, String fullName, String password) {
         String adminToken = getAdminToken();

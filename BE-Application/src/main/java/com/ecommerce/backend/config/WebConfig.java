@@ -14,17 +14,17 @@ import java.util.List;
  * Cấu hình CORS tập trung cho toàn bộ ứng dụng.
  * Expose CorsConfigurationSource bean để cả Spring MVC lẫn Spring Security
  * dùng chung — tránh xung đột giữa 2 tầng CORS filter.
- *
+ * <p>
  * Tham chiếu Spring Security 6.x best practice:
- * https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html
+ * <a href="https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html">Spring Security CORS Integration</a>
  */
 @Configuration
 public class WebConfig {
 
     /**
      * Danh sách origins được phép, phân cách bằng dấu phẩy.
-     * Local dev default: http://localhost:5173,http://localhost:3000
-     * Production: set biến môi trường CORS_ALLOWED_ORIGINS=https://yourdomain.com
+     * Local dev default: <a href="http://localhost:5173,http://localhost:3000">...</a>
+     * Production: set biến môi trường CORS_ALLOWED_ORIGINS=<a href="https://yourdomain.com">...</a>
      */
     @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
     private String allowedOriginsConfig;

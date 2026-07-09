@@ -26,6 +26,9 @@ public class MinioConfig {
     @Value("${minio.region:us-east-1}")
     private String region;
 
+    @Value("${minio.url.external:}")
+    private String externalUrl;
+
     @Bean
     public S3Client s3Client() {
         return S3Client.builder()

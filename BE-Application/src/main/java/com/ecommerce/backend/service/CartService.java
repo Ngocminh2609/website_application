@@ -4,7 +4,6 @@ import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.Product;
 import com.ecommerce.backend.entity.User;
-import com.ecommerce.backend.repository.CartItemRepository;
 import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,6 @@ import java.util.Optional;
 public class CartService {
 
     private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
 
     /**

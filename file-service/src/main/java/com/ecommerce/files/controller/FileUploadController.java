@@ -11,6 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/upload")
+@SuppressWarnings("SpellCheckingInspection")
 public class FileUploadController {
 
     private final MinioService minioService;

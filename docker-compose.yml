@@ -106,7 +106,7 @@ services:
     image: quay.io/keycloak/keycloak:24.0.3
     container_name: website_keycloak
     restart: unless-stopped
-    command: start-dev --import-realm
+    command: start-dev --import-realm --health-enabled=true
     environment:
       # Database
       KC_DB: postgres
@@ -139,6 +139,67 @@ services:
       timeout: 10s
       retries: 10
       start_period: 60s
+    networks:
+      - app_network
+
+  # ─── API Gateway ─────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: website_api_gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - SERVICES_FILE_URL=http://file-service:8086
+      - SERVICES_USER_URL=http://host.docker.internal:8082
+      - SERVICES_PRODUCT_URL=http://host.docker.internal:8082
+      - SERVICES_ORDER_URL=http://host.docker.internal:8082
+      - SERVICES_PAYMENT_URL=http://host.docker.internal:8082
+      - SERVICES_NOTIFICATION_URL=http://host.docker.internal:8082
+      - SERVICES_ADMIN_URL=http://host.docker.internal:8082
+      - SERVICES_MONOLITH_URL=http://host.docker.internal:8082
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  # ─── File Service ────────────────────────────────────────────
+  file-service:
+    build:
+      context: ./file-service
+      dockerfile: Dockerfile
+    container_name: website_file_service
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      - APP_BASE_URL=http://api-gateway:8080
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET_PRODUCT=products-image
+      - MINIO_BUCKET_CATEGORY=category-image
+      - MINIO_BUCKET_USER=user-image
+      - MINIO_BUCKET_BANNER=banner-image
+      - MINIO_EXTERNAL_URL=http://localhost:9000
+      - MINIO_REGION=us-east-1
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/ecommerce
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      minio:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     networks:
       - app_network
 

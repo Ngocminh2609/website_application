@@ -19,10 +19,22 @@ public interface UserProductViewRepository extends JpaRepository<UserProductView
     Optional<UserProductView> findByUserAndProduct(User user, Product product);
     
     // Lấy danh sách sản phẩm đã xem gần nhất của người dùng
-    @Query("SELECT v.product FROM UserProductView v WHERE v.user = :user ORDER BY v.lastViewedAt DESC")
+    @Query(value = """
+            SELECT p.* FROM products p
+            JOIN user_product_views v ON p.id = v.product_id
+            WHERE v.user_id = :#{#user.id}
+            ORDER BY v.last_viewed_at DESC
+            """, nativeQuery = true)
     List<Product> findRecentlyViewedProductsByUser(@Param("user") User user, Pageable pageable);
     
     // Lấy các danh mục mà người dùng xem nhiều nhất
-    @Query("SELECT p.category.name FROM UserProductView v JOIN v.product p WHERE v.user = :user GROUP BY p.category.name ORDER BY SUM(v.viewCount) DESC")
+    @Query(value = """
+            SELECT c.name FROM user_product_views v
+            JOIN products p ON v.product_id = p.id
+            JOIN categories c ON p.category_id = c.id
+            WHERE v.user_id = :#{#user.id}
+            GROUP BY c.name
+            ORDER BY SUM(v.view_count) DESC
+            """, nativeQuery = true)
     List<String> findTopInterestedCategoriesByUser(@Param("user") User user, Pageable pageable);
 }

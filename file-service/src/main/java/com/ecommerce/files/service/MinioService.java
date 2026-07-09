@@ -1,7 +1,5 @@
 package com.ecommerce.files.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,8 +14,6 @@ import java.util.UUID;
 
 @Service
 public class MinioService {
-
-    private static final Logger log = LoggerFactory.getLogger(MinioService.class);
 
     private final S3Client s3Client;
 
@@ -59,22 +55,22 @@ public class MinioService {
         );
     }
 
-    public void deleteFile(String fileUrl, String bucketName) {
-        if (fileUrl == null || fileUrl.isEmpty()) {
-            return;
-        }
-        try {
-            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-            s3Client.deleteObject(
-                    DeleteObjectRequest.builder()
-                            .bucket(bucketName)
-                            .key(fileName)
-                            .build()
-            );
-        } catch (Exception e) {
-            log.warn("Lỗi khi xóa tệp từ storage: {}", e.getMessage());
-        }
-    }
+//    public void deleteFile(String fileUrl, String bucketName) {
+//        if (fileUrl == null || fileUrl.isEmpty()) {
+//            return;
+//        }
+//        try {
+//            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+//            s3Client.deleteObject(
+//                    DeleteObjectRequest.builder()
+//                            .bucket(bucketName)
+//                            .key(fileName)
+//                            .build()
+//            );
+//        } catch (Exception e) {
+//            log.warn("Lỗi khi xóa tệp từ storage: {}", e.getMessage());
+//        }
+//    }
 
     private String sanitizeFileName(String originalFileName) {
         if (originalFileName == null || originalFileName.isBlank()) {

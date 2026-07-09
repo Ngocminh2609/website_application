@@ -24,7 +24,7 @@ public class DataInitializer implements CommandLineRunner {
         if (userRepository.findByUsername("admin").isEmpty()) {
             User admin = new User();
             admin.setUsername("admin");
-            // Mã hóa mật khẩu chuẩn BCrypt cho 'password123'
+            // Mã hóa mật khẩu chuẩn BCrypt
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setEmail("admin@technova.com");
             admin.setFullName("Quản Trị Hệ Thống");

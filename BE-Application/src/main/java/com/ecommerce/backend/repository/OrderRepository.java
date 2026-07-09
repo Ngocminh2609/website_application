@@ -2,6 +2,7 @@ package com.ecommerce.backend.repository;
 
 import com.ecommerce.backend.entity.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -10,19 +11,39 @@ import java.util.List;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByUserIdOrderByOrderDateDesc(Long userId);
 
-    @org.springframework.data.jpa.repository.Query("SELECT DATE_FORMAT(o.orderDate, '%Y-%m-%d'), SUM(o.totalAmount), COUNT(o.id) " +
-            "FROM Order o WHERE o.status IN ('PAID', 'SHIPPING', 'DELIVERED') GROUP BY DATE_FORMAT(o.orderDate, '%Y-%m-%d') ORDER BY DATE_FORMAT(o.orderDate, '%Y-%m-%d') DESC")
+    @Query(value = """
+            SELECT DATE_FORMAT(o.order_date, '%Y-%m-%d'), SUM(o.total_amount), COUNT(o.id)
+            FROM orders o
+            WHERE o.status IN ('PAID', 'SHIPPING', 'DELIVERED')
+            GROUP BY DATE_FORMAT(o.order_date, '%Y-%m-%d')
+            ORDER BY DATE_FORMAT(o.order_date, '%Y-%m-%d') DESC
+            """, nativeQuery = true)
     List<Object[]> getDailyStatisticsRaw();
 
-    @org.springframework.data.jpa.repository.Query("SELECT DATE_FORMAT(o.orderDate, '%Y-W%v'), SUM(o.totalAmount), COUNT(o.id) " +
-            "FROM Order o WHERE o.status IN ('PAID', 'SHIPPING', 'DELIVERED') GROUP BY DATE_FORMAT(o.orderDate, '%Y-W%v') ORDER BY DATE_FORMAT(o.orderDate, '%Y-W%v') DESC")
+    @Query(value = """
+            SELECT DATE_FORMAT(o.order_date, '%Y-W%v'), SUM(o.total_amount), COUNT(o.id)
+            FROM orders o
+            WHERE o.status IN ('PAID', 'SHIPPING', 'DELIVERED')
+            GROUP BY DATE_FORMAT(o.order_date, '%Y-W%v')
+            ORDER BY DATE_FORMAT(o.order_date, '%Y-W%v') DESC
+            """, nativeQuery = true)
     List<Object[]> getWeeklyStatisticsRaw();
 
-    @org.springframework.data.jpa.repository.Query("SELECT DATE_FORMAT(o.orderDate, '%Y-%m'), SUM(o.totalAmount), COUNT(o.id) " +
-            "FROM Order o WHERE o.status IN ('PAID', 'SHIPPING', 'DELIVERED') GROUP BY DATE_FORMAT(o.orderDate, '%Y-%m') ORDER BY DATE_FORMAT(o.orderDate, '%Y-%m') DESC")
+    @Query(value = """
+            SELECT DATE_FORMAT(o.order_date, '%Y-%m'), SUM(o.total_amount), COUNT(o.id)
+            FROM orders o
+            WHERE o.status IN ('PAID', 'SHIPPING', 'DELIVERED')
+            GROUP BY DATE_FORMAT(o.order_date, '%Y-%m')
+            ORDER BY DATE_FORMAT(o.order_date, '%Y-%m') DESC
+            """, nativeQuery = true)
     List<Object[]> getMonthlyStatisticsRaw();
 
-    @org.springframework.data.jpa.repository.Query("SELECT DATE_FORMAT(o.orderDate, '%Y'), SUM(o.totalAmount), COUNT(o.id) " +
-            "FROM Order o WHERE o.status IN ('PAID', 'SHIPPING', 'DELIVERED') GROUP BY DATE_FORMAT(o.orderDate, '%Y') ORDER BY DATE_FORMAT(o.orderDate, '%Y') DESC")
+    @Query(value = """
+            SELECT DATE_FORMAT(o.order_date, '%Y'), SUM(o.total_amount), COUNT(o.id)
+            FROM orders o
+            WHERE o.status IN ('PAID', 'SHIPPING', 'DELIVERED')
+            GROUP BY DATE_FORMAT(o.order_date, '%Y')
+            ORDER BY DATE_FORMAT(o.order_date, '%Y') DESC
+            """, nativeQuery = true)
     List<Object[]> getYearlyStatisticsRaw();
 }

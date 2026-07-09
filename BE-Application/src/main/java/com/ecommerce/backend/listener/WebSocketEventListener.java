@@ -7,7 +7,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
 /**
  * Lắng nghe các sự kiện WebSocket để xử lý dọn dẹp dữ liệu.

@@ -6,9 +6,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Service quản lý số lượng người đang xem sản phẩm theo thời gian thực.
@@ -33,7 +33,7 @@ public class ProductViewerService {
     public void addViewer(Long productId, String sessionId) {
         // Kiểm tra nếu session này đang xem sản phẩm khác, hãy xóa ở đó trước
         Long oldProductId = sessionProductMap.get(sessionId);
-        if (oldProductId != null && !oldProductId.equals(productId)) {
+        if (oldProductId != null && !Objects.equals(oldProductId, productId)) {
             removeViewer(sessionId);
         }
 
@@ -63,18 +63,13 @@ public class ProductViewerService {
                     int currentCount = viewers.size();
                     log.info("[VIEWER-SYSTEM] --- Người rời khỏi SP {}. Còn lại: {} (Session: {})", productId, currentCount, sessionId);
                     
-                    if (currentCount <= 0) {
+                    if (currentCount == 0) {
                         productViewers.remove(productId);
                     }
                     broadcastViewerCount(productId, currentCount);
                 }
             }
         }
-    }
-
-    public int getViewerCount(Long productId) {
-        Set<String> viewers = productViewers.get(productId);
-        return viewers != null ? viewers.size() : 0;
     }
 
     private void broadcastViewerCount(Long productId, int count) {

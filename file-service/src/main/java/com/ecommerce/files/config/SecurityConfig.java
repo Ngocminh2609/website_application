@@ -11,6 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@SuppressWarnings("SpellCheckingInspection")
 public class SecurityConfig {
 
     @Bean
