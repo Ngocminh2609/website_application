@@ -23,7 +23,7 @@ export const usePersonalizedProducts = (limit: number = 6) => {
       fetchProducts();
       initializeHomeData();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products.length, loading]);
 
   useEffect(() => {

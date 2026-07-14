@@ -4,6 +4,8 @@ import SockJS from "sockjs-client";
 import { EyeOutlined } from "@ant-design/icons";
 import { Typography, Space } from "antd";
 import { getWsUrl } from "../../utils/url";
+import { styles } from "./styles/RealTimeViewerCount.styles";
+import { PRODUCT_STRINGS } from "../../constants/Product/product";
 
 interface RealTimeViewerCountProps {
   productId: number;
@@ -87,30 +89,18 @@ const RealTimeViewerCount: React.FC<RealTimeViewerCountProps> = ({
   const displayCount = viewerCount > 0 ? viewerCount : 1;
 
   return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        background: "rgba(239, 68, 68, 0.1)", // Màu đỏ nhạt
-        padding: "4px 12px",
-        borderRadius: "20px",
-        border: "1px solid rgba(239, 68, 68, 0.2)",
-        marginBottom: "12px",
-      }}
-    >
+    <div style={styles.container}>
       <Space size={6}>
         <EyeOutlined
           className="animate-pulse-slow"
-          style={{ color: "#ef4444", fontSize: "14px" }}
+          style={styles.icon}
         />
-        <Typography.Text
-          style={{ color: "#ef4444", fontSize: "13px", fontWeight: 600 }}
-        >
-          Hiện có{" "}
-          <span style={{ fontSize: "15px", margin: "0 2px" }}>
+        <Typography.Text style={styles.text}>
+          {PRODUCT_STRINGS.realTimeViewer.prefix}{" "}
+          <span style={styles.count}>
             {displayCount}
           </span>{" "}
-          người đang xem sản phẩm này
+          {PRODUCT_STRINGS.realTimeViewer.suffix}
         </Typography.Text>
       </Space>
     </div>

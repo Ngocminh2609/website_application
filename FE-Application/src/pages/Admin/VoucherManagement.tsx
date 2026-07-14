@@ -21,6 +21,8 @@ import { useVoucherManagementState, type VoucherFormValues } from "../../hooks/A
 import { styles } from "./styles/voucher-management.styles";
 import { VOUCHER_STRINGS } from "../../constants/Admin/voucher-management";
 
+import { formatCurrency, calculateUsagePercentage } from "./helper";
+
 const VoucherManagement: React.FC = () => {
   const {
     coupons,
@@ -52,7 +54,7 @@ const VoucherManagement: React.FC = () => {
         <span>
           {type === "PERCENT"
             ? `${VOUCHER_STRINGS.table.percentPrefix}${record.discountValue}%`
-            : `${VOUCHER_STRINGS.table.fixedPrefix}${record.discountValue.toLocaleString()}đ`}
+            : `${VOUCHER_STRINGS.table.fixedPrefix}${formatCurrency(record.discountValue, false)}`}
         </span>
       ),
     },
@@ -60,13 +62,13 @@ const VoucherManagement: React.FC = () => {
       title: VOUCHER_STRINGS.table.minOrder,
       dataIndex: "minOrderAmount",
       key: "minOrderAmount",
-      render: (amt: number) => <span>{amt.toLocaleString()} đ</span>,
+      render: (amt: number) => <span>{formatCurrency(amt)}</span>,
     },
     {
       title: VOUCHER_STRINGS.table.usage,
       key: "usage",
       render: (_, record: Coupon) => {
-        const usagePercent = Math.min(100, (record.usedCount / (record.usageLimit || 1)) * 100);
+        const usagePercent = calculateUsagePercentage(record.usedCount, record.usageLimit || 1);
         return (
           <Tooltip
             title={`Đã dùng: ${record.usedCount} / Tổng: ${record.usageLimit}`}

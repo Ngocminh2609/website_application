@@ -26,6 +26,10 @@ import {
   PRODUCT_CARD_TITLE_STYLE,
   PRODUCT_CARD_DESC_STYLE,
 } from "../../styles/commonStyles";
+import { styles } from "./styles/ProductCard.styles";
+import { COMMON_STRINGS } from "../../constants/Common/common";
+
+const { productCard: pcStrings } = COMMON_STRINGS;
 
 const { Paragraph, Title, Text } = Typography;
 
@@ -40,60 +44,18 @@ export const StarRating: React.FC<{ value: number; size?: number }> = ({
   value,
   size = 16,
 }) => (
-  <div
-    style={{
-      display: "inline-flex",
-      gap: 3,
-      alignItems: "center",
-      lineHeight: 0,
-    }}
-  >
+  <div style={styles.ratingContainer}>
     {[1, 2, 3, 4, 5].map((star) => {
       const fillPercent = Math.min(
         100,
         Math.max(0, (value - (star - 1)) * 100),
       );
       return (
-        <div
-          key={star}
-          style={{
-            position: "relative",
-            width: size,
-            height: size,
-            flexShrink: 0,
-          }}
-        >
-          <StarFilled
-            style={{
-              color: "rgba(255,255,255,0.1)",
-              fontSize: size,
-              position: "absolute",
-              top: 0,
-              left: 0,
-              display: "block",
-            }}
-          />
+        <div key={star} style={styles.starWrapper(size)}>
+          <StarFilled style={styles.starBackground(size)} />
           {fillPercent > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: `${fillPercent}%`,
-                overflow: "hidden",
-                height: "100%",
-                display: "block",
-                transition: "width 0.3s ease",
-              }}
-            >
-              <StarFilled
-                style={{
-                  color: "#fadb14",
-                  fontSize: size,
-                  width: size,
-                  display: "block",
-                }}
-              />
+            <div style={styles.starForegroundWrapper(fillPercent)}>
+              <StarFilled style={styles.starForeground(size)} />
             </div>
           )}
         </div>
@@ -129,7 +91,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleAddToCart = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      notification.error("Vui lòng đăng nhập để thực hiện");
+      notification.error(pcStrings.loginRequired);
       return;
     }
 
@@ -146,7 +108,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       // hoặc giữ lại để xác nhận thành công
       notification.product.addCartSuccess();
     } catch {
-      notification.error("Không thể thêm sản phẩm vào giỏ hàng");
+      notification.error(pcStrings.addCartError);
     }
   };
 
@@ -162,7 +124,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
-    // Tránh vòng lặp vô tận nếu chính ảnh fallback cũng không load được
+    // Tránh vòng lặp vô chậm nếu chính ảnh fallback cũng không load được
     if (target.dataset.errored === "true") return;
     target.dataset.errored = "true";
     target.src = FALLBACK_IMAGE;
@@ -173,47 +135,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       hoverable
       className="animate-fade-up product-card"
       cover={
-        <div
-          style={{
-            position: "relative",
-            overflow: "hidden",
-            height: "260px",
-            background: "var(--bg-secondary)",
-          }}
-        >
+        <div style={styles.coverWrapper}>
           {/* Badge Flash Sale */}
           {discountPercent > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                top: "12px",
-                left: "12px",
-                zIndex: 2,
-              }}
-            >
-              <Tag
-                color="#ef4444"
-                style={{
-                  borderRadius: "6px",
-                  fontWeight: 700,
-                  padding: "4px 8px",
-                  border: "none",
-                }}
-              >
-                <FireOutlined /> {discountPercent}% OFF
+            <div style={styles.discountTagWrapper}>
+              <Tag color="#ef4444" style={styles.discountTag}>
+                <FireOutlined /> {discountPercent}% {pcStrings.off}
               </Tag>
             </div>
           )}
 
           {/* Nút Yêu thích */}
-          <div
-            style={{
-              position: "absolute",
-              top: "12px",
-              right: "12px",
-              zIndex: 3,
-            }}
-          >
+          <div style={styles.wishlistBtnWrapper}>
             <Button
               shape="circle"
               icon={
@@ -224,28 +157,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 )
               }
               onClick={toggleWishlist}
-              style={{
-                background: isFav ? "rgba(255,255,255,0.9)" : "var(--glass-bg)",
-                border: "none",
-                backdropFilter: "blur(4px)",
-                color: isFav ? "#f43f5e" : "var(--text-main)",
-              }}
+              style={styles.wishlistBtn(isFav)}
             />
           </div>
 
           {/* Nút So Sánh */}
-          <div
-            style={{
-              position: "absolute",
-              top: "56px",
-              right: "12px",
-              zIndex: 3,
-            }}
-          >
-            <Tooltip title={isComp ? "Xóa khỏi so sánh" : "So sánh sản phẩm"}>
+          <div style={styles.compareBtnWrapper}>
+            <Tooltip
+              title={
+                isComp ? pcStrings.removeFromCompare : pcStrings.addToCompare
+              }
+            >
               <Button
                 shape="circle"
-                icon={<SwapOutlined style={{ transform: "rotate(90deg)" }} />}
+                icon={<SwapOutlined style={styles.compareIcon} />}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -255,39 +180,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     addToCompare(product);
                   }
                 }}
-                style={{
-                  background: isComp
-                    ? "var(--primary-color)"
-                    : "var(--glass-bg)",
-                  border: "none",
-                  backdropFilter: "blur(4px)",
-                  color: isComp ? "#fff" : "var(--text-main)",
-                  boxShadow: isComp ? "0 0 10px var(--primary-color)" : "none",
-                }}
+                style={styles.compareBtn(isComp)}
               />
             </Tooltip>
           </div>
 
           {/* Badge Best Seller */}
           {product.isBestSeller && !isFav && (
-            <div
-              style={{
-                position: "absolute",
-                top: "12px",
-                right: "12px",
-                zIndex: 2,
-              }}
-            >
-              <Tag
-                color="#f59e0b"
-                style={{
-                  borderRadius: "6px",
-                  fontWeight: 700,
-                  padding: "4px 8px",
-                  border: "none",
-                }}
-              >
-                BÁN CHẠY
+            <div style={styles.bestSellerTagWrapper}>
+              <Tag color="#f59e0b" style={styles.bestSellerTag}>
+                {pcStrings.bestSeller}
               </Tag>
             </div>
           )}
@@ -299,12 +201,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               src={product.imageUrl}
               onError={handleImgError}
               className="product-image"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                transition: "transform 0.5s ease",
-              }}
+              style={styles.productImage}
             />
           </Link>
         </div>
@@ -316,22 +213,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     >
       <div>
         {/* Brand & Rating */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "8px",
-          }}
-        >
+        <div style={styles.brandRatingContainer}>
           <Text style={PRODUCT_CARD_BRAND_STYLE}>
-            {product.brand || "TECH"}
+            {product.brand || pcStrings.defaultBrand}
           </Text>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={styles.ratingWrapper}>
             <StarRating value={product.rating || 5} size={10} />
-            <Text style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
-              ({product.reviewCount || 0})
-            </Text>
+            <Text style={styles.reviewCount}>({product.reviewCount || 0})</Text>
           </div>
         </div>
 
@@ -359,64 +247,33 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       {/* Footer: Giá & Nút */}
-      <div style={{ marginTop: "auto" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: "8px",
-            marginBottom: "12px",
-          }}
-        >
-          <Title
-            level={3}
-            style={{
-              margin: 0,
-              color: "inherit",
-              fontSize: "1.2rem",
-              fontWeight: 700,
-            }}
-          >
+      <div style={styles.footerContainer}>
+        <div style={styles.priceContainer}>
+          <Title level={3} style={styles.priceText}>
             {(product.price ?? 0).toLocaleString("vi-VN")} ₫
           </Title>
           {product.originalPrice && (
-            <Text
-              delete
-              style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}
-            >
+            <Text delete style={styles.originalPriceText}>
               {(product.originalPrice ?? 0).toLocaleString("vi-VN")} ₫
             </Text>
           )}
         </div>
 
-        <Space direction="vertical" style={{ width: "100%" }} size="small">
+        <Space direction="vertical" style={styles.actionsSpace} size="small">
           <BaseButton
             type="primary"
             icon={<ShoppingCartOutlined />}
             onClick={handleAddToCart}
-            style={{
-              width: "100%",
-              height: "42px",
-              borderRadius: "10px",
-              fontWeight: 600,
-            }}
+            style={styles.addCartBtn}
           >
-            Thêm Vào Giỏ
+            {pcStrings.addToCart}
           </BaseButton>
-          <Link to={`/product/${product.id}`} style={{ width: "100%" }}>
-            <BaseButton
-              icon={<EyeOutlined />}
-              style={{
-                width: "100%",
-                height: "42px",
-                borderRadius: "10px",
-                fontWeight: 600,
-                background: "var(--glass-bg)",
-                borderColor: "var(--glass-border)",
-                color: "var(--text-main)",
-              }}
-            >
-              Xem Chi Tiết
+          <Link
+            to={`/product/${product.id}`}
+            style={styles.viewDetailBtnWrapper}
+          >
+            <BaseButton icon={<EyeOutlined />} style={styles.viewDetailBtn}>
+              {pcStrings.viewDetails}
             </BaseButton>
           </Link>
         </Space>

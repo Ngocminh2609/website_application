@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import { Form, Typography, Divider } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import BaseButton from "../../components/common/BaseButton";
 import BaseInput from "../../components/common/BaseInput";
-import { authApi } from "../../api/authApi";
 import { notification } from "../../utils/notification";
-import type { LoginRequest, AuthResponse } from "../../types/auth";
+import type { LoginRequest } from "../../types/auth";
 import { styles } from "./styles/login.styles";
 import { LOGIN_STRINGS } from "../../constants/Auth/auth";
+import { useLoginState } from "../../hooks/Auth/useLoginState";
 
 const { Title, Text } = Typography;
 
@@ -22,43 +22,8 @@ interface LoginPageProps {
  * Đã xử lý các lỗi TypeScript 'any' để đảm bảo Type-safety.
  */
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
-  const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
-
-  // Xử lý đăng nhập truyền thống
-  const onFinish = async (values: LoginRequest) => {
-    setLoading(true);
-    try {
-      const response = await authApi.login(values);
-      handleAuthResponse(response);
-    } catch {
-      notification.auth.loginError();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Xử lý sau khi Google cấp Token
-  const handleGoogleSuccess = async () => {
-    setLoading(true);
-    try {
-      await authApi.googleLogin();
-    } catch {
-      notification.error(LOGIN_STRINGS.messages.googleLoginFailed);
-      setLoading(false);
-    }
-  };
-
-  // Hàm dùng chung để lưu Session với Type định nghĩa rõ ràng
-  const handleAuthResponse = (response: AuthResponse) => {
-    if (response.token) {
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-      notification.auth.loginSuccess();
-      onLoginSuccess();
-      navigate("/");
-    }
-  };
+  const { loading, onFinish, handleGoogleSuccess } = useLoginState(onLoginSuccess);
 
   return (
     <div style={styles.loginCard} className="animate-fade-up">

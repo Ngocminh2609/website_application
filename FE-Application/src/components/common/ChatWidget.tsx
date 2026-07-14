@@ -9,6 +9,10 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { getWsUrl } from "../../utils/url";
 import type { User } from "../../types/auth";
+import { styles } from "./styles/ChatWidget.styles";
+import { COMMON_STRINGS } from "../../constants/Common/common";
+
+const { chatWidget: cwStrings } = COMMON_STRINGS;
 
 interface Message {
   id: string | number;
@@ -17,28 +21,7 @@ interface Message {
   timestamp: number;
 }
 
-const DEFAULT_QUESTIONS = [
-  {
-    q: "Tech Nova là gì?",
-    a: "Tech Nova là hệ thống bán lẻ công nghệ hàng đầu, chuyên cung cấp Laptop, Gaming Gear và linh kiện PC cao cấp với mức giá ưu đãi nhất!",
-  },
-  {
-    q: "Làm sao để đặt hàng?",
-    a: "Bạn chỉ cần chọn sản phẩm ưng ý, thêm vào giỏ hàng và tiến hành thanh toán. Chúng tôi hỗ trợ giao hàng toàn quốc trong 2-4 ngày.",
-  },
-  {
-    q: "Chính sách bảo hành?",
-    a: "Tất cả sản phẩm tại Tech Nova đều bảo hành chính hãng từ 12-36 tháng. 1 đổi 1 trong 30 ngày nếu có lỗi từ nhà sản xuất.",
-  },
-  {
-    q: "Phương thức thanh toán?",
-    a: "Chúng tôi hỗ trợ Thanh toán khi nhận hàng (COD), Chuyển khoản ngân hàng và các ví điện tử phổ biến như Momo, VNPay.",
-  },
-  {
-    q: "Liên hệ hỗ trợ?",
-    a: "Bạn có thể gọi Hotline 1900 xxxx hoặc chat trực tiếp tại đây để được tư vấn viên hỗ trợ nhanh nhất!",
-  },
-];
+const DEFAULT_QUESTIONS = cwStrings.defaultQuestions;
 
 const AnimatedRobot = () => (
   <svg viewBox="0 0 100 100" className="robot-canvas">
@@ -59,7 +42,7 @@ const AnimatedRobot = () => (
 
 const INITIAL_MESSAGE: Message = {
   id: "init",
-  text: "Xin chào! Tôi là NovaBot. Tôi có thể giúp gì cho bạn hôm nay?",
+  text: cwStrings.initialMessage,
   sender: "bot",
   timestamp: 0,
 };
@@ -81,7 +64,7 @@ const createMessageObject = (
 /** Tìm câu trả lời bot dựa trên text người dùng nhập. */
 const findBotAnswer = (text: string) => {
   const lowerText = text.toLowerCase();
-  return DEFAULT_QUESTIONS.find(
+  return cwStrings.defaultQuestions.find(
     (item) =>
       lowerText.includes(item.q.toLowerCase()) ||
       item.q.toLowerCase().includes(lowerText),
@@ -128,16 +111,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
 
     if (!gId || !gName) {
       gId = `guest-${Math.random().toString(36).slice(2, 7)}`;
-      gName = `Khách ${Math.floor(Math.random() * 1000)}`;
+      gName = `${cwStrings.guestDefaultName} ${Math.floor(Math.random() * 1000)}`;
       localStorage.setItem("guest_chat_id", gId);
       localStorage.setItem("guest_chat_name", gName);
     }
 
     return {
       id: gId || "guest",
-      name: gName || "Khách",
+      name: gName || cwStrings.guestDefaultName,
       email: null,
-      fullName: gName || "Khách",
+      fullName: gName || cwStrings.guestDefaultName,
     };
   });
 
@@ -207,9 +190,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
       setIsTyping(true);
       setTimeout(() => {
         setIsTyping(false);
-        const response = found
-          ? found.a
-          : "Tôi chưa biết câu trả lời này. Đã gửi yêu cầu tới Admin, bạn chờ một chút nhé!";
+        const response = found ? found.a : cwStrings.botFallbackResponse;
         const botMsg = createMessageObject(response, "bot");
         setMessages((prev) => [...prev, botMsg]);
       }, 800);
@@ -344,33 +325,20 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
   return (
     <div className="chat-widget-container">
       {isOpen && (
-        <div
-          className="chat-window"
-          style={{
-            background: "var(--bg-secondary)",
-            border: "1px solid var(--glass-border)",
-          }}
-        >
+        <div className="chat-window" style={styles.chatWindow}>
           <div className="chat-header">
             <AnimatedRobot />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: "#fff", fontSize: "16px" }}>
-                Nova Assistant
-              </div>
-              <div
-                style={{
-                  fontSize: "10px",
-                  color: isAdminActive ? "#10b981" : "#94a3b8",
-                }}
-              >
+            <div style={styles.headerTextContainer}>
+              <div style={styles.title}>{cwStrings.title}</div>
+              <div style={styles.statusText(isAdminActive)}>
                 {isAdminActive
-                  ? "● Tư vấn viên đang hỗ trợ"
+                  ? cwStrings.adminStatusActive
                   : "ID: " + chatSession.name}
               </div>
             </div>
             <Button
               type="text"
-              icon={<CloseOutlined style={{ color: "#94a3b8" }} />}
+              icon={<CloseOutlined style={styles.closeBtnIcon} />}
               onClick={() => setIsOpen(false)}
             />
           </div>
@@ -379,15 +347,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             {messages.map((msg) => (
               <div key={msg.id} className={`message message-${msg.sender}`}>
                 {msg.sender === "admin" && (
-                  <div
-                    style={{
-                      fontSize: "10px",
-                      marginBottom: "4px",
-                      color: "#10b981",
-                    }}
-                  >
-                    Tư vấn viên
-                  </div>
+                  <div style={styles.adminBadge}>{cwStrings.adminLabel}</div>
                 )}
                 {msg.text}
               </div>
@@ -395,33 +355,19 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             {isTyping && (
               <div
                 className="message message-bot"
-                style={{ opacity: 0.6, fontStyle: "italic" }}
+                style={styles.botTypingMessage}
               >
-                NovaBot đang gõ...
+                {cwStrings.botTyping}
               </div>
             )}
             {isAdminTyping && (
               <div
                 className={`message message-admin`}
-                style={{
-                  display: "flex",
-                  gap: "4px",
-                  alignItems: "center",
-                  width: "fit-content",
-                }}
+                style={styles.adminTypingMessage}
               >
-                <div
-                  className="typing-dot"
-                  style={{ background: "#10b981" }}
-                ></div>
-                <div
-                  className="typing-dot"
-                  style={{ background: "#10b981" }}
-                ></div>
-                <div
-                  className="typing-dot"
-                  style={{ background: "#10b981" }}
-                ></div>
+                <div className="typing-dot" style={styles.typingDot}></div>
+                <div className="typing-dot" style={styles.typingDot}></div>
+                <div className="typing-dot" style={styles.typingDot}></div>
               </div>
             )}
 
@@ -446,13 +392,13 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
           <div className="chat-input-area">
             <Input
               className="chat-input"
-              placeholder="Nhập tin nhắn..."
+              placeholder={cwStrings.inputPlaceholder}
               value={inputValue}
               onChange={(e) => {
                 setInputValue(e.target.value);
                 const now = Date.now();
                 if (now - lastTypingTime.current > 2000) {
-                  publishChatMessage("typing...", "TYPING");
+                  publishChatMessage(cwStrings.typingText, "TYPING");
                   lastTypingTime.current = now;
                 }
               }}

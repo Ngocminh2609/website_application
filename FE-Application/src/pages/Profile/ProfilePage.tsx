@@ -23,6 +23,7 @@ import type { User } from "../../types/auth";
 import { userApi } from "../../api/userApi";
 import { fileApi } from "../../api/fileApi";
 import { useLocation } from "react-router-dom";
+import { ROLES } from "../../components/common/roles";
 import { notification } from "../../utils/notification";
 import BaseButton from "../../components/common/BaseButton";
 import {
@@ -270,7 +271,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                 {
                   label: "Vai trò",
                   value:
-                    user?.role === "ADMIN" ? "Quản trị viên" : "Người dùng",
+                    user?.role === ROLES.ADMIN ? "Quản trị viên" : "Người dùng",
                 },
                 {
                   label: "Ngày tham gia",

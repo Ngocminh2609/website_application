@@ -6,6 +6,7 @@ import {
   StopOutlined,
 } from "@ant-design/icons";
 import type { Order } from "../../../api/orderApi";
+import dayjs from "dayjs";
 
 /**
  * Tính tổng doanh thu thực từ danh sách đơn hàng
@@ -66,3 +67,36 @@ export const getStatusTag = (status: string) => {
       return <Tag>{status}</Tag>;
   }
 };
+
+/**
+ * Định dạng tiền tệ VND
+ */
+export const formatCurrency = (amount: number, hasSpace: boolean = true): string => {
+  const formatted = amount.toLocaleString("vi-VN");
+  return hasSpace ? `${formatted} đ` : `${formatted}đ`;
+};
+
+/**
+ * Định dạng ngày giờ sử dụng toLocaleString
+ */
+export const formatDateTime = (date: string | Date | number): string => {
+  return new Date(date).toLocaleString("vi-VN");
+};
+
+/**
+ * Định dạng ngày giờ sử dụng dayjs
+ */
+export const formatDateDayjs = (
+  date: string | Date | number,
+  formatStr: string = "DD/MM/YYYY HH:mm",
+): string => {
+  return dayjs(date).format(formatStr);
+};
+
+/**
+ * Tính phần trăm sử dụng (Ví dụ: voucher)
+ */
+export const calculateUsagePercentage = (usedCount: number, usageLimit: number): number => {
+  return Math.min(100, (usedCount / (usageLimit || 1)) * 100);
+};
+

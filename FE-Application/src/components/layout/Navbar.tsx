@@ -45,10 +45,13 @@ const { Text } = Typography;
 import {
   FALLBACK_IMAGE,
   ICON_WRAPPER_STYLE,
-  themeText,
   themeBorder,
-  getNavbarNotificationMenuStyle,
 } from "../../styles/commonStyles";
+import { styles } from "./styles/Navbar.styles";
+import { LAYOUT_STRINGS } from "../../constants/Layout/layout";
+import { ROLES } from "../common/roles";
+
+const { navbar: nvStrings } = LAYOUT_STRINGS;
 
 const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
   const target = e.target as HTMLImageElement;
@@ -135,7 +138,7 @@ const Navbar: React.FC<NavbarProps> = ({
       key: "/",
       label: (
         <Link to="/" onClick={closeMobileMenu}>
-          Trang Chủ
+          {nvStrings.home}
         </Link>
       ),
     },
@@ -143,7 +146,7 @@ const Navbar: React.FC<NavbarProps> = ({
       key: "/products",
       label: (
         <Link to="/products" onClick={closeMobileMenu}>
-          Sản Phẩm
+          {nvStrings.products}
         </Link>
       ),
     },
@@ -151,7 +154,7 @@ const Navbar: React.FC<NavbarProps> = ({
       key: "/wishlist",
       label: (
         <Link to="/wishlist" onClick={closeMobileMenu}>
-          Yêu Thích
+          {nvStrings.wishlist}
         </Link>
       ),
     },
@@ -160,27 +163,27 @@ const Navbar: React.FC<NavbarProps> = ({
   const userMenuItems: MenuProps["items"] = [
     {
       key: "profile",
-      label: "Hồ sơ cá nhân",
+      label: nvStrings.profile,
       icon: <UserOutlined />,
       onClick: () => navigate("/profile"),
     },
     {
       key: "wishlist",
-      label: "Danh sách yêu thích",
+      label: nvStrings.wishlistList,
       icon: <HeartOutlined />,
       onClick: () => navigate("/wishlist"),
     },
     {
       key: "orders",
-      label: "Đơn hàng của tôi",
+      label: nvStrings.myOrders,
       icon: <ShoppingOutlined />,
       onClick: () => navigate("/orders"),
     },
-    ...(user?.role === "ADMIN"
+    ...(user?.role === ROLES.ADMIN
       ? [
           {
             key: "admin",
-            label: "Quản trị hệ thống",
+            label: nvStrings.adminSystem,
             icon: <DashboardOutlined />,
             onClick: () => navigate("/admin"),
           },
@@ -189,7 +192,7 @@ const Navbar: React.FC<NavbarProps> = ({
     { type: "divider" },
     {
       key: "logout",
-      label: "Đăng xuất",
+      label: nvStrings.logout,
       icon: <LogoutOutlined />,
       onClick: onLogout,
       danger: true,
@@ -233,87 +236,43 @@ const Navbar: React.FC<NavbarProps> = ({
 
   // Nội dung dropdown thông báo
   const notificationMenu = (
-    <div style={getNavbarNotificationMenuStyle(isDarkMode)}>
-      <div
-        style={{
-          padding: "16px",
-          borderBottom: `1px solid ${themeBorder(isDarkMode)}`,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Text strong style={{ color: themeText(isDarkMode), fontSize: "16px" }}>
-          Thông báo
+    <div style={styles.notificationMenu(isDarkMode)}>
+      <div style={styles.notificationHeader(isDarkMode)}>
+        <Text strong style={styles.notificationTitle(isDarkMode)}>
+          {nvStrings.notifications}
         </Text>
         {unreadCount > 0 && (
           <BaseButton
             type="text"
             size="small"
             onClick={() => markAllAsRead()}
-            style={{
-              color: "var(--primary-color)",
-              fontSize: "12px",
-              padding: 0,
-            }}
+            style={styles.markAllReadBtn}
           >
-            Đánh dấu tất cả đã đọc
+            {nvStrings.markAllRead}
           </BaseButton>
         )}
       </div>
-      <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+      <div style={styles.notificationListContainer}>
         {notifications.length > 0 ? (
           <List
             dataSource={notifications}
             renderItem={(item) => (
               <List.Item
                 onClick={() => !item.isRead && markAsRead(item.id)}
-                style={{
-                  padding: "12px 16px",
-                  borderBottom: `1px solid ${themeBorder(isDarkMode)}`,
-                  cursor: "pointer",
-                  backgroundColor: item.isRead
-                    ? "transparent"
-                    : isDarkMode
-                      ? "rgba(99, 102, 241, 0.05)"
-                      : "rgba(99, 102, 241, 0.02)",
-                  transition: "all 0.3s",
-                }}
+                style={styles.notificationListItem(isDarkMode, item.isRead)}
               >
-                <div style={{ display: "flex", gap: "12px", width: "100%" }}>
-                  <div
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      backgroundColor: item.isRead
-                        ? "transparent"
-                        : "var(--primary-color)",
-                      marginTop: "6px",
-                    }}
-                  />
+                <div style={styles.notificationItemContent}>
+                  <div style={styles.notificationDot(item.isRead)} />
                   <div style={{ flex: 1 }}>
                     <Text
-                      style={{
-                        color: item.isRead
-                          ? isDarkMode
-                            ? "rgba(255,255,255,0.6)"
-                            : "rgba(0,0,0,0.45)"
-                          : themeText(isDarkMode),
-                        fontSize: "14px",
-                        display: "block",
-                      }}
+                      style={styles.notificationMessageText(
+                        isDarkMode,
+                        item.isRead,
+                      )}
                     >
                       {item.message}
                     </Text>
-                    <Text
-                      style={{
-                        color: isDarkMode
-                          ? "rgba(255,255,255,0.4)"
-                          : "rgba(0,0,0,0.3)",
-                        fontSize: "11px",
-                      }}
-                    >
+                    <Text style={styles.notificationTimeText(isDarkMode)}>
                       {new Date(item.createdAt).toLocaleString("vi-VN")}
                     </Text>
                   </div>
@@ -322,20 +281,10 @@ const Navbar: React.FC<NavbarProps> = ({
             )}
           />
         ) : (
-          <div style={{ padding: "40px 20px", textAlign: "center" }}>
-            <BellOutlined
-              style={{
-                fontSize: "32px",
-                color: isDarkMode ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)",
-                marginBottom: "12px",
-              }}
-            />
-            <div
-              style={{
-                color: isDarkMode ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.3)",
-              }}
-            >
-              Không có thông báo nào
+          <div style={styles.noNotificationContainer}>
+            <BellOutlined style={styles.noNotificationIcon(isDarkMode)} />
+            <div style={styles.noNotificationText(isDarkMode)}>
+              {nvStrings.noNotifications}
             </div>
           </div>
         )}
@@ -346,13 +295,10 @@ const Navbar: React.FC<NavbarProps> = ({
   const searchOptions = [
     {
       label: (
-        <span
-          style={{
-            color: isDarkMode ? "var(--text-muted)" : "rgba(0,0,0,0.45)",
-            fontSize: "12px",
-          }}
-        >
-          {!searchValue ? "GỢI Ý CHO BẠN" : `KẾT QUẢ CHO "${searchValue}"`}
+        <span style={styles.searchOptionHeader(isDarkMode)}>
+          {!searchValue
+            ? nvStrings.suggestionsForYou
+            : nvStrings.resultsFor.replace('"{query}"', `"${searchValue}"`)}
         </span>
       ),
       options: (!searchValue
@@ -361,44 +307,21 @@ const Navbar: React.FC<NavbarProps> = ({
       ).map((product) => ({
         value: product.id,
         label: (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "4px 0",
-            }}
-          >
+          <div style={styles.searchOptionItem}>
             <img
               src={product.imageUrl}
               alt={product.name}
-              style={{
-                width: "40px",
-                height: "40px",
-                objectFit: "cover",
-                borderRadius: "8px",
-                border: `1px solid ${themeBorder(isDarkMode)}`,
-              }}
+              style={styles.searchOptionImage(isDarkMode)}
               onError={handleImgError}
             />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontWeight: 500,
-                  color: themeText(isDarkMode),
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
+            <div style={styles.searchOptionInfo}>
+              <div style={styles.searchOptionName(isDarkMode)}>
                 {product.name}
               </div>
-              <div style={{ fontSize: "12px", color: "var(--primary-color)" }}>
+              <div style={styles.searchOptionPrice}>
                 {product.price.toLocaleString()}đ
                 {!searchValue && (
-                  <FireOutlined
-                    style={{ marginLeft: "8px", color: "#ff4d4f" }}
-                  />
+                  <FireOutlined style={styles.searchOptionFireIcon} />
                 )}
               </div>
             </div>
@@ -412,18 +335,13 @@ const Navbar: React.FC<NavbarProps> = ({
             label: (
               <div
                 onClick={() => goToSearchPage(searchValue)}
-                style={{
-                  padding: "10px",
-                  textAlign: "center" as const,
-                  cursor: "pointer",
-                  color: "var(--primary-color)",
-                  fontWeight: 600,
-                  borderTop: `1px solid ${themeBorder(isDarkMode)}`,
-                  marginTop: "4px",
-                }}
+                style={styles.viewAllResultsBtn(isDarkMode)}
               >
-                <SearchOutlined style={{ marginRight: "8px" }} />
-                Xem tất cả kết quả cho "{searchValue}"
+                <SearchOutlined style={styles.searchIconMargin} />
+                {nvStrings.viewAllResultsFor.replace(
+                  '"{query}"',
+                  `"${searchValue}"`,
+                )}
               </div>
             ),
             options: [],
@@ -433,59 +351,29 @@ const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <Header
-      className="glass-effect"
-      style={{
-        position: "fixed",
-        zIndex: 1010,
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 var(--container-padding)",
-        height: "70px",
-        lineHeight: "70px",
-      }}
-    >
+    <Header className="glass-effect" style={styles.header}>
       <Space size="middle">
         <div className="mobile-only" onClick={() => setIsMobileMenuOpen(true)}>
-          <MenuOutlined
-            style={{
-              fontSize: "20px",
-              color: "var(--text-main)",
-              cursor: "pointer",
-            }}
-          />
+          <MenuOutlined style={styles.mobileMenuIcon} />
         </div>
-        <div
-          className="logo"
-          onClick={() => navigate("/")}
-          style={{ cursor: "pointer" }}
-        >
-          TECH NOVA
+        <div className="logo" onClick={() => navigate("/")} style={styles.logo}>
+          {nvStrings.logoText}
         </div>
       </Space>
 
       {/* Ô tìm kiếm trung tâm */}
-      <div
-        className="desktop-only"
-        style={{ flex: 1, maxWidth: "500px", margin: "0 40px" }}
-      >
+      <div className="desktop-only" style={styles.searchContainer}>
         <Select
           showSearch
           searchValue={searchValue}
           autoClearSearchValue={false}
           value={null}
-          placeholder="Tìm kiếm sản phẩm..."
+          placeholder={nvStrings.searchPlaceholder}
           defaultActiveFirstOption={false}
           suffixIcon={
             <SearchOutlined
               onClick={() => goToSearchPage(searchValue)}
-              style={{
-                color: "var(--primary-color)",
-                fontSize: "18px",
-                cursor: "pointer",
-              }}
+              style={styles.searchIcon}
             />
           }
           filterOption={false}
@@ -498,37 +386,22 @@ const Navbar: React.FC<NavbarProps> = ({
           }}
           options={searchOptions}
           loading={isSearching}
-          notFoundContent={searchValue ? "Không tìm thấy" : null}
-          dropdownStyle={{
-            backgroundColor: "var(--bg-secondary)",
-            border: "1px solid var(--glass-border)",
-            padding: "8px",
-            backdropFilter: "blur(10px)",
-          }}
-          style={{ width: "100%" }}
+          notFoundContent={searchValue ? nvStrings.notFound : null}
+          dropdownStyle={styles.searchDropdown}
+          style={styles.searchSelect}
           className="premium-search-input"
         />
       </div>
 
       <Space size="large" align="center">
         <Tooltip
-          title={
-            isDarkMode
-              ? "Chuyển sang giao diện sáng"
-              : "Chuyển sang giao diện tối"
-          }
+          title={isDarkMode ? nvStrings.switchToLight : nvStrings.switchToDark}
         >
-          <div
-            onClick={onToggleTheme}
-            style={{
-              ...ICON_WRAPPER_STYLE,
-              backgroundColor: "var(--glass-border)",
-            }}
-          >
+          <div onClick={onToggleTheme} style={styles.themeToggleBtn}>
             {isDarkMode ? (
-              <SunOutlined style={{ fontSize: "20px", color: "#fbbf24" }} />
+              <SunOutlined style={styles.sunIcon} />
             ) : (
-              <MoonOutlined style={{ fontSize: "20px", color: "#6366f1" }} />
+              <MoonOutlined style={styles.moonIcon} />
             )}
           </div>
         </Tooltip>
@@ -538,28 +411,20 @@ const Navbar: React.FC<NavbarProps> = ({
             <NavIconBadge
               count={wishlistItems.length}
               color="#f43f5e"
-              icon={
-                <HeartOutlined
-                  style={{ fontSize: "22px", color: "var(--text-main)" }}
-                />
-              }
+              icon={<HeartOutlined style={styles.badgeIcon} />}
               onClick={() => navigate("/wishlist")}
-              title="Danh sách yêu thích"
+              title={nvStrings.wishlistList}
             />
-            {user.role === "ADMIN" && (
+            {user.role === ROLES.ADMIN && (
               <NavIconBadge
                 count={chatUnread}
                 color="#6366f1"
-                icon={
-                  <MessageOutlined
-                    style={{ fontSize: "22px", color: "var(--text-main)" }}
-                  />
-                }
+                icon={<MessageOutlined style={styles.badgeIcon} />}
                 onClick={() => navigate("/admin#chat")}
-                title="Tin nhắn hỗ trợ"
+                title={nvStrings.supportMessages}
               />
             )}
-            <Tooltip title="Thông báo">
+            <Tooltip title={nvStrings.notifications}>
               <Dropdown
                 dropdownRender={() => notificationMenu}
                 placement="bottomRight"
@@ -573,9 +438,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     offset={[5, 0]}
                     color="#ff4d4f"
                   >
-                    <BellOutlined
-                      style={{ fontSize: "22px", color: "var(--text-main)" }}
-                    />
+                    <BellOutlined style={styles.badgeIcon} />
                   </Badge>
                 </div>
               </Dropdown>
@@ -584,13 +447,9 @@ const Navbar: React.FC<NavbarProps> = ({
               id="cart-icon"
               count={cartCount}
               color="#6366f1"
-              icon={
-                <ShoppingCartOutlined
-                  style={{ fontSize: "22px", color: "var(--text-main)" }}
-                />
-              }
+              icon={<ShoppingCartOutlined style={styles.badgeIcon} />}
               onClick={() => navigate("/cart")}
-              title="Giỏ hàng"
+              title={nvStrings.cart}
             />
           </>
         )}
@@ -601,16 +460,13 @@ const Navbar: React.FC<NavbarProps> = ({
             placement="bottomRight"
             arrow
           >
-            <Space style={{ cursor: "pointer" }}>
+            <Space style={styles.userDropdownTrigger}>
               <Avatar
                 src={user.avatarUrl}
                 icon={!user.avatarUrl && <UserOutlined />}
-                style={{ backgroundColor: "#6366f1" }}
+                style={styles.avatar}
               />
-              <span
-                className="desktop-only"
-                style={{ color: "var(--text-main)", fontWeight: 500 }}
-              >
+              <span className="desktop-only" style={styles.userName}>
                 {user.fullName || user.username}
               </span>
             </Space>
@@ -619,14 +475,14 @@ const Navbar: React.FC<NavbarProps> = ({
           <Space>
             <BaseButton
               type="text"
-              style={{ color: themeText(isDarkMode) }}
+              style={styles.loginBtn(isDarkMode)}
               onClick={() => navigate("/login")}
               className="desktop-only"
             >
-              Đăng Nhập
+              {nvStrings.login}
             </BaseButton>
             <BaseButton type="primary" onClick={() => navigate("/register")}>
-              Đăng Ký
+              {nvStrings.register}
             </BaseButton>
           </Space>
         )}
@@ -634,8 +490,8 @@ const Navbar: React.FC<NavbarProps> = ({
 
       <Drawer
         title={
-          <div className="logo" style={{ color: themeText(isDarkMode) }}>
-            TECH NOVA
+          <div className="logo" style={styles.drawerLogo(isDarkMode)}>
+            {nvStrings.logoText}
           </div>
         }
         placement="left"
@@ -658,7 +514,7 @@ const Navbar: React.FC<NavbarProps> = ({
           theme={isDarkMode ? "dark" : "light"}
           items={menuItems}
           selectedKeys={[location.pathname]}
-          style={{ background: "transparent", borderRight: "none" }}
+          style={styles.drawerMenu}
         />
       </Drawer>
     </Header>

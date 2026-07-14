@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import vnpayLogo from "../../assets/vnpay-logo.png";
 import {
   Layout,
@@ -29,34 +29,15 @@ import {
   HomeOutlined,
   CheckOutlined,
 } from "@ant-design/icons";
-import { useLocation, useNavigate } from "react-router-dom";
-import { cartApi } from "../../api/cartApi";
-import { paymentApi } from "../../api/paymentApi";
-import { couponApi } from "../../api/couponApi";
-import { addressApi } from "../../api/addressApi";
-import type { UserAddress } from "../../api/addressApi";
-import type { User } from "../../types/auth";
-import type { CartItem } from "../../types/cart";
-import type { CouponValidateResponse } from "../../types/coupon-review";
-import { useCart } from "../../hooks/Cart/useCart";
+import { useCartPageState } from "../../hooks/Cart/useCartPageState";
 import BaseButton from "../../components/common/BaseButton";
-import { notification } from "../../utils/notification";
 import type { ColumnsType } from "antd/es/table";
+import type { CartItem } from "../../types/cart";
 import PersonalizedRecommendations from "../../components/common/PersonalizedRecommendations";
 import { Radio, Divider, Select } from "antd";
 import { styles } from "./styles/cart-page.styles";
 import { CART_STRINGS } from "../../constants/Cart/cart-page";
-
-// Các Interface cho dữ liệu từ Provinces API
-interface ApiProvince {
-  code: number;
-  name: string;
-}
-
-interface ApiWard {
-  code: number;
-  name: string;
-}
+import { formatCartCurrency } from "./helper";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -65,252 +46,42 @@ const { Title, Text } = Typography;
  * Trang Giỏ hàng với Quy trình Checkout chuyên nghiệp.
  */
 const CartPage: React.FC = () => {
-  const { cart, loading, refreshCart } = useCart();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [addressForm] = Form.useForm();
-
-  const [addresses, setAddresses] = useState<UserAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
-    null,
-  );
-  const [isAddingAddress, setIsAddingAddress] = useState(false);
-  const [addressLoading, setAddressLoading] = useState(false);
-  const [provinces, setProvinces] = useState<ApiProvince[]>([]);
-  const [wards, setWards] = useState<ApiWard[]>([]);
-  const [wardsLoading, setWardsLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"VNPAY" | "COD">("VNPAY");
-
-  useEffect(() => {
-    // Fetch danh sách tỉnh thành khi trang web load
-    const fetchProvinces = async () => {
-      try {
-        // Sử dụng API v2 để lấy danh sách 34 tỉnh thành mới nhất năm 2026
-        const response = await fetch("https://provinces.open-api.vn/api/v2/p/");
-        const data = await response.json();
-        setProvinces(data);
-      } catch (error: unknown) {
-        console.error("Lỗi khi tải danh sách tỉnh thành:", error);
-      }
-    };
-    fetchProvinces();
-  }, []);
-
-  useEffect(() => {
-    refreshCart(true);
-  }, [refreshCart, location.key]);
-
-  const [couponCode, setCouponCode] = useState("");
-  const [couponResult, setCouponResult] =
-    useState<CouponValidateResponse | null>(null);
-  const [couponLoading, setCouponLoading] = useState(false);
-  const [couponError, setCouponError] = useState<string | null>(null);
-
-  const handleUpdateQuantity = async (itemId: number, quantity: number) => {
-    try {
-      await cartApi.updateQuantity(itemId, quantity);
-      await refreshCart(true);
-    } catch {
-      notification.error(CART_STRINGS.messages.updateQtyError);
-    }
-  };
-
-  const handleRemoveItem = async (itemId: number) => {
-    try {
-      await cartApi.removeItem(itemId);
-      await refreshCart(true);
-      notification.success(CART_STRINGS.messages.removeSuccess);
-    } catch {
-      notification.error(CART_STRINGS.messages.removeError);
-    }
-  };
-
-  const calculateTotal = () => {
-    if (!cart) return 0;
-    return cart.items.reduce(
-      (total, item) => total + item.product.price * item.quantity,
-      0,
-    );
-  };
-
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    const total = calculateTotal();
-    if (total <= 0) return;
-    try {
-      setCouponLoading(true);
-      setCouponError(null);
-      const result = await couponApi.validate(couponCode.trim(), total);
-      setCouponResult(result);
-    } catch (err: unknown) {
-      setCouponResult(null);
-      setCouponError(
-        err instanceof Error ? err.message : CART_STRINGS.messages.invalidCoupon,
-      );
-    } finally {
-      setCouponLoading(false);
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setCouponResult(null);
-    setCouponCode("");
-    setCouponError(null);
-  };
-
-  const fetchAddresses = async () => {
-    try {
-      setAddressLoading(true);
-      const data = await addressApi.getAddresses();
-      setAddresses(data);
-      const defaultAddr = data.find((a) => a.isDefault);
-      if (defaultAddr) {
-        setSelectedAddressId(defaultAddr.id);
-      } else if (data.length > 0) {
-        setSelectedAddressId(data[0].id);
-      }
-    } catch {
-      notification.error(CART_STRINGS.messages.loadAddressError);
-    } finally {
-      setAddressLoading(false);
-    }
-  };
-
-  const handlePaymentClick = () => {
-    const amount = calculateTotal();
-    if (amount <= 0) {
-      notification.error(CART_STRINGS.messages.emptyCartError);
-      return;
-    }
-    setIsModalVisible(true);
-    fetchAddresses();
-  };
-
-  const handleAddAddress = async (
-    values: Omit<UserAddress, "id" | "isDefault">,
-  ) => {
-    try {
-      setCheckoutLoading(true);
-      const newAddress = await addressApi.addAddress({
-        ...values,
-        isDefault: addresses.length === 0, // Tự động làm mặc định nếu là địa chỉ đầu tiên
-      });
-      setAddresses([newAddress, ...addresses]);
-      setSelectedAddressId(newAddress.id);
-      setIsAddingAddress(false);
-      addressForm.resetFields();
-      setWards([]);
-      notification.success(CART_STRINGS.messages.addAddressSuccess);
-    } catch {
-      notification.error(CART_STRINGS.messages.addAddressError);
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
-  const searchTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-
-  const handleProvinceChange = async (
-    provinceCode: number,
-    option:
-      | { label: string; value: string | number }
-      | { label: string; value: string | number }[]
-      | undefined,
-  ) => {
-    if (!option || Array.isArray(option)) return;
-    try {
-      setWardsLoading(true);
-      const provinceName = (option as { label: string }).label;
-
-      addressForm.setFieldsValue({
-        province: provinceName,
-        ward: undefined,
-      });
-
-      const response = await fetch(
-        `https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`,
-      );
-      const data = await response.json();
-      setWards(data.wards || []);
-    } catch {
-      notification.error(CART_STRINGS.messages.loadWardsError);
-    } finally {
-      setWardsLoading(false);
-    }
-  };
-
-  const handleProvinceSearch = (val: string) => {
-    if (!val) return;
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    searchTimeoutRef.current = setTimeout(() => {
-      if (addressForm.getFieldValue("province_code")) {
-        addressForm.setFieldsValue({
-          province: undefined,
-          province_code: undefined,
-          ward: undefined,
-        });
-        setWards([]);
-      }
-    }, 150);
-  };
-
-  const handleWardSearch = (val: string) => {
-    if (!val) return;
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    searchTimeoutRef.current = setTimeout(() => {
-      if (addressForm.getFieldValue("ward")) {
-        addressForm.setFieldsValue({ ward: undefined });
-      }
-    }, 150);
-  };
-
-  const handleConfirmPayment = async () => {
-    if (!selectedAddressId) {
-      notification.error(CART_STRINGS.messages.selectAddressError);
-      return;
-    }
-
-    const selectedAddr = addresses.find((a) => a.id === selectedAddressId);
-    if (!selectedAddr) return;
-
-    const userStr = localStorage.getItem("user");
-    if (!userStr) {
-      notification.error(CART_STRINGS.messages.loginRequired);
-      return;
-    }
-    const user = JSON.parse(userStr) as User;
-
-    const fullAddressString = `${selectedAddr.detailAddress}, ${selectedAddr.ward}, ${selectedAddr.province}`;
-
-    try {
-      setCheckoutLoading(true);
-      const response = await paymentApi.createOrderPayment({
-        username: user.username,
-        address: fullAddressString,
-        phone: selectedAddr.phoneNumber,
-        couponCode: couponResult?.code,
-        paymentMethod,
-      });
-
-      if (paymentMethod === "VNPAY" && response.url) {
-        window.location.href = response.url;
-      } else if (paymentMethod === "COD") {
-        notification.success(CART_STRINGS.messages.codSuccess);
-        // response.url lúc này chứa "ORDER_ID=...&AMOUNT=..."
-        navigate(`/payment-success?status=OK&method=COD&${response.url}`);
-      }
-    } catch (error: unknown) {
-      notification.error(
-        error instanceof Error ? error.message : CART_STRINGS.messages.initPaymentError,
-      );
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
+  const {
+    cart,
+    loading,
+    isModalVisible,
+    setIsModalVisible,
+    checkoutLoading,
+    addressForm,
+    addresses,
+    selectedAddressId,
+    setSelectedAddressId,
+    isAddingAddress,
+    setIsAddingAddress,
+    addressLoading,
+    provinces,
+    wards,
+    wardsLoading,
+    paymentMethod,
+    setPaymentMethod,
+    couponCode,
+    setCouponCode,
+    couponResult,
+    couponLoading,
+    couponError,
+    setCouponError,
+    handleUpdateQuantity,
+    handleRemoveItem,
+    calculateTotal,
+    handleApplyCoupon,
+    handleRemoveCoupon,
+    handlePaymentClick,
+    handleAddAddress,
+    handleProvinceChange,
+    handleProvinceSearch,
+    handleWardSearch,
+    handleConfirmPayment,
+  } = useCartPageState();
 
   const columns: ColumnsType<CartItem> = [
     {
@@ -338,7 +109,7 @@ const CartPage: React.FC = () => {
               {record.product.name}
             </Text>
             <Text type="secondary" style={{ fontSize: "12px" }}>
-              {record.product.price.toLocaleString("vi-VN")}đ
+              {formatCartCurrency(record.product.price)}
             </Text>
           </div>
         </Space>
@@ -362,7 +133,7 @@ const CartPage: React.FC = () => {
       key: "subtotal",
       render: (_, record) => (
         <Text strong style={{ color: "var(--primary-color)" }}>
-          {(record.product.price * record.quantity).toLocaleString("vi-VN")}đ
+          {formatCartCurrency(record.product.price * record.quantity)}
         </Text>
       ),
     },
@@ -457,7 +228,7 @@ const CartPage: React.FC = () => {
                 <div style={styles.spaceBetween}>
                   <Text style={styles.billingLabel}>{CART_STRINGS.invoice.subtotal}</Text>
                   <Text style={styles.billingValue}>
-                    {calculateTotal().toLocaleString("vi-VN")}đ
+                    {formatCartCurrency(calculateTotal())}
                   </Text>
                 </div>
 
@@ -477,10 +248,10 @@ const CartPage: React.FC = () => {
                             : ""}
                         </Text>
                         <Text style={styles.couponSuccessSubtext}>
-                          -{couponResult.discountAmount.toLocaleString("vi-VN")}đ
+                          -{formatCartCurrency(couponResult.discountAmount)}
                           {couponResult.maxDiscountAmount &&
                             couponResult.discountAmount >=
-                              couponResult.maxDiscountAmount && (
+                            couponResult.maxDiscountAmount && (
                               <span style={styles.couponMaxText}>
                                 {CART_STRINGS.invoice.maxDiscount}
                               </span>
@@ -537,7 +308,7 @@ const CartPage: React.FC = () => {
                       :
                     </Text>
                     <Text style={styles.discountValue}>
-                      -{couponResult.discountAmount.toLocaleString("vi-VN")}đ
+                      -{formatCartCurrency(couponResult.discountAmount)}
                     </Text>
                   </div>
                 )}
@@ -546,10 +317,9 @@ const CartPage: React.FC = () => {
                     {CART_STRINGS.invoice.total}
                   </Text>
                   <Text strong style={styles.totalValue}>
-                    {(couponResult
-                      ? couponResult.finalAmount
-                      : calculateTotal()
-                    ).toLocaleString("vi-VN")}đ
+                    {formatCartCurrency(
+                      couponResult ? couponResult.finalAmount : calculateTotal(),
+                    )}
                   </Text>
                 </div>
                 <BaseButton

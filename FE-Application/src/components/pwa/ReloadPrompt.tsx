@@ -2,6 +2,8 @@ import React, { useCallback, useEffect } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { Button, notification } from "antd";
 import { CloudDownloadOutlined, CloseOutlined } from "@ant-design/icons";
+import { styles } from "./styles/ReloadPrompt.styles";
+import { PWA_STRINGS } from "../../constants/Pwa/pwa";
 
 /**
  * Component xử lý thông báo cập nhật PWA.
@@ -30,10 +32,10 @@ const ReloadPrompt: React.FC = () => {
   useEffect(() => {
     if (offlineReady) {
       notification.success({
-        message: "Trình duyệt ngoại tuyến",
-        description: "Ứng dụng đã sẵn sàng hoạt động ngoại tuyến.",
+        message: PWA_STRINGS.reloadPrompt.offlineReady.message,
+        description: PWA_STRINGS.reloadPrompt.offlineReady.description,
         placement: "bottomRight",
-        icon: <CloudDownloadOutlined style={{ color: "#52c41a" }} />,
+        icon: <CloudDownloadOutlined style={styles.offlineIcon} />,
       });
     }
   }, [offlineReady]);
@@ -51,20 +53,19 @@ const ReloadPrompt: React.FC = () => {
           }}
           icon={<CloudDownloadOutlined />}
         >
-          Cập nhật ngay
+          {PWA_STRINGS.reloadPrompt.needRefresh.btnText}
         </Button>
       );
 
       notification.info({
-        message: "Bản cập nhật mới!",
-        description:
-          "Đã có phiên bản mới. Vui lòng cập nhật để trải nghiệm những tính năng mới nhất.",
+        message: PWA_STRINGS.reloadPrompt.needRefresh.message,
+        description: PWA_STRINGS.reloadPrompt.needRefresh.description,
         btn,
         key,
         duration: 0,
         placement: "bottomRight",
         onClose: close,
-        icon: <CloudDownloadOutlined style={{ color: "#1890ff" }} />,
+        icon: <CloudDownloadOutlined style={styles.refreshIcon} />,
         closeIcon: (
           <CloseOutlined
             onClick={() => {

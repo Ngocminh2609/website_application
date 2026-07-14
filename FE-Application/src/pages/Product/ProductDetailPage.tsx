@@ -37,6 +37,7 @@ import type { ProductReview } from "../../types/coupon-review";
 import BaseButton from "../../components/common/BaseButton";
 import BaseInput from "../../components/common/BaseInput";
 import { notification } from "../../utils/notification";
+import { ROLES } from "../../components/common/roles";
 import PersonalizedRecommendations from "../../components/common/PersonalizedRecommendations";
 import RealTimeViewerCount from "../../components/product/RealTimeViewerCount";
 import { useCompare } from "../../hooks/Product/useCompare";
@@ -858,7 +859,7 @@ const ProductDetailPage: React.FC = () => {
                             )}
                           </Typography.Text>
                           {(currentUser?.id === review.user.id ||
-                            currentUser?.role === "ADMIN") && (
+                            currentUser?.role === ROLES.ADMIN) && (
                             <DeleteOutlined
                               style={{
                                 color: "#ef4444",

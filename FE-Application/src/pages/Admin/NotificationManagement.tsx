@@ -10,6 +10,8 @@ import { useNotificationManagementState } from "../../hooks/Admin/useNotificatio
 import { styles } from "./styles/notification-management.styles";
 import { NOTIF_STRINGS } from "../../constants/Admin/notification-management";
 
+import { formatDateTime } from "./helper";
+
 const { Title, Text } = Typography;
 
 /**
@@ -90,7 +92,7 @@ const NotificationManagement: React.FC = () => {
                 />
                 <div style={styles.historyTimeWrapper}>
                   <Text style={styles.historyTime}>
-                    {new Date(item.createdAt).toLocaleString("vi-VN")}
+                    {formatDateTime(item.createdAt)}
                   </Text>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Form, Typography } from "antd";
 import {
   UserOutlined,
@@ -9,11 +9,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import BaseButton from "../../components/common/BaseButton";
 import BaseInput from "../../components/common/BaseInput";
-import { authApi } from "../../api/authApi";
-import { notification } from "../../utils/notification";
 import type { RegisterRequest } from "../../types/auth";
 import { styles } from "./styles/register.styles";
 import { REGISTER_STRINGS } from "../../constants/Auth/auth";
+import { useRegisterState } from "../../hooks/Auth/useRegisterState";
 
 const { Title, Text } = Typography;
 
@@ -21,25 +20,8 @@ const { Title, Text } = Typography;
  * Trang Đăng ký sử dụng thông báo tùy chỉnh trên Frontend.
  */
 const RegisterPage: React.FC = () => {
-  const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
-
-  const onFinish = async (values: RegisterRequest) => {
-    setLoading(true);
-    try {
-      await authApi.register(values);
-
-      // Sử dụng thông báo nghiệp vụ đăng ký thành công (DRY)
-      notification.auth.registerSuccess();
-
-      navigate("/login");
-    } catch {
-      // Loại bỏ biến error không sử dụng để tránh lỗi lints
-      notification.auth.registerError();
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { loading, onFinish } = useRegisterState();
 
   return (
     <div style={styles.registerCard}>

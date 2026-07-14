@@ -52,7 +52,7 @@ import ReviewModeration from "./ReviewModeration";
 import BannerManagement from "./BannerManagement";
 import { useAdminDashboardState } from "../../hooks/Admin/useAdminDashboardState";
 import { styles } from "./styles/admin-dashboard.styles";
-import { calculateTotalRevenue, getStatusTag } from "./helper";
+import { calculateTotalRevenue, getStatusTag, formatCurrency } from "./helper";
 import { ADMIN_STRINGS } from "../../constants/Admin/admin-dashboard";
 
 const { Content } = Layout;
@@ -128,11 +128,11 @@ const AdminDashboard: React.FC = () => {
       render: (_, record: Product) => (
         <div>
           <Text strong style={styles.productPrice}>
-            {record.price.toLocaleString("vi-VN")} đ
+            {formatCurrency(record.price)}
           </Text>
           {record.discountPercent && record.discountPercent > 0 ? (
             <Text delete type="secondary" style={styles.originalPrice}>
-              {record.originalPrice?.toLocaleString("vi-VN")} đ
+              {formatCurrency(record.originalPrice || 0)}
             </Text>
           ) : null}
           {!record.isActive && (
@@ -202,7 +202,7 @@ const AdminDashboard: React.FC = () => {
       key: "totalAmount",
       render: (amt: number) => (
         <Text strong style={styles.orderTotalAmount}>
-          {amt.toLocaleString("vi-VN")}đ
+          {formatCurrency(amt, false)}
         </Text>
       ),
     },
@@ -334,7 +334,7 @@ const AdminDashboard: React.FC = () => {
                 {ADMIN_STRINGS.cards.revenue}
               </Text>
               <Title level={2} style={styles.cardTitleRevenueValue}>
-                {calculateTotalRevenue(orders).toLocaleString("vi-VN")}đ
+                {formatCurrency(calculateTotalRevenue(orders), false)}
               </Title>
             </Space>
           </Card>
@@ -527,7 +527,7 @@ const AdminDashboard: React.FC = () => {
                   {ADMIN_STRINGS.modal.discountPriceLabel}
                 </Text>
                 <Text strong style={styles.discountPrice}>
-                  {livePrice.toLocaleString("vi-VN")} đ
+                  {formatCurrency(livePrice)}
                 </Text>
               </div>
             </Col>

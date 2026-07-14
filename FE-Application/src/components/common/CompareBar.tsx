@@ -10,11 +10,9 @@ import {
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
-import {
-  FALLBACK_IMAGE,
-  COMPARE_BAR_CONTAINER_STYLE,
-  COMPARE_BAR_CONTENT_STYLE,
-} from "../../styles/commonStyles";
+import { FALLBACK_IMAGE } from "../../styles/commonStyles";
+import { styles } from "./styles/CompareBar.styles";
+import { COMMON_STRINGS } from "../../constants/Common/common";
 
 /**
  * CompareBar - UX độc đáo: Thanh so sánh nổi phía dưới màn hình với hiệu ứng mượt mà.
@@ -36,50 +34,24 @@ const CompareBar: React.FC = () => {
   return (
     <div
       className={`compare-bar ${isExpanded ? "expanded" : "collapsed"}`}
-      style={{
-        ...COMPARE_BAR_CONTAINER_STYLE,
-        width: isExpanded ? "max-content" : "60px",
-      }}
+      style={styles.container(isExpanded)}
     >
-      <div
-        style={{
-          ...COMPARE_BAR_CONTENT_STYLE,
-          padding: isExpanded ? "12px 24px" : "12px",
-        }}
-      >
+      <div style={styles.content(isExpanded)}>
         {/* Nút Thu gọn/Mở rộng */}
         <Button
           type="text"
           icon={isExpanded ? <ShrinkOutlined /> : <ArrowsAltOutlined />}
           onClick={() => setIsExpanded(!isExpanded)}
-          style={{ color: "#fff" }}
+          style={styles.toggleButton}
         />
 
         {isExpanded && (
           <>
-            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <div style={styles.itemsContainer}>
               {compareItems.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    position: "relative",
-                    width: "50px",
-                    height: "50px",
-                  }}
-                >
+                <div key={item.id} style={styles.itemWrapper}>
                   <Badge
-                    count={
-                      <CloseOutlined
-                        style={{
-                          color: "#fff",
-                          fontSize: "10px",
-                          cursor: "pointer",
-                          background: "#ff4d4f",
-                          borderRadius: "50%",
-                          padding: "2px",
-                        }}
-                      />
-                    }
+                    count={<CloseOutlined style={styles.closeIcon} />}
                     onClick={() => removeFromCompare(item.id)}
                     offset={[-5, 5]}
                   >
@@ -87,56 +59,35 @@ const CompareBar: React.FC = () => {
                       src={item.imageUrl}
                       alt={item.name}
                       onError={handleImgError}
-                      style={{
-                        width: "50px",
-                        height: "50px",
-                        borderRadius: "12px",
-                        objectFit: "cover",
-                        border: "2px solid rgba(255, 255, 255, 0.2)",
-                      }}
+                      style={styles.itemImage}
                     />
                   </Badge>
                 </div>
               ))}
               {/* Chốt giữ chỗ nếu chưa đủ 4 */}
               {Array.from({ length: 4 - compareItems.length }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: "50px",
-                    height: "50px",
-                    borderRadius: "12px",
-                    border: "2px dashed rgba(255, 255, 255, 0.1)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "rgba(255, 255, 255, 0.1)",
-                  }}
-                >
+                <div key={i} style={styles.emptyPlaceholder}>
                   <SwapOutlined />
                 </div>
               ))}
             </div>
 
-            <div
-              className="compare-actions"
-              style={{ display: "flex", gap: "8px" }}
-            >
+            <div className="compare-actions" style={styles.actionsContainer}>
               <Button
                 type="primary"
                 icon={<SwapOutlined />}
                 disabled={compareItems.length < 2}
                 onClick={() => navigate("/compare")}
-                style={{ borderRadius: "12px", fontWeight: 600 }}
+                style={styles.compareBtn}
               >
-                So Sánh Ngay ({compareItems.length})
+                {COMMON_STRINGS.compareBar.compareNow} ({compareItems.length})
               </Button>
-              <Tooltip title="Xóa tất cả">
+              <Tooltip title={COMMON_STRINGS.compareBar.clearAll}>
                 <Button
                   danger
                   icon={<DeleteOutlined />}
                   onClick={clearCompare}
-                  style={{ borderRadius: "12px" }}
+                  style={styles.clearBtn}
                 />
               </Tooltip>
             </div>
@@ -146,7 +97,7 @@ const CompareBar: React.FC = () => {
         {!isExpanded && (
           <Badge count={compareItems.length} offset={[5, -5]}>
             <SwapOutlined
-              style={{ color: "#fff", fontSize: "24px" }}
+              style={styles.collapsedIcon}
               onClick={() => setIsExpanded(true)}
             />
           </Badge>

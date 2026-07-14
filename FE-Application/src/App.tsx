@@ -35,6 +35,7 @@ import CompareBar from "./components/common/CompareBar";
 import ComparePage from "./pages/Product/ComparePage";
 import ReloadPrompt from "./components/pwa/ReloadPrompt";
 import ScrollToTop from "./components/common/ScrollToTop";
+import { ROLES } from "./components/common/roles";
 
 // Thay thế bằng Client ID của bạn từ Google Cloud Console
 const GOOGLE_CLIENT_ID =
@@ -182,7 +183,7 @@ const App: React.FC = () => {
   };
 
   const getNotificationUserId = () => {
-    if (user?.role === "ADMIN") return "admin";
+    if (user?.role === ROLES.ADMIN) return "admin";
     return user ? `user-${user.id}` : null;
   };
 
@@ -224,7 +225,7 @@ const App: React.FC = () => {
                 <WishlistProvider isLoggedIn={!!user}>
                   <CompareProvider>
                     <NotificationProvider userId={getNotificationUserId()}>
-                      <AdminChatProvider isAdmin={user?.role === "ADMIN"}>
+                      <AdminChatProvider isAdmin={user?.role === ROLES.ADMIN}>
                         <Layout
                           style={{
                             minHeight: "100vh",
@@ -304,7 +305,7 @@ const App: React.FC = () => {
                             <Route
                               path="/admin"
                               element={
-                                user?.role === "ADMIN" ? (
+                                user?.role === ROLES.ADMIN ? (
                                   <AdminDashboard />
                                 ) : (
                                   <Navigate to="/" replace />

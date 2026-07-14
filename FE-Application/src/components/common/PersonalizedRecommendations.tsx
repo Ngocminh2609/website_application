@@ -3,6 +3,8 @@ import { Typography, Row, Col, Spin } from "antd";
 import { usePersonalizedProducts } from "../../hooks/Product/usePersonalizedProducts";
 import ProductCard from "./ProductCard";
 import { StarOutlined } from "@ant-design/icons";
+import { styles } from "./styles/PersonalizedRecommendations.styles";
+import { COMMON_STRINGS } from "../../constants/Common/common";
 
 const { Title, Text } = Typography;
 
@@ -12,6 +14,8 @@ interface PersonalizedRecommendationsProps {
   limit?: number;
 }
 
+const { personalizedRecommendations: prStrings } = COMMON_STRINGS;
+
 /**
  * Component hiển thị danh sách sản phẩm gợi ý cá nhân hóa.
  * Mang lại trải nghiệm chuyên nghiệp và độc đáo cho từng người dùng.
@@ -19,16 +23,16 @@ interface PersonalizedRecommendationsProps {
 const PersonalizedRecommendations: React.FC<
   PersonalizedRecommendationsProps
 > = ({
-  title = "Dành Riêng Cho Bạn",
-  description = "Dựa trên sở thích và lịch sử xem sản phẩm của bạn.",
+  title = prStrings.defaultTitle,
+  description = prStrings.defaultDescription,
   limit = 5,
 }) => {
   const { personalized, loading } = usePersonalizedProducts(limit);
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: "40px" }}>
-        <Spin size="large" tip="Đang chuẩn bị gợi ý..." />
+      <div style={styles.loadingContainer}>
+        <Spin size="large" tip={prStrings.loadingTip} />
       </div>
     );
   }
@@ -36,27 +40,15 @@ const PersonalizedRecommendations: React.FC<
   if (personalized.length === 0) return null;
 
   return (
-    <section style={{ margin: "60px 0" }}>
-      <div style={{ marginBottom: "32px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            marginBottom: "8px",
-          }}
-        >
-          <StarOutlined
-            style={{ fontSize: "24px", color: "var(--primary-color)" }}
-          />
-          <Title
-            level={2}
-            style={{ margin: 0, fontSize: "2rem", fontWeight: 800 }}
-          >
+    <section style={styles.section}>
+      <div style={styles.header}>
+        <div style={styles.titleContainer}>
+          <StarOutlined style={styles.starIcon} />
+          <Title level={2} style={styles.title}>
             {title}
           </Title>
         </div>
-        <Text type="secondary" style={{ fontSize: "1.1rem" }}>
+        <Text type="secondary" style={styles.description}>
           {description}
         </Text>
       </div>

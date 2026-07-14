@@ -16,11 +16,11 @@ import {
 } from "@ant-design/icons";
 import type { ProductReview } from "../../types/coupon-review";
 import BaseButton from "../../components/common/BaseButton";
-import dayjs from "dayjs";
 import type { ColumnsType } from "antd/es/table";
 import { useReviewModerationState } from "../../hooks/Admin/useReviewModerationState";
 import { styles } from "./styles/review-moderation.styles";
 import { REVIEW_STRINGS } from "../../constants/Admin/review-moderation";
+import { formatDateDayjs } from "./helper";
 
 const { Text } = Typography;
 
@@ -44,7 +44,7 @@ const ReviewModeration: React.FC = () => {
               {record.user.fullName || record.user.username}
             </Text>
             <Text style={styles.createdAt}>
-              {dayjs(record.createdAt).format("DD/MM/YYYY HH:mm")}
+              {formatDateDayjs(record.createdAt)}
             </Text>
           </div>
         </Space>
