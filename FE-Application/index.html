@@ -1,38 +1,44 @@
 <!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#6366f1" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="EliteShop" />
-  <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-  <title>Elite Shop - Nền tảng mua sắm đẳng cấp</title>
-  <script>
-    window.global = window;
-    window.process = {
-      env: { NODE_ENV: 'production' },
-      browser: true,
-      version: '',
-      nextTick: function (fn) { setTimeout(fn, 0); }
-    };
-    // Polyfill Buffer cơ bản để tránh lỗi ném ra từ các thư viện WebSocket
-    if (!window.Buffer) {
-      window.Buffer = {
-        isBuffer: function () { return false; },
-        from: function () { return []; },
-        alloc: function () { return []; }
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/dist/assets/hi.jpg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="EliteShop" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    <title>Elite Shop - Nền tảng mua sắm đẳng cấp</title>
+    <script>
+      window.global = window;
+      window.process = {
+        env: { NODE_ENV: "production" },
+        browser: true,
+        version: "",
+        nextTick: function (fn) {
+          setTimeout(fn, 0);
+        },
       };
-    }
-  </script>
-</head>
+      // Polyfill Buffer cơ bản để tránh lỗi ném ra từ các thư viện WebSocket
+      if (!window.Buffer) {
+        window.Buffer = {
+          isBuffer: function () {
+            return false;
+          },
+          from: function () {
+            return [];
+          },
+          alloc: function () {
+            return [];
+          },
+        };
+      }
+    </script>
+  </head>
 
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

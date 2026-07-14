@@ -1,131 +1,143 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
-import { getBaseApiUrl, getWsUrl } from '../utils/url';
-import type { Notification } from '../types/notification';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { getBaseApiUrl, getWsUrl } from "../utils/url";
+import type { Notification } from "../types/notification";
 
 interface NotificationContextType {
-    notifications: Notification[];
-    unreadCount: number;
-    markAsRead: (id: number) => Promise<void>;
-    markAllAsRead: () => Promise<void>;
+  notifications: Notification[];
+  unreadCount: number;
+  markAsRead: (id: number) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined,
+);
 
 // Helper function to get auth headers
 const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('token');
-    return {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    };
+  const token = localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 };
 
-export const NotificationProvider: React.FC<{ children: React.ReactNode; userId: string | null }> = ({ children, userId }) => {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+export const NotificationProvider: React.FC<{
+  children: React.ReactNode;
+  userId: string | null;
+}> = ({ children, userId }) => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-    useEffect(() => {
-        if (!userId) return;
+  useEffect(() => {
+    if (!userId) return;
 
-        const fetchNotifications = async () => {
-            try {
-                const baseUrl = getBaseApiUrl();
-                const response = await fetch(`${baseUrl}/notifications/${userId}`, {
-                    headers: getAuthHeaders()
-                });
+    const fetchNotifications = async () => {
+      try {
+        const baseUrl = getBaseApiUrl();
+        const response = await fetch(`${baseUrl}/notifications/${userId}`, {
+          headers: getAuthHeaders(),
+        });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setNotifications(data);
-                }
-            } catch (error) {
-                console.error('Lỗi tải thông báo:', error);
-            }
-        };
-
-        fetchNotifications();
-    }, [userId]);
-
-    useEffect(() => {
-        if (!userId) return;
-
-        let client: Client | null = null;
-        try {
-            const url = getWsUrl();
-            const isUnsafe = window.location.protocol === 'https:' && url.startsWith('http:');
-
-            client = new Client({
-                webSocketFactory: () => {
-                    if (isUnsafe) {
-                        console.warn('Bỏ qua khởi tạo WebSocket không an toàn');
-                        return new WebSocket('wss://localhost:0'); // Dummy socket
-                    }
-                    return new SockJS(url);
-                },
-                onConnect: () => {
-                    client?.subscribe(`/topic/notifications/${userId}`, (msg) => {
-                        const newNotification: Notification = JSON.parse(msg.body);
-                        setNotifications(prev => [newNotification, ...prev]);
-                    });
-                },
-                reconnectDelay: 5000,
-            });
-
-            if (!isUnsafe) {
-                client.activate();
-            }
-        } catch (error) {
-            console.error('Không thể kích hoạt kết nối thông báo:', error);
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data);
         }
-
-        return () => {
-            if (client) {
-                client.deactivate();
-            }
-        };
-    }, [userId]);
-
-    const markAsRead = async (id: number) => {
-        try {
-            const baseUrl = getBaseApiUrl();
-            await fetch(`${baseUrl}/notifications/${id}/read`, {
-                method: 'PUT',
-                headers: getAuthHeaders()
-            });
-            setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-        } catch (error) {
-            console.error('Lỗi đánh dấu đã đọc:', error);
-        }
+      } catch (error) {
+        console.error("Lỗi tải thông báo:", error);
+      }
     };
 
-    const markAllAsRead = async () => {
-        if (!userId) return;
-        try {
-            const baseUrl = getBaseApiUrl();
-            await fetch(`${baseUrl}/notifications/read-all/${userId}`, {
-                method: 'PUT',
-                headers: getAuthHeaders()
-            });
-            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-        } catch (error) {
-            console.error('Lỗi đánh dấu tất cả đã đọc:', error);
-        }
-    };
+    fetchNotifications();
+  }, [userId]);
 
-    return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
-            {children}
-        </NotificationContext.Provider>
-    );
+  useEffect(() => {
+    if (!userId) return;
+
+    let client: Client | null = null;
+    try {
+      const url = getWsUrl();
+      const isUnsafe =
+        window.location.protocol === "https:" && url.startsWith("http:");
+
+      client = new Client({
+        webSocketFactory: () => {
+          if (isUnsafe) {
+            console.warn("Bỏ qua khởi tạo WebSocket không an toàn");
+            return new WebSocket("wss://localhost:0"); // Dummy socket
+          }
+          return new SockJS(url);
+        },
+        onConnect: () => {
+          client?.subscribe(`/topic/notifications/${userId}`, (msg) => {
+            const newNotification: Notification = JSON.parse(msg.body);
+            setNotifications((prev) => [newNotification, ...prev]);
+          });
+        },
+        reconnectDelay: 5000,
+      });
+
+      if (!isUnsafe) {
+        client.activate();
+      }
+    } catch (error) {
+      console.error("Không thể kích hoạt kết nối thông báo:", error);
+    }
+
+    return () => {
+      if (client) {
+        client.deactivate();
+      }
+    };
+  }, [userId]);
+
+  const markAsRead = async (id: number) => {
+    try {
+      const baseUrl = getBaseApiUrl();
+      await fetch(`${baseUrl}/notifications/${id}/read`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+      });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+      );
+    } catch (error) {
+      console.error("Lỗi đánh dấu đã đọc:", error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!userId) return;
+    try {
+      const baseUrl = getBaseApiUrl();
+      await fetch(`${baseUrl}/notifications/read-all/${userId}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+      });
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (error) {
+      console.error("Lỗi đánh dấu tất cả đã đọc:", error);
+    }
+  };
+
+  return (
+    <NotificationContext.Provider
+      value={{ notifications, unreadCount, markAsRead, markAllAsRead }}
+    >
+      {children}
+    </NotificationContext.Provider>
+  );
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useNotifications = () => {
-    const context = useContext(NotificationContext);
-    if (!context) {
-        throw new Error('useNotifications must be used within a NotificationProvider');
-    }
-    return context;
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider",
+    );
+  }
+  return context;
 };
