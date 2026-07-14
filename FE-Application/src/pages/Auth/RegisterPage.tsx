@@ -12,7 +12,8 @@ import BaseInput from "../../components/common/BaseInput";
 import { authApi } from "../../api/authApi";
 import { notification } from "../../utils/notification";
 import type { RegisterRequest } from "../../types/auth";
-import { REGISTER_CARD_STYLE } from "../../styles/commonStyles";
+import { styles } from "./styles/register.styles";
+import { REGISTER_STRINGS } from "../../constants/Auth/auth";
 
 const { Title, Text } = Typography;
 
@@ -41,13 +42,13 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div style={REGISTER_CARD_STYLE}>
-      <div style={{ textAlign: "center", marginBottom: "30px" }}>
-        <Title level={2} style={{ color: "var(--text-main)", margin: 0 }}>
-          Tạo Tài Khoản
+    <div style={styles.registerCard}>
+      <div style={styles.headerContainer}>
+        <Title level={2} style={styles.title}>
+          {REGISTER_STRINGS.title}
         </Title>
-        <Text style={{ color: "var(--text-muted)" }}>
-          Gia nhập cộng đồng Tech Nova ngay hôm nay
+        <Text style={styles.subText}>
+          {REGISTER_STRINGS.subTitle}
         </Text>
       </div>
 
@@ -59,46 +60,46 @@ const RegisterPage: React.FC = () => {
       >
         <Form.Item
           name="username"
-          rules={[{ required: true, message: "Vui lòng nhập tên đăng nhập!" }]}
+          rules={[{ required: true, message: REGISTER_STRINGS.usernameRequired }]}
         >
           <BaseInput
-            prefix={<UserOutlined style={{ color: "var(--primary-color)" }} />}
-            placeholder="Tên đăng nhập"
+            prefix={<UserOutlined style={styles.inputPrefix} />}
+            placeholder={REGISTER_STRINGS.usernamePlaceholder}
           />
         </Form.Item>
 
         <Form.Item name="fullName">
           <BaseInput
             prefix={
-              <IdcardOutlined style={{ color: "var(--primary-color)" }} />
+              <IdcardOutlined style={styles.inputPrefix} />
             }
-            placeholder="Họ và tên"
+            placeholder={REGISTER_STRINGS.fullNamePlaceholder}
           />
         </Form.Item>
 
         <Form.Item
           name="email"
           rules={[
-            { required: true, message: "Vui lòng nhập email!" },
-            { type: "email", message: "Email không đúng định dạng!" },
+            { required: true, message: REGISTER_STRINGS.emailRequired },
+            { type: "email", message: REGISTER_STRINGS.emailInvalid },
           ]}
         >
           <BaseInput
-            prefix={<MailOutlined style={{ color: "var(--primary-color)" }} />}
-            placeholder="Email"
+            prefix={<MailOutlined style={styles.inputPrefix} />}
+            placeholder={REGISTER_STRINGS.emailPlaceholder}
           />
         </Form.Item>
 
         <Form.Item
           name="password"
           rules={[
-            { required: true, message: "Vui lòng nhập mật khẩu!" },
-            { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự!" },
+            { required: true, message: REGISTER_STRINGS.passwordRequired },
+            { min: 6, message: REGISTER_STRINGS.passwordMin },
           ]}
         >
           <BaseInput.Password
-            prefix={<LockOutlined style={{ color: "var(--primary-color)" }} />}
-            placeholder="Mật khẩu"
+            prefix={<LockOutlined style={styles.inputPrefix} />}
+            placeholder={REGISTER_STRINGS.passwordPlaceholder}
           />
         </Form.Item>
 
@@ -107,19 +108,19 @@ const RegisterPage: React.FC = () => {
             type="primary"
             htmlType="submit"
             loading={loading}
-            style={{ width: "100%", height: "50px" }}
+            style={styles.registerButton}
           >
-            Đăng Ký
+            {REGISTER_STRINGS.registerBtn}
           </BaseButton>
         </Form.Item>
 
-        <div style={{ textAlign: "center" }}>
-          <Text style={{ color: "var(--text-muted)" }}>Đã có tài khoản? </Text>
+        <div style={styles.footerContainer}>
+          <Text style={styles.footerText}>{REGISTER_STRINGS.hasAccount}</Text>
           <span
             onClick={() => navigate("/login")}
-            style={{ color: "var(--primary-color)", cursor: "pointer" }}
+            style={styles.loginLink}
           >
-            Đăng nhập
+            {REGISTER_STRINGS.loginLink}
           </span>
         </div>
       </Form>

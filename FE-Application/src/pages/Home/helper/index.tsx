@@ -50,3 +50,48 @@ export const DEFAULT_BANNERS: Banner[] = [
     isActive: true,
   },
 ];
+
+/**
+ * Lấy danh sách sản phẩm hiển thị, nếu rỗng thì trả về danh sách mặc định
+ */
+export const getDisplayProducts = (
+  products: Product[],
+  categoryName: string,
+  count: number = 4,
+): Product[] => {
+  return products.length > 0 ? products : createDefaultProducts(categoryName, count);
+};
+
+/**
+ * Định dạng cấu trúc dữ liệu của các thương hiệu chính
+ */
+export const formatBrandsData = (
+  appleProducts: Product[],
+  samsungProducts: Product[],
+) => {
+  return [
+    {
+      id: "Apple",
+      name: "Apple Ecosystem",
+      products:
+        appleProducts.length > 0
+          ? appleProducts.slice(0, 4)
+          : createDefaultProducts("Apple"),
+    },
+    {
+      id: "Samsung",
+      name: "Samsung Galaxy",
+      products:
+        samsungProducts.length > 0
+          ? samsungProducts.slice(0, 4)
+          : createDefaultProducts("Samsung"),
+    },
+  ];
+};
+
+/**
+ * Giải quyết danh sách banners hiển thị (sử dụng mặc định nếu rỗng)
+ */
+export const resolveBanners = (activeBanners: Banner[]): Banner[] => {
+  return activeBanners && activeBanners.length > 0 ? activeBanners : DEFAULT_BANNERS;
+};

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card, Typography, Form, Input, List, Tag, Badge } from "antd";
 import {
   NotificationOutlined,
@@ -6,103 +6,57 @@ import {
   HistoryOutlined,
 } from "@ant-design/icons";
 import BaseButton from "../../components/common/BaseButton";
-import { getBaseApiUrl } from "../../utils/url";
-import { notification } from "../../utils/notification";
+import { useNotificationManagementState } from "../../hooks/Admin/useNotificationManagementState";
+import { styles } from "./styles/notification-management.styles";
+import { NOTIF_STRINGS } from "../../constants/Admin/notification-management";
 
 const { Title, Text } = Typography;
-
-interface NotificationHistoryItem {
-  id: number;
-  message: string;
-  type: string;
-  createdAt: string;
-  recipientCount: string;
-}
 
 /**
  * Quản lý thông báo hệ thống (Admin)
  * Cho phép Admin tạo thông báo và gửi cho tất cả người dùng (Broadcast)
  */
 const NotificationManagement: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
-  const [history, setHistory] = useState<NotificationHistoryItem[]>([]);
-
-  // Hàm gửi thông báo broadcast
-  const handleBroadcast = async (values: { message: string }) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const baseUrl = getBaseApiUrl();
-      const response = await fetch(`${baseUrl}/notifications/broadcast`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (response.ok) {
-        notification.success("Đã gửi thông báo cho tất cả người dùng!");
-        form.resetFields();
-        // Tạm thời thêm vào lịch sử ảo để admin thấy
-        const newLog: NotificationHistoryItem = {
-          id: Date.now(),
-          message: values.message,
-          type: "SYSTEM",
-          createdAt: new Date().toISOString(),
-          recipientCount: "Toàn bộ hệ thống",
-        };
-        setHistory((prev) => [newLog, ...prev]);
-      } else {
-        notification.error("Gửi thông báo thất bại");
-      }
-    } catch (error) {
-      console.error("Lỗi gửi thông báo:", error);
-      notification.error("Có lỗi xảy ra khi kết nối server");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { loading, form, history, handleBroadcast } =
+    useNotificationManagementState();
 
   return (
-    <div style={{ padding: "20px 0" }}>
+    <div style={styles.container}>
       <Title
         level={4}
-        style={{ color: "var(--text-main)", marginBottom: "24px" }}
+        style={styles.headerTitle}
       >
-        <NotificationOutlined style={{ marginRight: "8px" }} />
-        Gửi Thông Báo Hệ Thống
+        <NotificationOutlined style={styles.headerIcon} />
+        {NOTIF_STRINGS.headerTitle}
       </Title>
 
-      <Card className="glass-effect" style={{ marginBottom: "32px" }}>
+      <Card className="glass-effect" style={styles.formCard}>
         <Form form={form} layout="vertical" onFinish={handleBroadcast}>
           <Form.Item
             name="message"
             label={
-              <span style={{ color: "var(--text-main)" }}>
-                Nội dung thông báo (Ví dụ: Black Friday, Noel, Tết...)
+              <span style={styles.formLabel}>
+                {NOTIF_STRINGS.form.messageLabel}
               </span>
             }
             rules={[
-              { required: true, message: "Vui lòng nhập nội dung thông báo" },
+              { required: true, message: NOTIF_STRINGS.form.messageRequired },
             ]}
           >
             <Input.TextArea
               rows={4}
-              placeholder="Nhập thông báo bạn muốn gửi đến tất cả khách hàng..."
+              placeholder={NOTIF_STRINGS.form.messagePlaceholder}
             />
           </Form.Item>
-          <Form.Item style={{ marginBottom: 0 }}>
+          <Form.Item style={styles.formItemNoMargin}>
             <BaseButton
               type="primary"
               htmlType="submit"
               loading={loading}
               icon={<SendOutlined />}
-              style={{ width: "100%", height: "45px" }}
+              style={styles.submitButton}
             >
-              Gửi Thông Báo Ngay
+              {NOTIF_STRINGS.form.submitBtn}
             </BaseButton>
           </Form.Item>
         </Form>
@@ -110,10 +64,10 @@ const NotificationManagement: React.FC = () => {
 
       <Title
         level={4}
-        style={{ color: "var(--text-main)", marginBottom: "16px" }}
+        style={styles.headerTitle}
       >
-        <HistoryOutlined style={{ marginRight: "8px" }} />
-        Lịch sử gửi (Phiên làm việc này)
+        <HistoryOutlined style={styles.headerIcon} />
+        {NOTIF_STRINGS.historyTitle}
       </Title>
 
       <List
@@ -122,31 +76,20 @@ const NotificationManagement: React.FC = () => {
           <Card
             size="small"
             className="glass-effect"
-            style={{
-              marginBottom: "12px",
-              border: "1px solid var(--glass-border)",
-            }}
+            style={styles.historyCard}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-              }}
-            >
+            <div style={styles.historyCardContent}>
               <div style={{ flex: 1 }}>
                 <Badge
                   status="processing"
                   text={
-                    <Text strong style={{ color: "var(--text-main)" }}>
+                    <Text strong style={styles.historyMessage}>
                       {item.message}
                     </Text>
                   }
                 />
-                <div style={{ marginTop: "8px" }}>
-                  <Text
-                    style={{ fontSize: "12px", color: "var(--text-muted)" }}
-                  >
+                <div style={styles.historyTimeWrapper}>
+                  <Text style={styles.historyTime}>
                     {new Date(item.createdAt).toLocaleString("vi-VN")}
                   </Text>
                 </div>
@@ -157,8 +100,8 @@ const NotificationManagement: React.FC = () => {
         )}
         locale={{
           emptyText: (
-            <Text style={{ color: "var(--text-muted)" }}>
-              Chưa có thông báo nào được gửi trong phiên này
+            <Text style={styles.emptyText}>
+              {NOTIF_STRINGS.emptyHistory}
             </Text>
           ),
         }}

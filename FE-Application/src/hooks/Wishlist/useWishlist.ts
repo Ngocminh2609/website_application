@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { WishlistContext } from "../context/WishlistContextDefinition";
+import { WishlistContext } from "../../context/WishlistContextDefinition";
 
 /**
  * Hook để sử dụng dữ liệu và các thao tác trong danh sách yêu thích.

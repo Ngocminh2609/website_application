@@ -14,9 +14,9 @@ import type { Product } from "../../types/product";
 import BaseButton from "../common/BaseButton";
 import { notification } from "../../utils/notification";
 import { cartApi } from "../../api/cartApi";
-import { useCart } from "../../hooks/useCart";
-import { useWishlist } from "../../hooks/useWishlist";
-import { useCompare } from "../../hooks/useCompare";
+import { useCart } from "../../hooks/Cart/useCart";
+import { useWishlist } from "../../hooks/Wishlist/useWishlist";
+import { useCompare } from "../../hooks/Product/useCompare";
 
 import {
   FALLBACK_IMAGE,

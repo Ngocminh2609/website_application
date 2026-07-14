@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { productApi } from "../api/productApi";
-import { ProductContext } from "../hooks/useProducts";
+import { ProductContext } from "../hooks/Product/useProducts";
 import type { Product } from "../types/product";
 
 /**

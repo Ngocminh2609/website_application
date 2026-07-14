@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useCompare } from "../../hooks/useCompare";
+import { useCompare } from "../../hooks/Product/useCompare";
 import { Button, Badge, Tooltip } from "antd";
 import {
   SwapOutlined,

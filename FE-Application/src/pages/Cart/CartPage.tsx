@@ -38,12 +38,14 @@ import type { UserAddress } from "../../api/addressApi";
 import type { User } from "../../types/auth";
 import type { CartItem } from "../../types/cart";
 import type { CouponValidateResponse } from "../../types/coupon-review";
-import { useCart } from "../../hooks/useCart";
+import { useCart } from "../../hooks/Cart/useCart";
 import BaseButton from "../../components/common/BaseButton";
 import { notification } from "../../utils/notification";
 import type { ColumnsType } from "antd/es/table";
 import PersonalizedRecommendations from "../../components/common/PersonalizedRecommendations";
 import { Radio, Divider, Select } from "antd";
+import { styles } from "./styles/cart-page.styles";
+import { CART_STRINGS } from "../../constants/Cart/cart-page";
 
 // Các Interface cho dữ liệu từ Provinces API
 interface ApiProvince {
@@ -111,7 +113,7 @@ const CartPage: React.FC = () => {
       await cartApi.updateQuantity(itemId, quantity);
       await refreshCart(true);
     } catch {
-      notification.error("Không thể cập nhật số lượng");
+      notification.error(CART_STRINGS.messages.updateQtyError);
     }
   };
 
@@ -119,9 +121,9 @@ const CartPage: React.FC = () => {
     try {
       await cartApi.removeItem(itemId);
       await refreshCart(true);
-      notification.success("Đã xóa sản phẩm khỏi giỏ hàng");
+      notification.success(CART_STRINGS.messages.removeSuccess);
     } catch {
-      notification.error("Lỗi khi xóa sản phẩm");
+      notification.error(CART_STRINGS.messages.removeError);
     }
   };
 
@@ -145,7 +147,7 @@ const CartPage: React.FC = () => {
     } catch (err: unknown) {
       setCouponResult(null);
       setCouponError(
-        err instanceof Error ? err.message : "Mã giảm giá không hợp lệ",
+        err instanceof Error ? err.message : CART_STRINGS.messages.invalidCoupon,
       );
     } finally {
       setCouponLoading(false);
@@ -170,7 +172,7 @@ const CartPage: React.FC = () => {
         setSelectedAddressId(data[0].id);
       }
     } catch {
-      notification.error("Không thể tải danh sách địa chỉ");
+      notification.error(CART_STRINGS.messages.loadAddressError);
     } finally {
       setAddressLoading(false);
     }
@@ -179,7 +181,7 @@ const CartPage: React.FC = () => {
   const handlePaymentClick = () => {
     const amount = calculateTotal();
     if (amount <= 0) {
-      notification.error("Giỏ hàng trống");
+      notification.error(CART_STRINGS.messages.emptyCartError);
       return;
     }
     setIsModalVisible(true);
@@ -200,9 +202,9 @@ const CartPage: React.FC = () => {
       setIsAddingAddress(false);
       addressForm.resetFields();
       setWards([]);
-      notification.success("Đã thêm địa chỉ mới");
+      notification.success(CART_STRINGS.messages.addAddressSuccess);
     } catch {
-      notification.error("Lỗi khi thêm địa chỉ");
+      notification.error(CART_STRINGS.messages.addAddressError);
     } finally {
       setCheckoutLoading(false);
     }
@@ -235,7 +237,7 @@ const CartPage: React.FC = () => {
       const data = await response.json();
       setWards(data.wards || []);
     } catch {
-      notification.error("Không thể tải danh sách Phường/Xã");
+      notification.error(CART_STRINGS.messages.loadWardsError);
     } finally {
       setWardsLoading(false);
     }
@@ -268,7 +270,7 @@ const CartPage: React.FC = () => {
 
   const handleConfirmPayment = async () => {
     if (!selectedAddressId) {
-      notification.error("Vui lòng chọn địa chỉ giao hàng");
+      notification.error(CART_STRINGS.messages.selectAddressError);
       return;
     }
 
@@ -277,7 +279,7 @@ const CartPage: React.FC = () => {
 
     const userStr = localStorage.getItem("user");
     if (!userStr) {
-      notification.error("Bạn cần đăng nhập để thanh toán");
+      notification.error(CART_STRINGS.messages.loginRequired);
       return;
     }
     const user = JSON.parse(userStr) as User;
@@ -297,13 +299,13 @@ const CartPage: React.FC = () => {
       if (paymentMethod === "VNPAY" && response.url) {
         window.location.href = response.url;
       } else if (paymentMethod === "COD") {
-        notification.success("Đơn hàng đã được đặt thành công (COD)!");
+        notification.success(CART_STRINGS.messages.codSuccess);
         // response.url lúc này chứa "ORDER_ID=...&AMOUNT=..."
         navigate(`/payment-success?status=OK&method=COD&${response.url}`);
       }
     } catch (error: unknown) {
       notification.error(
-        error instanceof Error ? error.message : "Lỗi khởi tạo thanh toán",
+        error instanceof Error ? error.message : CART_STRINGS.messages.initPaymentError,
       );
     } finally {
       setCheckoutLoading(false);
@@ -312,7 +314,7 @@ const CartPage: React.FC = () => {
 
   const columns: ColumnsType<CartItem> = [
     {
-      title: "Sản phẩm",
+      title: CART_STRINGS.table.product,
       key: "product",
       render: (_, record) => (
         <Space size="middle">
@@ -343,7 +345,7 @@ const CartPage: React.FC = () => {
       ),
     },
     {
-      title: "Số lượng",
+      title: CART_STRINGS.table.quantity,
       dataIndex: "quantity",
       key: "quantity",
       render: (qty: number, record) => (
@@ -356,7 +358,7 @@ const CartPage: React.FC = () => {
       ),
     },
     {
-      title: "Tổng",
+      title: CART_STRINGS.table.total,
       key: "subtotal",
       render: (_, record) => (
         <Text strong style={{ color: "var(--primary-color)" }}>
@@ -365,7 +367,7 @@ const CartPage: React.FC = () => {
       ),
     },
     {
-      title: "Thao tác",
+      title: CART_STRINGS.table.action,
       key: "action",
       render: (_, record) => (
         <BaseButton
@@ -386,28 +388,28 @@ const CartPage: React.FC = () => {
           textAlign: window.innerWidth < 768 ? "center" : "left",
         }}
       >
-        <Title level={2} style={{ color: "var(--text-main)", margin: 0 }}>
-          Giỏ Hàng
+        <Title level={2} style={styles.billingTitle}>
+          {CART_STRINGS.header.title}
         </Title>
-        <Text style={{ color: "var(--text-muted)" }}>
-          Tiến hành checkout sản phẩm của bạn
+        <Text style={styles.billingLabel}>
+          {CART_STRINGS.header.subtitle}
         </Text>
       </div>
 
       {!cart || cart.items.length === 0 ? (
         <Card
           className="glass-effect"
-          style={{ textAlign: "center", padding: "50px" }}
+          style={styles.emptyCartCard}
         >
           <Empty
             image={
               <ShoppingCartOutlined
-                style={{ fontSize: 64, color: "var(--primary-color)" }}
+                style={styles.emptyCartIcon}
               />
             }
             description={
-              <Text style={{ color: "var(--text-muted)" }}>
-                Giỏ hàng của bạn đang trống
+              <Text style={styles.emptyCartText}>
+                {CART_STRINGS.empty.title}
               </Text>
             }
           >
@@ -415,7 +417,7 @@ const CartPage: React.FC = () => {
               type="primary"
               onClick={() => (window.location.href = "/")}
             >
-              Mua sắm ngay
+              {CART_STRINGS.empty.btn}
             </BaseButton>
           </Empty>
         </Card>
@@ -425,7 +427,7 @@ const CartPage: React.FC = () => {
             <Card
               className="glass-effect"
               styles={{
-                body: { padding: window.innerWidth < 768 ? "10px" : "24px" },
+                body: styles.tableCardBody(window.innerWidth < 768),
               }}
             >
               <Table
@@ -441,78 +443,59 @@ const CartPage: React.FC = () => {
           <Col xs={24} xl={8}>
             <Card
               title={
-                <span style={{ color: "var(--text-main)" }}>
-                  <CreditCardOutlined /> Hóa đơn thanh toán
+                <span style={styles.billingTitle}>
+                  <CreditCardOutlined /> {CART_STRINGS.invoice.title}
                 </span>
               }
               className="glass-effect"
             >
               <Space
                 direction="vertical"
-                style={{ width: "100%" }}
+                style={styles.fullWidth}
                 size="large"
               >
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <Text style={{ color: "var(--text-muted)" }}>Tạm tính:</Text>
-                  <Text style={{ color: "var(--text-main)" }}>
+                <div style={styles.spaceBetween}>
+                  <Text style={styles.billingLabel}>{CART_STRINGS.invoice.subtotal}</Text>
+                  <Text style={styles.billingValue}>
                     {calculateTotal().toLocaleString("vi-VN")}đ
                   </Text>
                 </div>
 
                 {/* Khu vực nhập mã giảm giá */}
                 <div>
-                  <Text
-                    style={{
-                      color: "var(--text-muted)",
-                      display: "block",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <TagOutlined /> Mã giảm giá
+                  <Text style={styles.couponLabel}>
+                    <TagOutlined /> {CART_STRINGS.invoice.coupon}
                   </Text>
                   {couponResult ? (
-                    <div
-                      style={{
-                        background: "rgba(34, 197, 94, 0.1)",
-                        border: "1px solid rgba(34, 197, 94, 0.4)",
-                        borderRadius: 10,
-                        padding: "10px 14px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
+                    <div style={styles.couponSuccessWrapper}>
                       <Space>
                         <CheckCircleOutlined style={{ color: "#22c55e" }} />
-                        <Text style={{ color: "#22c55e", fontWeight: 600 }}>
+                        <Text style={styles.couponSuccessText}>
                           {couponResult.code}{" "}
                           {couponResult.discountType === "PERCENT"
                             ? `(-${couponResult.discountValue}%)`
                             : ""}
                         </Text>
-                        <Text style={{ color: "#22c55e", fontSize: 12 }}>
-                          -{couponResult.discountAmount.toLocaleString("vi-VN")}
-                          đ
+                        <Text style={styles.couponSuccessSubtext}>
+                          -{couponResult.discountAmount.toLocaleString("vi-VN")}đ
                           {couponResult.maxDiscountAmount &&
                             couponResult.discountAmount >=
                               couponResult.maxDiscountAmount && (
-                              <span style={{ fontSize: "10px", marginLeft: 4 }}>
-                                (Tối đa)
+                              <span style={styles.couponMaxText}>
+                                {CART_STRINGS.invoice.maxDiscount}
                               </span>
                             )}
                         </Text>
                       </Space>
                       <CloseCircleOutlined
-                        style={{ color: "#22c55e", cursor: "pointer" }}
+                        style={styles.couponSuccessClose}
                         onClick={handleRemoveCoupon}
                       />
                     </div>
                   ) : (
-                    <Space.Compact style={{ width: "100%" }}>
+                    <Space.Compact style={styles.fullWidth}>
                       <Input
-                        placeholder="Nhập mã giảm giá"
+                        placeholder={CART_STRINGS.invoice.couponPlaceholder}
                         value={couponCode}
                         onChange={(e) => {
                           setCouponCode(e.target.value.toUpperCase());
@@ -520,99 +503,67 @@ const CartPage: React.FC = () => {
                         }}
                         onPressEnter={handleApplyCoupon}
                         status={couponError ? "error" : undefined}
-                        style={{ textTransform: "uppercase" }}
+                        style={styles.couponInput}
                       />
                       <BaseButton
                         onClick={handleApplyCoupon}
                         loading={couponLoading}
                         type="primary"
                       >
-                        {couponLoading ? <Spin size="small" /> : "Mã"}
+                        {couponLoading ? <Spin size="small" /> : CART_STRINGS.invoice.couponApplyBtn}
                       </BaseButton>
                     </Space.Compact>
                   )}
                   {couponError && (
-                    <Text
-                      style={{
-                        color: "#ef4444",
-                        fontSize: 12,
-                        marginTop: 6,
-                        display: "block",
-                      }}
-                    >
+                    <Text style={styles.couponErrorText}>
                       {couponError}
                     </Text>
                   )}
                 </div>
 
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <Text style={{ color: "var(--text-muted)" }}>
-                    Vận chuyển:
+                <div style={styles.spaceBetween}>
+                  <Text style={styles.billingLabel}>
+                    {CART_STRINGS.invoice.shipping}
                   </Text>
-                  <Tag color="green">Miễn phí toàn quốc</Tag>
+                  <Tag color="green">{CART_STRINGS.invoice.freeShipping}</Tag>
                 </div>
                 {couponResult && (
-                  <div
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                  >
-                    <Text style={{ color: "#22c55e" }}>
-                      Giảm giá{" "}
+                  <div style={styles.spaceBetween}>
+                    <Text style={styles.discountLabel}>
+                      {CART_STRINGS.invoice.discount}
                       {couponResult.discountType === "PERCENT"
                         ? `(${couponResult.discountValue}%)`
                         : ""}
                       :
                     </Text>
-                    <Text style={{ color: "#22c55e", fontWeight: 600 }}>
+                    <Text style={styles.discountValue}>
                       -{couponResult.discountAmount.toLocaleString("vi-VN")}đ
                     </Text>
                   </div>
                 )}
-                <div
-                  style={{
-                    borderTop: "1px solid var(--glass-border)",
-                    paddingTop: "16px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Text
-                    strong
-                    style={{ color: "var(--text-main)", fontSize: "18px" }}
-                  >
-                    Tổng cộng:
+                <div style={styles.totalDivider}>
+                  <Text strong style={styles.totalLabel}>
+                    {CART_STRINGS.invoice.total}
                   </Text>
-                  <Text
-                    strong
-                    style={{ color: "var(--primary-color)", fontSize: "24px" }}
-                  >
+                  <Text strong style={styles.totalValue}>
                     {(couponResult
                       ? couponResult.finalAmount
                       : calculateTotal()
-                    ).toLocaleString("vi-VN")}
-                    đ
+                    ).toLocaleString("vi-VN")}đ
                   </Text>
                 </div>
                 <BaseButton
                   type="primary"
-                  style={{
-                    width: "100%",
-                    height: "50px",
-                    fontSize: "1.1rem",
-                    marginTop: "10px",
-                    background: "var(--primary-gradient)",
-                    border: "none",
-                  }}
+                  style={styles.paymentButton}
                   onClick={handlePaymentClick}
                 >
-                  Thanh Toán VNPay
+                  {CART_STRINGS.invoice.payBtn}
                 </BaseButton>
-                <div style={{ textAlign: "center", marginTop: "10px" }}>
+                <div style={styles.vnpayLogoContainer}>
                   <img
                     src={vnpayLogo}
                     alt="VNPay"
-                    style={{ height: 30, opacity: 1 }}
+                    style={styles.vnpayLogo}
                   />
                 </div>
               </Space>
@@ -622,18 +573,18 @@ const CartPage: React.FC = () => {
       )}
 
       <PersonalizedRecommendations
-        title="Khám Phá Thêm"
-        description="Sản phẩm công nghệ cao cấp bạn có thể quan tâm."
+        title={CART_STRINGS.recommendations.title}
+        description={CART_STRINGS.recommendations.description}
         limit={5}
       />
 
       {/* Modal Checkout Đa Địa Chỉ */}
       <Modal
         title={
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <HomeOutlined style={{ color: "var(--primary-color)" }} />
-            <Title level={4} style={{ margin: 0 }}>
-              Thông tin nhận hàng
+          <div style={styles.modalTitleContainer}>
+            <HomeOutlined style={styles.codIcon} />
+            <Title level={4} style={styles.modalTitleText}>
+              {CART_STRINGS.modal.title}
             </Title>
           </div>
         }
@@ -648,43 +599,43 @@ const CartPage: React.FC = () => {
         centered
       >
         {addressLoading ? (
-          <div style={{ textAlign: "center", padding: "40px" }}>
-            <Spin size="large" tip="Đang tải địa chỉ..." />
+          <div style={styles.modalSpinner}>
+            <Spin size="large" tip={CART_STRINGS.modal.loadingAddress} />
           </div>
         ) : isAddingAddress || addresses.length === 0 ? (
           <Form
             form={addressForm}
             layout="vertical"
             onFinish={handleAddAddress}
-            style={{ marginTop: 20 }}
+            style={styles.formContainer}
             initialValues={{ isDefault: addresses.length === 0 }}
           >
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
                   name="fullName"
-                  label="Họ và tên người nhận"
-                  rules={[{ required: true, message: "Vui lòng nhập họ tên" }]}
+                  label={CART_STRINGS.modal.fullNameLabel}
+                  rules={[{ required: true, message: CART_STRINGS.modal.fullNameRequired }]}
                 >
-                  <Input placeholder="Nguyễn Văn A" />
+                  <Input placeholder={CART_STRINGS.modal.fullNamePlaceholder} />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="phoneNumber"
-                  label="Số điện thoại"
+                  label={CART_STRINGS.modal.phoneLabel}
                   getValueFromEvent={(e) =>
                     e.target.value.replace(/[^0-9]/g, "")
                   }
                   rules={[
-                    { required: true, message: "Vui lòng nhập số điện thoại" },
+                    { required: true, message: CART_STRINGS.modal.phoneRequired },
                     {
                       pattern: /^[0-9]{10,11}$/,
-                      message: "Số điện thoại không hợp lệ (10-11 số)",
+                      message: CART_STRINGS.modal.phoneInvalid,
                     },
                   ]}
                 >
-                  <Input placeholder="09xxxxxxxx" maxLength={11} />
+                  <Input placeholder={CART_STRINGS.modal.phonePlaceholder} maxLength={11} />
                 </Form.Item>
               </Col>
             </Row>
@@ -693,15 +644,15 @@ const CartPage: React.FC = () => {
               <Col span={12}>
                 <Form.Item
                   name="province_code"
-                  label="Tỉnh/Thành phố"
-                  rules={[{ required: true, message: "Bắt buộc" }]}
+                  label={CART_STRINGS.modal.provinceLabel}
+                  rules={[{ required: true, message: CART_STRINGS.modal.required }]}
                 >
                   <Select
                     showSearch
                     allowClear
                     virtual={true}
                     listHeight={250}
-                    placeholder="Chọn hoặc gõ tìm kiếm..."
+                    placeholder={CART_STRINGS.modal.provincePlaceholder}
                     onChange={handleProvinceChange}
                     onSearch={handleProvinceSearch}
                     optionFilterProp="label"
@@ -719,15 +670,15 @@ const CartPage: React.FC = () => {
               <Col span={12}>
                 <Form.Item
                   name="ward"
-                  label="Phường/Xã"
-                  rules={[{ required: true, message: "Bắt buộc" }]}
+                  label={CART_STRINGS.modal.wardLabel}
+                  rules={[{ required: true, message: CART_STRINGS.modal.required }]}
                 >
                   <Select
                     showSearch
                     allowClear
                     virtual={true}
                     listHeight={250}
-                    placeholder="Chọn Phường/Xã..."
+                    placeholder={CART_STRINGS.modal.wardPlaceholder}
                     loading={wardsLoading}
                     disabled={wards.length === 0}
                     onSearch={handleWardSearch}
@@ -743,63 +694,56 @@ const CartPage: React.FC = () => {
 
             <Form.Item
               name="detailAddress"
-              label="Địa chỉ chi tiết"
+              label={CART_STRINGS.modal.detailLabel}
               rules={[
-                { required: true, message: "Vui lòng nhập địa chỉ chi tiết" },
+                { required: true, message: CART_STRINGS.modal.detailRequired },
               ]}
             >
-              <Input.TextArea rows={2} placeholder="Số nhà, tên đường..." />
+              <Input.TextArea rows={2} placeholder={CART_STRINGS.modal.detailPlaceholder} />
             </Form.Item>
 
-            <div style={{ marginTop: 24, display: "flex", gap: "12px" }}>
+            <div style={styles.formActionButtons}>
               <BaseButton
                 type="primary"
                 htmlType="submit"
-                style={{ flex: 2, height: 45 }}
+                style={styles.buttonFlex2}
                 loading={checkoutLoading}
               >
-                Lưu địa chỉ & Tiếp tục
+                {CART_STRINGS.modal.saveBtn}
               </BaseButton>
               {addresses.length > 0 && (
                 <BaseButton
                   type="text"
                   onClick={() => setIsAddingAddress(false)}
-                  style={{ flex: 1, height: 45 }}
+                  style={styles.buttonFlex1}
                 >
-                  Hủy bỏ
+                  {CART_STRINGS.modal.cancelBtn}
                 </BaseButton>
               )}
             </div>
           </Form>
         ) : (
-          <div style={{ marginTop: 20 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 16,
-              }}
-            >
-              <Text strong>Chọn địa chỉ giao hàng:</Text>
+          <div style={styles.formContainer}>
+            <div style={styles.addressHeader}>
+              <Text strong>{CART_STRINGS.modal.selectAddress}</Text>
               <BaseButton
                 type="text"
                 icon={<PlusOutlined />}
                 onClick={() => setIsAddingAddress(true)}
-                style={{ color: "var(--primary-color)" }}
+                style={styles.addAddressBtn}
               >
-                Thêm địa chỉ mới
+                {CART_STRINGS.modal.addAddressBtn}
               </BaseButton>
             </div>
 
             <Radio.Group
               onChange={(e) => setSelectedAddressId(e.target.value)}
               value={selectedAddressId}
-              style={{ width: "100%" }}
+              style={styles.fullWidth}
             >
               <Space
                 direction="vertical"
-                style={{ width: "100%" }}
+                style={styles.fullWidth}
                 size="middle"
               >
                 {addresses.map((addr) => (
@@ -807,53 +751,29 @@ const CartPage: React.FC = () => {
                     key={addr.id}
                     value={addr.id}
                     className={`address-item-radio ${selectedAddressId === addr.id ? "active" : ""}`}
-                    style={{
-                      width: "100%",
-                      padding: "16px",
-                      border: "1px solid var(--glass-border)",
-                      borderRadius: "12px",
-                      margin: 0,
-                      background:
-                        selectedAddressId === addr.id
-                          ? "rgba(99, 102, 241, 0.05)"
-                          : "transparent",
-                      transition: "all 0.3s ease",
-                    }}
+                    style={styles.addressItemRadio(selectedAddressId === addr.id)}
                   >
-                    <div
-                      style={{
-                        display: "inline-block",
-                        marginLeft: "8px",
-                        verticalAlign: "top",
-                        width: "90%",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <Text strong style={{ fontSize: "16px" }}>
+                    <div style={styles.addressMeta}>
+                      <div style={styles.addressTitleRow}>
+                        <Text strong style={styles.addressFullName}>
                           {addr.fullName}
                         </Text>
                         {addr.isDefault && (
                           <Tag
                             color="blue"
-                            style={{ borderRadius: "4px", margin: 0 }}
+                            style={styles.defaultTag}
                           >
-                            Mặc định
+                            {CART_STRINGS.modal.defaultTag}
                           </Tag>
                         )}
                       </div>
-                      <div style={{ marginTop: "4px" }}>
+                      <div style={styles.addressPhone}>
                         <Text type="secondary">
                           <PhoneOutlined /> {addr.phoneNumber}
                         </Text>
                       </div>
-                      <div style={{ marginTop: "4px" }}>
-                        <Text style={{ color: "var(--text-main)" }}>
+                      <div style={styles.addressDetail}>
+                        <Text style={styles.addressDetailText}>
                           <EnvironmentOutlined /> {addr.detailAddress},{" "}
                           {addr.ward}, {addr.province}
                         </Text>
@@ -864,60 +784,40 @@ const CartPage: React.FC = () => {
               </Space>
             </Radio.Group>
 
-            <Divider style={{ margin: "24px 0" }} />
+            <Divider style={styles.dividerMargin} />
 
             <div style={{ marginBottom: 24 }}>
-              <Text strong style={{ display: "block", marginBottom: 12 }}>
-                Hình thức thanh toán:
+              <Text strong style={styles.paymentMethodTitle}>
+                {CART_STRINGS.modal.paymentMethodLabel}
               </Text>
               <Radio.Group
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 value={paymentMethod}
-                style={{ width: "100%" }}
+                style={styles.fullWidth}
               >
-                <Space direction="vertical" style={{ width: "100%" }}>
+                <Space direction="vertical" style={styles.fullWidth}>
                   <Radio
                     value="VNPAY"
                     className={`payment-method-item ${paymentMethod === "VNPAY" ? "active" : ""}`}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      border: "1px solid var(--glass-border)",
-                      borderRadius: "8px",
-                      margin: 0,
-                      background:
-                        paymentMethod === "VNPAY"
-                          ? "rgba(99, 102, 241, 0.05)"
-                          : "transparent",
-                    }}
+                    style={styles.paymentMethodItem(paymentMethod === "VNPAY")}
                   >
                     <Space>
-                      <img src={vnpayLogo} alt="VNPay" style={{ height: 20 }} />
+                      <img src={vnpayLogo} alt="VNPay" style={styles.vnpayLogoSmall} />
                       <Text>
-                        Thanh toán qua VNPay (ATM/Internet Banking/QR Code)
+                        {CART_STRINGS.modal.vnpayLabel}
                       </Text>
                     </Space>
                   </Radio>
                   <Radio
                     value="COD"
                     className={`payment-method-item ${paymentMethod === "COD" ? "active" : ""}`}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      border: "1px solid var(--glass-border)",
-                      borderRadius: "8px",
-                      margin: 0,
-                      background:
-                        paymentMethod === "COD"
-                          ? "rgba(99, 102, 241, 0.05)"
-                          : "transparent",
-                    }}
+                    style={styles.paymentMethodItem(paymentMethod === "COD")}
                   >
                     <Space>
                       <CreditCardOutlined
-                        style={{ color: "var(--primary-color)", fontSize: 18 }}
+                        style={styles.codIcon}
                       />
-                      <Text>Thanh toán khi nhận hàng (COD)</Text>
+                      <Text>{CART_STRINGS.modal.codLabel}</Text>
                     </Space>
                   </Radio>
                 </Space>
@@ -926,19 +826,14 @@ const CartPage: React.FC = () => {
 
             <BaseButton
               type="primary"
-              style={{
-                width: "100%",
-                height: 50,
-                fontSize: "1.1rem",
-                borderRadius: "12px",
-              }}
+              style={styles.confirmButton}
               loading={checkoutLoading}
               onClick={handleConfirmPayment}
               icon={<CheckOutlined />}
             >
               {paymentMethod === "VNPAY"
-                ? "Tiếp tục thanh toán VNPay"
-                : "Xác nhận đặt hàng"}
+                ? CART_STRINGS.modal.continueVNPay
+                : CART_STRINGS.modal.confirmOrder}
             </BaseButton>
           </div>
         )}

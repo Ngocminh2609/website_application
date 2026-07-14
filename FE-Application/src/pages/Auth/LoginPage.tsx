@@ -8,7 +8,8 @@ import BaseInput from "../../components/common/BaseInput";
 import { authApi } from "../../api/authApi";
 import { notification } from "../../utils/notification";
 import type { LoginRequest, AuthResponse } from "../../types/auth";
-import { LOGIN_CARD_STYLE } from "../../styles/commonStyles";
+import { styles } from "./styles/login.styles";
+import { LOGIN_STRINGS } from "../../constants/Auth/auth";
 
 const { Title, Text } = Typography;
 
@@ -43,7 +44,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     try {
       await authApi.googleLogin();
     } catch {
-      notification.error("Đăng nhập Google thất bại. Vui lòng thử lại.");
+      notification.error(LOGIN_STRINGS.messages.googleLoginFailed);
       setLoading(false);
     }
   };
@@ -60,16 +61,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div style={LOGIN_CARD_STYLE} className="animate-fade-up">
-      <div style={{ textAlign: "center", marginBottom: "30px" }}>
+    <div style={styles.loginCard} className="animate-fade-up">
+      <div style={styles.headerContainer}>
         <Title
           level={2}
-          style={{ color: "var(--text-main)", margin: 0, fontWeight: 700 }}
+          style={styles.title}
         >
-          CHÀO MỪNG TRỞ LẠI
+          {LOGIN_STRINGS.title}
         </Title>
-        <Text style={{ color: "var(--text-muted)" }}>
-          Vui lòng đăng nhập để tiếp tục
+        <Text style={styles.subText}>
+          {LOGIN_STRINGS.subTitle}
         </Text>
       </div>
 
@@ -81,21 +82,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       >
         <Form.Item
           name="username"
-          rules={[{ required: true, message: "Vui lòng nhập tên đăng nhập!" }]}
+          rules={[{ required: true, message: LOGIN_STRINGS.usernameRequired }]}
         >
           <BaseInput
-            prefix={<UserOutlined style={{ color: "var(--primary-color)" }} />}
-            placeholder="Tên đăng nhập"
+            prefix={<UserOutlined style={styles.inputPrefix} />}
+            placeholder={LOGIN_STRINGS.usernamePlaceholder}
           />
         </Form.Item>
 
         <Form.Item
           name="password"
-          rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
+          rules={[{ required: true, message: LOGIN_STRINGS.passwordRequired }]}
         >
           <BaseInput.Password
-            prefix={<LockOutlined style={{ color: "var(--primary-color)" }} />}
-            placeholder="Mật khẩu"
+            prefix={<LockOutlined style={styles.inputPrefix} />}
+            placeholder={LOGIN_STRINGS.passwordPlaceholder}
           />
         </Form.Item>
 
@@ -104,33 +105,22 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             type="primary"
             htmlType="submit"
             loading={loading}
-            style={{
-              width: "100%",
-              height: "52px",
-              borderRadius: "12px",
-              fontWeight: 600,
-            }}
+            style={styles.loginButton}
           >
-            ĐĂNG NHẬP
+            {LOGIN_STRINGS.loginBtn}
           </BaseButton>
         </Form.Item>
 
-        <Divider style={{ borderColor: "var(--glass-border)" }}>
-          <Text style={{ color: "var(--text-muted)", fontSize: "12px" }}>
-            HOẶC TIẾP TỤC VỚI
+        <Divider style={styles.divider}>
+          <Text style={styles.dividerText}>
+            {LOGIN_STRINGS.dividerText}
           </Text>
         </Divider>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "24px",
-          }}
-        >
+        <div style={styles.googleLoginContainer}>
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
-            onError={() => notification.error("Lỗi kết nối với Google")}
+            onError={() => notification.error(LOGIN_STRINGS.messages.googleConnectionError)}
             theme="filled_blue"
             shape="pill"
             text="signin_with"
@@ -138,19 +128,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           />
         </div>
 
-        <div style={{ textAlign: "center" }}>
-          <Text style={{ color: "var(--text-muted)" }}>
-            Chưa có tài khoản?{" "}
+        <div style={styles.footerContainer}>
+          <Text style={styles.footerText}>
+            {LOGIN_STRINGS.noAccount}
           </Text>
           <span
             onClick={() => navigate("/register")}
-            style={{
-              color: "var(--primary-color)",
-              cursor: "pointer",
-              fontWeight: 600,
-            }}
+            style={styles.registerLink}
           >
-            Tạo tài khoản mới
+            {LOGIN_STRINGS.registerLink}
           </span>
         </div>
       </Form>

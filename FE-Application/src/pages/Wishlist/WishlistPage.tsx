@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Row, Col, Typography, Empty, Breadcrumb, Button } from "antd";
 import { HeartFilled, DeleteOutlined, HomeOutlined } from "@ant-design/icons";
-import { useWishlist } from "../../hooks/useWishlist";
+import { useWishlist } from "../../hooks/Wishlist/useWishlist";
 import type { Product } from "../../types/product";
 import ProductCard from "../../components/common/ProductCard";
 import { Link, useLocation } from "react-router-dom";

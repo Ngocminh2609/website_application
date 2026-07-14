@@ -22,7 +22,7 @@ import {
   HistoryOutlined,
 } from "@ant-design/icons";
 import { paymentApi } from "../../api/paymentApi";
-import { useCart } from "../../hooks/useCart";
+import { useCart } from "../../hooks/Cart/useCart";
 
 const { Title, Text } = Typography;
 

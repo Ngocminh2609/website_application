@@ -1,98 +1,36 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import { Input, Button, List, Avatar, Typography, Badge, Space } from "antd";
 import { SendOutlined, MessageOutlined, UserOutlined } from "@ant-design/icons";
-import { useAdminChat } from "../../context/useAdminChat";
+import { useAdminChatState } from "../../hooks/Admin/useAdminChatState";
+import { styles } from "./styles/admin-chat.styles";
+import { CHAT_STRINGS } from "../../constants/Admin/admin-chat";
 
 const { Text, Title } = Typography;
 
 const AdminChat: React.FC = () => {
-  // Sử dụng context để lấy conversations, sessions và sendMessage
   const {
-    conversations,
+    activeSessionId,
+    setActiveSessionId,
+    inputValue,
+    currentMessages,
     sessions,
     typingSessions,
     connected,
-    sendMessage,
-    sendTypingStatus,
     markSessionRead,
-  } = useAdminChat();
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [inputValue, setInputValue] = useState("");
-  const lastTypingTime = useRef<number>(0);
-
-  // Tự động đánh dấu đã đọc khi đang xem session đó
-  useEffect(() => {
-    if (activeSessionId) {
-      const currentSession = sessions.find((s) => s.id === activeSessionId);
-      if (currentSession?.unreadCount && currentSession.unreadCount > 0) {
-        markSessionRead(activeSessionId);
-      }
-    }
-  }, [sessions, activeSessionId, markSessionRead]);
-
-  const handleSend = () => {
-    if (inputValue.trim() && activeSessionId) {
-      // Lấy senderId từ session để gửi tin nhắn
-      const activeSession = sessions.find((s) => s.id === activeSessionId);
-      const recipientSenderId = activeSession?.senderId || activeSessionId;
-
-      // Gửi tin nhắn qua context
-      sendMessage(recipientSenderId, inputValue);
-      setInputValue("");
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setInputValue(val);
-
-    if (activeSessionId) {
-      const now = Date.now();
-      // Gửi tín hiệu typing tối đa 1 lần mỗi 2 giây để tránh làm quá tải server
-      if (now - lastTypingTime.current > 2000) {
-        const activeSession = sessions.find((s) => s.id === activeSessionId);
-        const recipientSenderId = activeSession?.senderId || activeSessionId;
-        sendTypingStatus(recipientSenderId);
-        lastTypingTime.current = now;
-      }
-    }
-  };
-
-  const currentMessages = activeSessionId
-    ? conversations[activeSessionId] || []
-    : [];
+    handleSend,
+    handleInputChange,
+  } = useAdminChatState();
 
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "600px",
-        background: "var(--glass-bg)",
-        borderRadius: "12px",
-        border: "1px solid var(--glass-border)",
-        overflow: "hidden",
-      }}
-    >
+    <div style={styles.chatContainer}>
       {/* Sidebar: Danh sách khách hàng đang chat */}
-      <div
-        style={{
-          width: "300px",
-          borderRight: "1px solid var(--glass-border)",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div
-          style={{
-            padding: "20px",
-            borderBottom: "1px solid var(--glass-border)",
-          }}
-        >
-          <Title level={5} style={{ color: "var(--text-main)", margin: 0 }}>
-            Hội thoại khách hàng
+      <div style={styles.sidebar}>
+        <div style={styles.sidebarHeader}>
+          <Title level={5} style={styles.sidebarHeaderTitle}>
+            {CHAT_STRINGS.sidebarTitle}
           </Title>
         </div>
-        <div style={{ flex: 1, overflowY: "auto" }}>
+        <div style={styles.sessionsListContainer}>
           <List
             dataSource={sessions}
             renderItem={(item) => (
@@ -103,19 +41,7 @@ const AdminChat: React.FC = () => {
                     markSessionRead(item.id);
                   }
                 }}
-                style={{
-                  padding: "15px 20px",
-                  cursor: "pointer",
-                  transition: "all 0.3s",
-                  background:
-                    activeSessionId === item.id
-                      ? "rgba(99, 102, 241, 0.15)"
-                      : "transparent",
-                  borderLeft:
-                    activeSessionId === item.id
-                      ? "3px solid #6366f1"
-                      : "3px solid transparent",
-                }}
+                style={styles.sessionItem(activeSessionId === item.id)}
               >
                 <Space>
                   <Badge
@@ -125,21 +51,15 @@ const AdminChat: React.FC = () => {
                   >
                     <Avatar
                       icon={<UserOutlined />}
-                      style={{ background: "#6366f1" }}
+                      style={styles.avatarBadge}
                     />
                   </Badge>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      width: "180px",
-                    }}
-                  >
-                    <Text strong style={{ color: "var(--text-main)" }}>
+                  <div style={styles.sessionMeta}>
+                    <Text strong style={styles.sessionName}>
                       {item.name}
                     </Text>
                     <Text
-                      style={{ fontSize: "12px", color: "var(--text-muted)" }}
+                      style={styles.sessionLastMsg}
                       ellipsis
                     >
                       {item.lastMessage}
@@ -153,21 +73,13 @@ const AdminChat: React.FC = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={styles.mainChatArea}>
         {activeSessionId ? (
           <>
-            <div
-              style={{
-                padding: "15px 20px",
-                borderBottom: "1px solid var(--glass-border)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
+            <div style={styles.chatHeader}>
               <div>
-                <Text strong style={{ color: "var(--text-main)" }}>
-                  Đang chat với:{" "}
+                <Text strong style={styles.sessionName}>
+                  {CHAT_STRINGS.chattingWith}
                 </Text>
                 <Text style={{ color: "var(--primary-color)" }}>
                   {sessions.find((s) => s.id === activeSessionId)?.name}
@@ -175,82 +87,30 @@ const AdminChat: React.FC = () => {
               </div>
               <Badge
                 status={connected ? "success" : "error"}
-                text={connected ? "Máy chủ sẵn sàng" : "Mất kết nối"}
-                style={{ color: "var(--text-muted)" }}
+                text={connected ? CHAT_STRINGS.serverReady : CHAT_STRINGS.serverDisconnected}
+                style={styles.chatHeaderStatus}
               />
             </div>
 
-            <div
-              style={{
-                flex: 1,
-                padding: "20px",
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-                gap: "15px",
-              }}
-            >
-              {currentMessages.map((msg, index) => (
-                <div
-                  key={index}
-                  style={{
-                    alignSelf:
-                      msg.senderId === "admin" ? "flex-end" : "flex-start",
-                    maxWidth: "75%",
-                    padding: "10px 15px",
-                    background:
-                      msg.senderId === "admin"
-                        ? "var(--primary-gradient)"
-                        : "var(--bg-secondary)",
-                    borderRadius: "12px",
-                    borderBottomRightRadius:
-                      msg.senderId === "admin" ? "2px" : "12px",
-                    borderBottomLeftRadius:
-                      msg.senderId === "admin" ? "12px" : "2px",
-                    border:
-                      msg.senderId === "admin"
-                        ? "none"
-                        : "1px solid var(--glass-border)",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                  }}
-                >
+            <div style={styles.messagesContainer}>
+              {currentMessages.map((msg, index) => {
+                const isAdmin = msg.senderId === "admin";
+                return (
                   <div
-                    style={{
-                      fontSize: "11px",
-                      color:
-                        msg.senderId === "admin" ? "#fff" : "var(--text-muted)",
-                      marginBottom: "4px",
-                      fontWeight: 600,
-                    }}
+                    key={index}
+                    style={styles.messageBubble(isAdmin)}
                   >
-                    {msg.sender}
+                    <div style={styles.senderName(isAdmin)}>
+                      {msg.sender}
+                    </div>
+                    <div style={styles.messageContent(isAdmin)}>
+                      {msg.content}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      color:
-                        msg.senderId === "admin" ? "#fff" : "var(--text-main)",
-                      fontSize: "14px",
-                      lineHeight: "1.5",
-                    }}
-                  >
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {activeSessionId && typingSessions[activeSessionId] && (
-                <div
-                  style={{
-                    alignSelf: "flex-start",
-                    padding: "10px 15px",
-                    background: "var(--bg-secondary)",
-                    borderRadius: "12px",
-                    borderBottomLeftRadius: "2px",
-                    border: "1px solid var(--glass-border)",
-                    display: "flex",
-                    gap: "4px",
-                    alignItems: "center",
-                  }}
-                >
+                <div style={styles.typingBubble}>
                   <div className="typing-dot"></div>
                   <div className="typing-dot"></div>
                   <div className="typing-dot"></div>
@@ -258,16 +118,10 @@ const AdminChat: React.FC = () => {
               )}
             </div>
 
-            <div
-              style={{
-                padding: "20px",
-                background: "var(--bg-secondary)",
-                borderTop: "1px solid var(--glass-border)",
-              }}
-            >
-              <Space.Compact style={{ width: "100%" }}>
+            <div style={styles.inputArea}>
+              <Space.Compact style={styles.inputCompact}>
                 <Input
-                  placeholder="Gửi câu trả lời cho khách hàng..."
+                  placeholder={CHAT_STRINGS.inputPlaceholder}
                   value={inputValue}
                   onChange={handleInputChange}
                   onPressEnter={handleSend}
@@ -277,31 +131,16 @@ const AdminChat: React.FC = () => {
                   icon={<SendOutlined />}
                   onClick={handleSend}
                 >
-                  Gửi ngay
+                  {CHAT_STRINGS.sendBtn}
                 </Button>
               </Space.Compact>
             </div>
           </>
         ) : (
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              opacity: 0.5,
-            }}
-          >
-            <MessageOutlined
-              style={{
-                fontSize: "48px",
-                color: "var(--primary-color)",
-                marginBottom: "20px",
-              }}
-            />
-            <Text style={{ color: "var(--text-main)" }}>
-              Chọn một khách hàng để bắt đầu tư vấn
+          <div style={styles.emptyChatArea}>
+            <MessageOutlined style={styles.emptyChatIcon} />
+            <Text style={styles.emptyChatText}>
+              {CHAT_STRINGS.emptyStateText}
             </Text>
           </div>
         )}

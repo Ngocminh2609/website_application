@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { cartApi as cartApiService } from "../api/cartApi";
-import { CartContext } from "../hooks/useCart";
+import { CartContext } from "../hooks/Cart/useCart";
 import type { Cart } from "../types/cart";
 
 /**

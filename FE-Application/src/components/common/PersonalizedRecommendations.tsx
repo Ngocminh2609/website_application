@@ -1,6 +1,6 @@
 import React from "react";
 import { Typography, Row, Col, Spin } from "antd";
-import { usePersonalizedProducts } from "../../hooks/usePersonalizedProducts";
+import { usePersonalizedProducts } from "../../hooks/Product/usePersonalizedProducts";
 import ProductCard from "./ProductCard";
 import { StarOutlined } from "@ant-design/icons";
 

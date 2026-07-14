@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Table,
   Rate,
@@ -7,7 +7,6 @@ import {
   Typography,
   Tag,
   Tooltip,
-  Modal,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -15,82 +14,36 @@ import {
   UserOutlined,
   ShopOutlined,
 } from "@ant-design/icons";
-import { reviewApi } from "../../api/reviewApi";
 import type { ProductReview } from "../../types/coupon-review";
-import { notification } from "../../utils/notification";
 import BaseButton from "../../components/common/BaseButton";
 import dayjs from "dayjs";
 import type { ColumnsType } from "antd/es/table";
+import { useReviewModerationState } from "../../hooks/Admin/useReviewModerationState";
+import { styles } from "./styles/review-moderation.styles";
+import { REVIEW_STRINGS } from "../../constants/Admin/review-moderation";
 
 const { Text } = Typography;
 
 const ReviewModeration: React.FC = () => {
-  const [reviews, setReviews] = useState<ProductReview[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchAllReviews = async () => {
-    setLoading(true);
-    try {
-      const data = await reviewApi.getAllAdmin();
-      setReviews(data);
-    } catch {
-      notification.error("Không thể tải danh sách đánh giá");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAllReviews();
-  }, []);
-
-  const handleApprove = async (id: number) => {
-    try {
-      await reviewApi.approve(id);
-      notification.success("Đã duyệt đánh giá");
-      fetchAllReviews();
-    } catch {
-      notification.error("Duyệt thất bại");
-    }
-  };
-
-  const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: "Xóa đánh giá",
-      content:
-        "Bạn có chắc chắn muốn xóa đánh giá này? Nội dung sẽ bị gỡ vĩnh viễn.",
-      okType: "danger",
-      onOk: async () => {
-        try {
-          await reviewApi.delete(id);
-          notification.success("Đã xóa đánh giá");
-          fetchAllReviews();
-        } catch {
-          notification.error("Thanh tác thất bại");
-        }
-      },
-    });
-  };
+  const { reviews, loading, handleApprove, handleDelete } =
+    useReviewModerationState();
 
   const columns: ColumnsType<ProductReview> = [
     {
-      title: "Khách hàng",
+      title: REVIEW_STRINGS.table.customer,
       key: "user",
       render: (_, record: ProductReview) => (
         <Space>
           <Avatar
             src={record.user.avatarUrl}
             icon={<UserOutlined />}
-            style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+            style={styles.avatar}
           />
           <div>
-            <Text
-              strong
-              style={{ display: "block", color: "var(--text-main)" }}
-            >
+            <Text strong style={styles.fullName}>
               {record.user.fullName || record.user.username}
             </Text>
-            <Text style={{ fontSize: 11, color: "var(--text-muted)" }}>
+            <Text style={styles.createdAt}>
               {dayjs(record.createdAt).format("DD/MM/YYYY HH:mm")}
             </Text>
           </div>
@@ -98,17 +51,17 @@ const ReviewModeration: React.FC = () => {
       ),
     },
     {
-      title: "Đánh giá cho",
+      title: REVIEW_STRINGS.table.reviewFor,
       key: "product",
       render: (_, record: ProductReview) => (
         <Space>
-          <ShopOutlined style={{ color: "var(--primary-color)" }} />
-          <Text style={{ fontSize: 13 }}>ID: #{record.product?.id || "?"}</Text>
+          <ShopOutlined style={styles.shopIcon} />
+          <Text style={styles.productId}>ID: #{record.product?.id || "?"}</Text>
         </Space>
       ),
     },
     {
-      title: "Nội dung",
+      title: REVIEW_STRINGS.table.content,
       key: "content",
       width: "35%",
       render: (_, record: ProductReview) => (
@@ -116,26 +69,20 @@ const ReviewModeration: React.FC = () => {
           <Rate
             disabled
             defaultValue={record.rating}
-            style={{ fontSize: 12, marginBottom: 4 }}
+            style={styles.rate}
           />
-          <div
-            style={{
-              color: "var(--text-main)",
-              fontSize: 13,
-              lineHeight: "1.4",
-            }}
-          >
+          <div style={styles.comment}>
             {record.comment}
           </div>
-          <Space style={{ marginTop: 8 }}>
+          <Space style={styles.tagSpace}>
             {record.isVerifiedPurchase && (
-              <Tag color="green" style={{ fontSize: 10, borderRadius: 4 }}>
-                ✓ ĐÃ MUA HÀNG
+              <Tag color="green" style={styles.tag}>
+                {REVIEW_STRINGS.table.verifiedPurchase}
               </Tag>
             )}
             {!record.isApproved && (
-              <Tag color="warning" style={{ fontSize: 10, borderRadius: 4 }}>
-                ĐANG CHỜ DUYỆT
+              <Tag color="warning" style={styles.tag}>
+                {REVIEW_STRINGS.table.pendingApproval}
               </Tag>
             )}
           </Space>
@@ -143,19 +90,19 @@ const ReviewModeration: React.FC = () => {
       ),
     },
     {
-      title: "Trạng thái",
+      title: REVIEW_STRINGS.table.status,
       key: "status",
       render: (_, record: ProductReview) =>
         record.isApproved ? (
           <Tag icon={<CheckCircleOutlined />} color="success">
-            Đã hiển thị
+            {REVIEW_STRINGS.table.approved}
           </Tag>
         ) : (
-          <Tag color="default">Ẩn</Tag>
+          <Tag color="default">{REVIEW_STRINGS.table.hidden}</Tag>
         ),
     },
     {
-      title: "Thao tác",
+      title: REVIEW_STRINGS.table.actions,
       key: "action",
       align: "right",
       render: (_, record: ProductReview) => (
@@ -185,13 +132,13 @@ const ReviewModeration: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: "10px 0" }}>
-      <div style={{ marginBottom: 24 }}>
-        <h3 style={{ color: "var(--text-main)", margin: 0 }}>
-          Phê duyệt & Kiểm duyệt Đánh giá
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <h3 style={styles.title}>
+          {REVIEW_STRINGS.headerTitle}
         </h3>
-        <p style={{ color: "var(--text-muted)", fontSize: 12 }}>
-          Đảm bảo chất lượng trải nghiệm khách hàng thông qua kiểm soát nội dung
+        <p style={styles.subtitle}>
+          {REVIEW_STRINGS.headerSubtitle}
         </p>
       </div>
 

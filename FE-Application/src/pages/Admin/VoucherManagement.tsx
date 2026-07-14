@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Table,
   Tag,
@@ -14,182 +14,97 @@ import {
   Col,
 } from "antd";
 import { PlusOutlined, DeleteOutlined, GiftOutlined } from "@ant-design/icons";
-import { couponApi, type Coupon } from "../../api/couponApi";
-import { notification } from "../../utils/notification";
+import type { Coupon } from "../../api/couponApi";
 import BaseButton from "../../components/common/BaseButton";
 import type { ColumnsType } from "antd/es/table";
-import type { Dayjs } from "dayjs";
-
-interface VoucherFormValues extends Omit<Partial<Coupon>, "expiresAt"> {
-  expiresAt?: Dayjs | null;
-}
+import { useVoucherManagementState, type VoucherFormValues } from "../../hooks/Admin/useVoucherManagementState";
+import { styles } from "./styles/voucher-management.styles";
+import { VOUCHER_STRINGS } from "../../constants/Admin/voucher-management";
 
 const VoucherManagement: React.FC = () => {
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [form] = Form.useForm<VoucherFormValues>();
-
-  const fetchCoupons = async () => {
-    setLoading(true);
-    try {
-      const data = await couponApi.getAll();
-      setCoupons(data);
-    } catch {
-      notification.error("Không thể tải danh sách mã giảm giá");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCoupons();
-  }, []);
-
-  const handleStatusChange = async (id: number, active: boolean) => {
-    try {
-      await couponApi.updateStatus(id, active);
-      notification.success("Đã cập nhật trạng thái");
-      fetchCoupons();
-    } catch {
-      notification.error("Thao tác thất bại");
-    }
-  };
-
-  const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: "Xóa mã giảm giá",
-      content:
-        "Bạn có chắc chắn muốn xóa mã này? Hành động này không thể hoàn tác.",
-      okType: "danger",
-      onOk: async () => {
-        try {
-          await couponApi.delete(id);
-          notification.success("Đã xóa mã giảm giá");
-          fetchCoupons();
-        } catch {
-          notification.error("Không thể xóa mã giảm giá");
-        }
-      },
-    });
-  };
-
-  const handleCreate = async (values: VoucherFormValues) => {
-    try {
-      setLoading(true);
-      const payload: Partial<Coupon> = {
-        ...values,
-        isActive: true,
-        expiresAt: values.expiresAt
-          ? values.expiresAt.toISOString()
-          : undefined,
-      };
-      await couponApi.create(payload);
-      notification.success("Tạo mã giảm giá thành công");
-      setIsModalVisible(false);
-      form.resetFields();
-      fetchCoupons();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Lỗi khi tạo mã";
-      notification.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    coupons,
+    loading,
+    isModalVisible,
+    setIsModalVisible,
+    form,
+    handleStatusChange,
+    handleDelete,
+    handleCreate,
+  } = useVoucherManagementState();
 
   const columns: ColumnsType<Coupon> = [
     {
-      title: "Mã Code",
+      title: VOUCHER_STRINGS.table.code,
       dataIndex: "code",
       key: "code",
       render: (code: string) => (
-        <Tag
-          color="blue"
-          style={{ fontWeight: 700, padding: "4px 10px", fontSize: 13 }}
-        >
+        <Tag color="blue" style={styles.tagCode}>
           {code}
         </Tag>
       ),
     },
     {
-      title: "Loại giảm giá",
+      title: VOUCHER_STRINGS.table.type,
       dataIndex: "discountType",
       key: "discountType",
       render: (type: string, record: Coupon) => (
         <span>
           {type === "PERCENT"
-            ? `Giảm ${record.discountValue}%`
-            : `Giảm ${record.discountValue.toLocaleString()}đ`}
+            ? `${VOUCHER_STRINGS.table.percentPrefix}${record.discountValue}%`
+            : `${VOUCHER_STRINGS.table.fixedPrefix}${record.discountValue.toLocaleString()}đ`}
         </span>
       ),
     },
     {
-      title: "Đơn tối thiểu",
+      title: VOUCHER_STRINGS.table.minOrder,
       dataIndex: "minOrderAmount",
       key: "minOrderAmount",
       render: (amt: number) => <span>{amt.toLocaleString()} đ</span>,
     },
     {
-      title: "Lượt dùng",
+      title: VOUCHER_STRINGS.table.usage,
       key: "usage",
-      render: (_, record: Coupon) => (
-        <Tooltip
-          title={`Đã dùng: ${record.usedCount} / Tổng: ${record.usageLimit}`}
-        >
-          <div style={{ width: 100 }}>
-            <div
-              style={{
-                fontSize: 11,
-                marginBottom: 4,
-                display: "flex",
-                justifyContent: "space-between",
-                color: "var(--text-muted)",
-              }}
-            >
-              <span>Tiến độ:</span>
-              <span>
-                {record.usedCount}/{record.usageLimit}
-              </span>
+      render: (_, record: Coupon) => {
+        const usagePercent = Math.min(100, (record.usedCount / (record.usageLimit || 1)) * 100);
+        return (
+          <Tooltip
+            title={`Đã dùng: ${record.usedCount} / Tổng: ${record.usageLimit}`}
+          >
+            <div style={styles.usageWrapper}>
+              <div style={styles.usageProgressLabel}>
+                <span>{VOUCHER_STRINGS.table.progressLabel}</span>
+                <span>
+                  {record.usedCount}/{record.usageLimit}
+                </span>
+              </div>
+              <div style={styles.progressBarBg}>
+                <div style={styles.progressBarFill(usagePercent)} />
+              </div>
             </div>
-            <div
-              style={{
-                height: 4,
-                background: "var(--glass-border)",
-                borderRadius: 2,
-              }}
-            >
-              <div
-                style={{
-                  height: "100%",
-                  width: `${Math.min(100, (record.usedCount / (record.usageLimit || 1)) * 100)}%`,
-                  background: "var(--primary-color)",
-                  borderRadius: 2,
-                }}
-              />
-            </div>
-          </div>
-        </Tooltip>
-      ),
+          </Tooltip>
+        );
+      },
     },
     {
-      title: "Trạng thái",
+      title: VOUCHER_STRINGS.table.status,
       key: "status",
       render: (_, record: Coupon) => (
         <Select
           value={record.isActive}
           onChange={(val) => handleStatusChange(record.id, val)}
           size="small"
-          style={{ width: 110 }}
+          style={styles.statusSelect}
           options={[
-            { label: "Kích hoạt", value: true },
-            { label: "Tạm dừng", value: false },
+            { label: VOUCHER_STRINGS.table.active, value: true },
+            { label: VOUCHER_STRINGS.table.inactive, value: false },
           ]}
           status={record.isActive ? undefined : "warning"}
         />
       ),
     },
     {
-      title: "Thao tác",
+      title: VOUCHER_STRINGS.table.action,
       key: "action",
       align: "right",
       render: (_, record: Coupon) => (
@@ -204,21 +119,14 @@ const VoucherManagement: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: "10px 0" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
+    <div style={styles.container}>
+      <div style={styles.header}>
         <div>
-          <h3 style={{ color: "var(--text-main)", margin: 0 }}>
-            Quản lý Chương trình Ưu đãi
+          <h3 style={styles.headerTitle}>
+            {VOUCHER_STRINGS.headerTitle}
           </h3>
-          <p style={{ color: "var(--text-muted)", fontSize: 12 }}>
-            Tạo và điều chỉnh các mã giảm giá cho khách hàng
+          <p style={styles.headerSubtitle}>
+            {VOUCHER_STRINGS.headerSubtitle}
           </p>
         </div>
         <BaseButton
@@ -226,7 +134,7 @@ const VoucherManagement: React.FC = () => {
           icon={<PlusOutlined />}
           onClick={() => setIsModalVisible(true)}
         >
-          Tạo mã mới
+          {VOUCHER_STRINGS.createBtn}
         </BaseButton>
       </div>
 
@@ -242,13 +150,13 @@ const VoucherManagement: React.FC = () => {
       <Modal
         title={
           <Space>
-            <GiftOutlined /> Tạo mã giảm giá mới
+            <GiftOutlined /> {VOUCHER_STRINGS.modal.titleAdd}
           </Space>
         }
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         onOk={() => form.submit()}
-        okText="Phát hành"
+        okText={VOUCHER_STRINGS.modal.btnSubmit}
         confirmLoading={loading}
         width={500}
       >
@@ -260,22 +168,22 @@ const VoucherManagement: React.FC = () => {
         >
           <Form.Item
             name="code"
-            label="Mã Voucher"
-            rules={[{ required: true, message: "Nhập mã code" }]}
+            label={VOUCHER_STRINGS.modal.codeLabel}
+            rules={[{ required: true, message: VOUCHER_STRINGS.modal.codeRequired }]}
           >
             <Input
-              placeholder="Ví dụ: HELLO2024"
-              style={{ textTransform: "uppercase" }}
+              placeholder={VOUCHER_STRINGS.modal.codePlaceholder}
+              style={styles.inputCode}
             />
           </Form.Item>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="discountType" label="Kiểu giảm giá">
+              <Form.Item name="discountType" label={VOUCHER_STRINGS.modal.typeLabel}>
                 <Select
                   options={[
-                    { label: "Theo phần trăm (%)", value: "PERCENT" },
-                    { label: "Cố định (đ)", value: "FIXED" },
+                    { label: VOUCHER_STRINGS.modal.typePercent, value: "PERCENT" },
+                    { label: VOUCHER_STRINGS.modal.typeFixed, value: "FIXED" },
                   ]}
                 />
               </Form.Item>
@@ -283,21 +191,21 @@ const VoucherManagement: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="discountValue"
-                label="Giá trị giảm"
-                rules={[{ required: true, message: "Nhập giá trị" }]}
+                label={VOUCHER_STRINGS.modal.valueLabel}
+                rules={[{ required: true, message: VOUCHER_STRINGS.modal.valueRequired }]}
               >
-                <InputNumber style={{ width: "100%" }} />
+                <InputNumber style={styles.inputNumberWidth} />
               </Form.Item>
             </Col>
           </Row>
 
           <Form.Item
             name="minOrderAmount"
-            label="Giá trị đơn tối thiểu"
-            rules={[{ required: true, message: "Nhập giá trị" }]}
+            label={VOUCHER_STRINGS.modal.minOrderLabel}
+            rules={[{ required: true, message: VOUCHER_STRINGS.modal.minOrderRequired }]}
           >
             <InputNumber
-              style={{ width: "100%" }}
+              style={styles.inputNumberWidth}
               formatter={(value) =>
                 `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
               }
@@ -306,13 +214,13 @@ const VoucherManagement: React.FC = () => {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="usageLimit" label="Tổng lượt sử dụng">
-                <InputNumber style={{ width: "100%" }} />
+              <Form.Item name="usageLimit" label={VOUCHER_STRINGS.modal.usageLimitLabel}>
+                <InputNumber style={styles.inputNumberWidth} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="expiresAt" label="Ngày hết hạn">
-                <DatePicker style={{ width: "100%" }} showTime />
+              <Form.Item name="expiresAt" label={VOUCHER_STRINGS.modal.expiresLabel}>
+                <DatePicker style={styles.inputNumberWidth} showTime />
               </Form.Item>
             </Col>
           </Row>

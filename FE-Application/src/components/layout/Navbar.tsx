@@ -31,13 +31,13 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import BaseButton from "../common/BaseButton";
 import type { User } from "../../types/auth";
 import type { MenuProps } from "antd";
-import { useCart } from "../../hooks/useCart";
+import { useCart } from "../../hooks/Cart/useCart";
 import { productApi } from "../../api/productApi";
-import { useProducts } from "../../hooks/useProducts";
+import { useProducts } from "../../hooks/Product/useProducts";
 import type { Product } from "../../types/product";
 import { useNotifications } from "../../context/NotificationContext";
 import { useAdminChat } from "../../context/useAdminChat";
-import { useWishlist } from "../../hooks/useWishlist";
+import { useWishlist } from "../../hooks/Wishlist/useWishlist";
 
 const { Header } = Layout;
 const { Text } = Typography;

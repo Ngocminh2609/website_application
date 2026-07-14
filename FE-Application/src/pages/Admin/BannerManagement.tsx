@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Table,
   Tag,
@@ -14,7 +14,6 @@ import {
   Upload,
   Typography,
 } from "antd";
-import type { UploadFile } from "antd";
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -22,155 +21,42 @@ import {
   UploadOutlined,
   PictureOutlined,
 } from "@ant-design/icons";
-import { bannerApi } from "../../api/bannerApi";
-import { fileApi } from "../../api/fileApi";
 import type { Banner } from "../../types/banner";
-import { notification } from "../../utils/notification";
 import BaseButton from "../../components/common/BaseButton";
 import type { ColumnsType } from "antd/es/table";
+import { useBannerManagementState } from "../../hooks/Admin/useBannerManagementState";
+import { styles } from "./styles/banner-management.styles";
+import { BANNER_STRINGS } from "../../constants/Admin/banner-management";
 
 const { Text } = Typography;
 
 const BannerManagement: React.FC = () => {
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [form] = Form.useForm<Partial<Banner>>();
-
-  const fetchBanners = async () => {
-    setLoading(true);
-    try {
-      const data = await bannerApi.getAll();
-      setBanners(data);
-    } catch {
-      notification.error("Không thể tải danh sách banner");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBanners();
-  }, []);
-
-  const handleCreateOrUpdate = async (values: Partial<Banner>) => {
-    try {
-      setLoading(true);
-      let imageUrl = values.imageUrl || "";
-
-      // Nếu có tải ảnh lên từ máy tính
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        const uploadRes = await fileApi.uploadImage(
-          fileList[0].originFileObj as File,
-          "banner",
-        );
-        imageUrl = uploadRes.url;
-      }
-
-      if (!imageUrl) {
-        notification.error("Vui lòng tải lên hoặc nhập URL ảnh banner");
-        setLoading(false);
-        return;
-      }
-
-      const payload = {
-        ...values,
-        imageUrl,
-      };
-
-      if (editingId) {
-        await bannerApi.update(editingId, payload);
-        notification.success("Cập nhật banner thành công");
-      } else {
-        await bannerApi.create(payload);
-        notification.success("Tạo banner mới thành công");
-      }
-
-      setIsModalVisible(false);
-      setEditingId(null);
-      form.resetFields();
-      setFileList([]);
-      fetchBanners();
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Lỗi khi thực hiện thao tác";
-      notification.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = (banner: Banner) => {
-    setEditingId(banner.id);
-    form.setFieldsValue({
-      title: banner.title,
-      imageUrl: banner.imageUrl,
-      linkUrl: banner.linkUrl,
-      sortOrder: banner.sortOrder,
-      isActive: banner.isActive,
-    });
-    setFileList([]);
-    setIsModalVisible(true);
-  };
-
-  const handleStatusChange = async (
-    id: number,
-    banner: Banner,
-    active: boolean,
-  ) => {
-    try {
-      await bannerApi.update(id, { ...banner, isActive: active });
-      notification.success("Đã cập nhật trạng thái hoạt động");
-      fetchBanners();
-    } catch {
-      notification.error("Thao tác thất bại");
-    }
-  };
-
-  const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: "Xóa banner quảng cáo",
-      content:
-        "Bạn có chắc chắn muốn xóa banner này? Tệp tin liên quan trên MinIO cũng sẽ được dọn dẹp. Hành động này không thể hoàn tác.",
-      okType: "danger",
-      onOk: async () => {
-        try {
-          await bannerApi.delete(id);
-          notification.success("Đã xóa banner");
-          fetchBanners();
-        } catch {
-          notification.error("Không thể xóa banner");
-        }
-      },
-    });
-  };
-
-  const handleAddNew = () => {
-    setEditingId(null);
-    form.resetFields();
-    form.setFieldsValue({ sortOrder: 0, isActive: true });
-    setFileList([]);
-    setIsModalVisible(true);
-  };
+  const {
+    banners,
+    loading,
+    isModalVisible,
+    setIsModalVisible,
+    editingId,
+    fileList,
+    setFileList,
+    form,
+    handleCreateOrUpdate,
+    handleEdit,
+    handleStatusChange,
+    handleDelete,
+    handleAddNew,
+  } = useBannerManagementState();
 
   const columns: ColumnsType<Banner> = [
     {
-      title: "Hình ảnh",
+      title: BANNER_STRINGS.table.image,
       key: "image",
       width: 200,
       render: (_, record: Banner) => (
         <img
           src={record.imageUrl}
           alt={record.title || "Banner"}
-          style={{
-            width: "150px",
-            height: "50px",
-            objectFit: "cover",
-            borderRadius: "8px",
-            border: "1px solid var(--glass-border)",
-          }}
+          style={styles.bannerImage}
           onError={(e) => {
             (e.target as HTMLImageElement).src =
               "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=300";
@@ -179,25 +65,25 @@ const BannerManagement: React.FC = () => {
       ),
     },
     {
-      title: "Tiêu đề",
+      title: BANNER_STRINGS.table.title,
       dataIndex: "title",
       key: "title",
       render: (title: string) => (
-        <Text strong style={{ color: "var(--text-main)" }}>
-          {title || <Text type="secondary">Không có tiêu đề</Text>}
+        <Text strong style={styles.titleText}>
+          {title || <Text type="secondary">{BANNER_STRINGS.table.noTitle}</Text>}
         </Text>
       ),
     },
     {
-      title: "Liên kết (Link)",
+      title: BANNER_STRINGS.table.link,
       dataIndex: "linkUrl",
       key: "linkUrl",
       render: (link: string) => (
-        <Text style={{ color: "var(--text-muted)" }}>{link || "-"}</Text>
+        <Text style={styles.linkText}>{link || "-"}</Text>
       ),
     },
     {
-      title: "Thứ tự",
+      title: BANNER_STRINGS.table.order,
       dataIndex: "sortOrder",
       key: "sortOrder",
       width: 100,
@@ -205,7 +91,7 @@ const BannerManagement: React.FC = () => {
       render: (order: number) => <Tag color="blue">{order}</Tag>,
     },
     {
-      title: "Trạng thái",
+      title: BANNER_STRINGS.table.status,
       key: "status",
       width: 150,
       render: (_, record: Banner) => (
@@ -213,17 +99,17 @@ const BannerManagement: React.FC = () => {
           value={record.isActive}
           onChange={(val) => handleStatusChange(record.id, record, val)}
           size="small"
-          style={{ width: 110 }}
+          style={styles.statusSelect}
           options={[
-            { label: "Kích hoạt", value: true },
-            { label: "Tạm dừng", value: false },
+            { label: BANNER_STRINGS.table.active, value: true },
+            { label: BANNER_STRINGS.table.inactive, value: false },
           ]}
           status={record.isActive ? undefined : "warning"}
         />
       ),
     },
     {
-      title: "Thao tác",
+      title: BANNER_STRINGS.table.actions,
       key: "action",
       align: "right",
       width: 120,
@@ -250,21 +136,14 @@ const BannerManagement: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: "10px 0" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
+    <div style={styles.container}>
+      <div style={styles.header}>
         <div>
-          <h3 style={{ color: "var(--text-main)", margin: 0 }}>
-            Quản lý Banners Quảng Cáo
+          <h3 style={styles.headerTitle}>
+            {BANNER_STRINGS.headerTitle}
           </h3>
-          <p style={{ color: "var(--text-muted)", fontSize: 12 }}>
-            Thiết lập các slide banner xuất hiện tại trang chủ trang web
+          <p style={styles.headerSubtitle}>
+            {BANNER_STRINGS.headerSubtitle}
           </p>
         </div>
         <BaseButton
@@ -272,7 +151,7 @@ const BannerManagement: React.FC = () => {
           icon={<PlusOutlined />}
           onClick={handleAddNew}
         >
-          Thêm banner mới
+          {BANNER_STRINGS.addBtn}
         </BaseButton>
       </div>
 
@@ -289,13 +168,13 @@ const BannerManagement: React.FC = () => {
         title={
           <Space>
             <PictureOutlined />{" "}
-            {editingId ? "Cập nhật banner quảng cáo" : "Tạo banner mới"}
+            {editingId ? BANNER_STRINGS.modal.titleUpdate : BANNER_STRINGS.modal.titleAdd}
           </Space>
         }
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         onOk={() => form.submit()}
-        okText={editingId ? "Cập nhật" : "Tạo mới"}
+        okText={editingId ? BANNER_STRINGS.modal.btnUpdate : BANNER_STRINGS.modal.btnCreate}
         confirmLoading={loading}
         width={600}
       >
@@ -304,37 +183,37 @@ const BannerManagement: React.FC = () => {
           layout="vertical"
           onFinish={handleCreateOrUpdate}
         >
-          <Form.Item name="title" label="Tiêu đề Banner">
-            <Input placeholder="Ví dụ: Chương trình khuyến mãi hè 2026" />
+          <Form.Item name="title" label={BANNER_STRINGS.modal.titleLabel}>
+            <Input placeholder={BANNER_STRINGS.modal.titlePlaceholder} />
           </Form.Item>
 
           <Form.Item
             name="linkUrl"
-            label="Liên kết chuyển hướng khi click (Link URL)"
+            label={BANNER_STRINGS.modal.linkLabel}
           >
-            <Input placeholder="Ví dụ: /products?brand=Apple hoặc https://..." />
+            <Input placeholder={BANNER_STRINGS.modal.linkPlaceholder} />
           </Form.Item>
 
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="sortOrder"
-                label="Thứ tự hiển thị"
-                rules={[{ required: true, message: "Vui lòng nhập thứ tự" }]}
+                label={BANNER_STRINGS.modal.orderLabel}
+                rules={[{ required: true, message: BANNER_STRINGS.modal.orderRequired }]}
               >
-                <InputNumber min={0} style={{ width: "100%" }} />
+                <InputNumber min={0} style={styles.inputNumberWidth} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="isActive"
-                label="Trạng thái hiển thị"
+                label={BANNER_STRINGS.modal.statusLabel}
                 rules={[{ required: true }]}
               >
                 <Select
                   options={[
-                    { label: "Hiển thị (Kích hoạt)", value: true },
-                    { label: "Tạm ẩn (Tạm dừng)", value: false },
+                    { label: BANNER_STRINGS.modal.statusActive, value: true },
+                    { label: BANNER_STRINGS.modal.statusInactive, value: false },
                   ]}
                 />
               </Form.Item>
@@ -344,7 +223,7 @@ const BannerManagement: React.FC = () => {
           <Form.Item
             label={
               <Space>
-                <UploadOutlined /> Hình ảnh Banner (Tỷ lệ khuyến nghị 3:1)
+                <UploadOutlined /> {BANNER_STRINGS.modal.imageLabel}
               </Space>
             }
           >
@@ -360,7 +239,7 @@ const BannerManagement: React.FC = () => {
                   {fileList.length >= 1 ? null : (
                     <div>
                       <PlusOutlined />
-                      <div style={{ marginTop: 8 }}>Tải lên</div>
+                      <div style={styles.uploadButtonText}>{BANNER_STRINGS.modal.uploadBtn}</div>
                     </div>
                   )}
                 </Upload>
@@ -368,8 +247,8 @@ const BannerManagement: React.FC = () => {
               <Col span={16}>
                 <Form.Item name="imageUrl">
                   <Input.TextArea
-                    placeholder="Hoặc dán URL ảnh trực tiếp vào đây..."
-                    style={{ height: 102 }}
+                    placeholder={BANNER_STRINGS.modal.urlPlaceholder}
+                    style={styles.imageUrlInput}
                     disabled={fileList.length > 0}
                   />
                 </Form.Item>

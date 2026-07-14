@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Layout,
   Typography,
@@ -18,8 +18,6 @@ import {
   Tooltip,
   Badge,
 } from "antd";
-import type { UploadFile } from "antd";
-import { useLocation } from "react-router-dom";
 import {
   TeamOutlined,
   ShoppingOutlined,
@@ -32,34 +30,30 @@ import {
   StopOutlined,
   HistoryOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
-  CarOutlined,
   MessageOutlined,
   BarChartOutlined,
   BellOutlined,
   InfoCircleOutlined,
-  FireFilled,
   AppstoreOutlined,
   GiftOutlined,
   StarOutlined,
   PictureOutlined,
+  FireFilled,
 } from "@ant-design/icons";
 import AdminChat from "./AdminChat";
-import { useAdminChat } from "../../context/useAdminChat";
-import { productApi } from "../../api/productApi";
-import { categoryApi } from "../../api/categoryApi";
-import { fileApi } from "../../api/fileApi";
-import { orderApi, type Order } from "../../api/orderApi";
-import type { Product, ProductRequest } from "../../types/product";
-import type { Category } from "../../types/category";
+import type { Product } from "../../types/product";
+import { type Order } from "../../api/orderApi";
 import BaseButton from "../../components/common/BaseButton";
-import { notification } from "../../utils/notification";
 import type { ColumnsType } from "antd/es/table";
 import StatisticsTab from "./StatisticsTab";
 import NotificationManagement from "./NotificationManagement";
 import VoucherManagement from "./VoucherManagement";
 import ReviewModeration from "./ReviewModeration";
 import BannerManagement from "./BannerManagement";
+import { useAdminDashboardState } from "../../hooks/Admin/useAdminDashboardState";
+import { styles } from "./styles/admin-dashboard.styles";
+import { calculateTotalRevenue, getStatusTag } from "./helper";
+import { ADMIN_STRINGS } from "../../constants/Admin/admin-dashboard";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -69,222 +63,28 @@ const { Title, Text } = Typography;
  * Tích hợp quản lý sản phẩm và quản lý đơn hàng tập trung.
  */
 const AdminDashboard: React.FC = () => {
-  const { totalUnread } = useAdminChat();
-  const location = useLocation();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [form] = Form.useForm<ProductRequest>();
-  const [activeTab, setActiveTab] = useState<string>("products");
-
-  // Watch values for live calculation
-  const watchOriginalPrice = Form.useWatch("originalPrice", form);
-  const watchDiscountPercent = Form.useWatch("discountPercent", form);
-  const [livePrice, setLivePrice] = useState<number>(0);
-
-  useEffect(() => {
-    const price = watchOriginalPrice || 0;
-    const percent = watchDiscountPercent || 0;
-    setLivePrice(Math.round((price * (100 - percent)) / 100));
-  }, [watchOriginalPrice, watchDiscountPercent]);
-
-  const loadCoreData = async () => {
-    setLoading(true);
-    try {
-      const [productData, categoryData, orderData] = await Promise.all([
-        productApi.getAllAdmin(),
-        categoryApi.getAllCategories(),
-        orderApi.getAllOrders(),
-      ]);
-      setProducts(productData);
-      setCategories(categoryData);
-      setOrders(orderData);
-    } catch (error) {
-      console.error("Lỗi tải dữ liệu quản trị:", error);
-      notification.error("Lỗi tải dữ liệu quản trị");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadCoreData();
-    // Xử lý chuyển tab qua hash (#chat, #orders, etc.)
-    const hash = window.location.hash.replace("#", "");
-    if (hash) {
-      setActiveTab(hash);
-    }
-  }, [location.pathname, location.search, activeTab]); // Gọi lại load khi đổi route hoặc đổi tab
-
-  const handleAddProduct = () => {
-    setEditingId(null);
-    form.resetFields();
-    setFileList([]);
-    setIsModalVisible(true);
-  };
-
-  const handleEdit = (product: Product) => {
-    setEditingId(product.id);
-    form.setFieldsValue({
-      name: product.name,
-      originalPrice: product.originalPrice || product.price,
-      discountPercent: product.discountPercent || 0,
-      stockQuantity: product.stockQuantity,
-      categoryId: product.category?.id || 0,
-      imageUrl: product.imageUrl,
-      description: product.description,
-      brand: product.brand,
-      isBestSeller: product.isBestSeller,
-      specifications: product.specifications,
-      moreImages: product.moreImages,
-      isActive: product.isActive !== false, // Mặc định là true nếu undefined
-    });
-    setFileList([]);
-    setIsModalVisible(true);
-  };
-
-  const onFinish = async (values: ProductRequest) => {
-    try {
-      setLoading(true);
-      let imageUrl = values.imageUrl;
-
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        const uploadRes = await fileApi.uploadImage(
-          fileList[0].originFileObj as File,
-          "product",
-        );
-        imageUrl = uploadRes.url;
-      }
-
-      if (editingId) {
-        await productApi.updateProduct(editingId, { ...values, imageUrl });
-        notification.success("Cập nhật sản phẩm thành công!");
-      } else {
-        await productApi.createProduct({ ...values, imageUrl });
-        notification.success("Thêm sản phẩm thành công!");
-      }
-
-      setIsModalVisible(false);
-      const productData = await productApi.getAllAdmin();
-      setProducts(productData);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Không thể thực hiện yêu cầu này";
-      notification.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    Modal.confirm({
-      title: "Xác nhận xóa",
-      content: "Bạn có chắc chắn muốn xóa sản phẩm này không?",
-      onOk: async () => {
-        try {
-          await productApi.deleteProduct(id);
-          notification.success("Xóa sản phẩm thành công");
-          const productData = await productApi.getAllAdmin();
-          setProducts(productData);
-        } catch {
-          notification.error("Lỗi khi xóa sản phẩm");
-        }
-      },
-    });
-  };
-
-  const handleStatusUpdate = async (
-    orderId: number,
-    status: string,
-    message: string,
-  ) => {
-    try {
-      setLoading(true);
-      await orderApi.updateOrderStatus(orderId, status);
-      notification.success(message);
-      const orderData = await orderApi.getAllOrders();
-      setOrders(orderData);
-    } catch (error: unknown) {
-      notification.error(
-        error instanceof Error ? error.message : "Lỗi cập nhật đơn hàng",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteOrder = async (orderId: number) => {
-    Modal.confirm({
-      title: "Xóa vĩnh viễn đơn hàng",
-      content:
-        "Bạn có chắc chắn muốn xóa đơn hàng này khỏi hệ thống? Hành động này không thể hoàn tác.",
-      okType: "danger",
-      onOk: async () => {
-        try {
-          setLoading(true);
-          await orderApi.deleteOrder(orderId);
-          notification.success("Đã xóa đơn hàng");
-          const orderData = await orderApi.getAllOrders();
-          setOrders(orderData);
-        } catch (error: unknown) {
-          notification.error(
-            error instanceof Error ? error.message : "Lỗi khi xóa đơn hàng",
-          );
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-  };
-
-  const getStatusTag = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return (
-          <Tag icon={<ClockCircleOutlined />} color="warning">
-            Chờ thanh toán
-          </Tag>
-        );
-      case "PAID":
-        return (
-          <Tag icon={<CheckCircleOutlined />} color="processing">
-            Đã thanh toán
-          </Tag>
-        );
-      case "SHIPPING":
-        return (
-          <Tag icon={<CarOutlined />} color="blue">
-            Đang giao hàng
-          </Tag>
-        );
-      case "DELIVERED":
-        return (
-          <Tag icon={<CheckCircleOutlined />} color="success">
-            Đã giao hàng
-          </Tag>
-        );
-      case "FAILED":
-        return (
-          <Tag icon={<StopOutlined />} color="error">
-            Lỗi giao dịch
-          </Tag>
-        );
-      case "CANCELLED":
-        return (
-          <Tag icon={<StopOutlined />} color="default">
-            Đã hủy
-          </Tag>
-        );
-      default:
-        return <Tag>{status}</Tag>;
-    }
-  };
+  const {
+    totalUnread,
+    products,
+    categories,
+    orders,
+    loading,
+    isModalVisible,
+    setIsModalVisible,
+    editingId,
+    fileList,
+    setFileList,
+    form,
+    activeTab,
+    setActiveTab,
+    livePrice,
+    handleAddProduct,
+    handleEdit,
+    onFinish,
+    handleDelete,
+    handleStatusUpdate,
+    handleDeleteOrder,
+  } = useAdminDashboardState();
 
   const productColumns: ColumnsType<Product> = [
     {
@@ -292,7 +92,7 @@ const AdminDashboard: React.FC = () => {
       key: "product",
       render: (_, record: Product) => (
         <Space size="middle">
-          <div style={{ position: "relative" }}>
+          <div style={styles.imageWrapper}>
             <img
               src={record.imageUrl}
               alt={record.name}
@@ -300,42 +100,21 @@ const AdminDashboard: React.FC = () => {
                 (e.target as HTMLImageElement).src =
                   "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=200";
               }}
-              style={{
-                width: 50,
-                height: 50,
-                borderRadius: 10,
-                objectFit: "cover",
-                border: "1px solid rgba(255,255,255,0.1)",
-              }}
+              style={styles.productImage}
             />
             {record.isBestSeller && (
-              <FireFilled
-                style={{
-                  position: "absolute",
-                  top: -5,
-                  right: -5,
-                  color: "#ff4d4f",
-                  fontSize: 16,
-                }}
-              />
+              <FireFilled style={styles.bestSellerFire} />
             )}
           </div>
           <div>
-            <Text
-              strong
-              style={{
-                display: "block",
-                fontSize: "15px",
-                color: "var(--text-main)",
-              }}
-            >
+            <Text strong style={styles.productNameText}>
               {record.name}
             </Text>
             <Space>
-              <Tag color="blue" style={{ borderRadius: 4, margin: 0 }}>
+              <Tag color="blue" style={styles.tagBrandAndCategory}>
                 {record.brand || "No Brand"}
               </Tag>
-              <Tag color="purple" style={{ borderRadius: 4, margin: 0 }}>
+              <Tag color="purple" style={styles.tagBrandAndCategory}>
                 {record.category?.name}
               </Tag>
             </Space>
@@ -348,19 +127,16 @@ const AdminDashboard: React.FC = () => {
       key: "price",
       render: (_, record: Product) => (
         <div>
-          <Text
-            strong
-            style={{ display: "block", color: "var(--primary-color)" }}
-          >
+          <Text strong style={styles.productPrice}>
             {record.price.toLocaleString("vi-VN")} đ
           </Text>
           {record.discountPercent && record.discountPercent > 0 ? (
-            <Text delete type="secondary" style={{ fontSize: 11 }}>
+            <Text delete type="secondary" style={styles.originalPrice}>
               {record.originalPrice?.toLocaleString("vi-VN")} đ
             </Text>
           ) : null}
           {!record.isActive && (
-            <Tag color="default" style={{ fontSize: 10, marginTop: 4 }}>
+            <Tag color="default" style={styles.inactiveTag}>
               ĐANG ẨN
             </Tag>
           )}
@@ -414,7 +190,7 @@ const AdminDashboard: React.FC = () => {
       render: (_, record: Order) => (
         <Space direction="vertical" size={0}>
           <Text strong>{record.shippingAddress}</Text>
-          <Text type="secondary" style={{ fontSize: "12px" }}>
+          <Text type="secondary" style={styles.orderContactSubtext}>
             <TeamOutlined /> {record.phoneNumber}
           </Text>
         </Space>
@@ -425,7 +201,7 @@ const AdminDashboard: React.FC = () => {
       dataIndex: "totalAmount",
       key: "totalAmount",
       render: (amt: number) => (
-        <Text strong style={{ color: "var(--primary-color)" }}>
+        <Text strong style={styles.orderTotalAmount}>
           {amt.toLocaleString("vi-VN")}đ
         </Text>
       ),
@@ -464,7 +240,7 @@ const AdminDashboard: React.FC = () => {
                 type="primary"
                 size="small"
                 icon={<CheckCircleOutlined />}
-                style={{ background: "#52c41a", border: "none" }}
+                style={styles.deliveredStatusButton}
                 onClick={() =>
                   handleStatusUpdate(
                     record.id,
@@ -500,149 +276,72 @@ const AdminDashboard: React.FC = () => {
     },
   ];
 
-  const calculateTotalRevenue = () => {
-    return orders
-      .filter(
-        (o) =>
-          o.status === "PAID" ||
-          o.status === "DELIVERED" ||
-          o.status === "SHIPPING",
-      )
-      .reduce((sum, o) => sum + o.totalAmount, 0);
-  };
-
   return (
     <Content className="main-content">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "40px",
-          flexWrap: "wrap",
-          gap: "20px",
-        }}
-      >
+      <div style={styles.headerContainer}>
         <div>
-          <Title level={1} style={{ color: "var(--text-main)", margin: 0 }}>
-            Quản Trị Hệ Thống
+          <Title level={1} style={styles.headerTitle}>
+            {ADMIN_STRINGS.header.title}
           </Title>
-          <Text style={{ color: "var(--text-muted)", fontSize: "15px" }}>
-            Cửa hàng của bạn đang có{" "}
-            <Text strong style={{ color: "var(--primary-color)" }}>
+          <Text style={styles.headerSubtitle}>
+            {ADMIN_STRINGS.header.subPrefix}
+            <Text strong style={styles.ordersCountHighlight}>
               {orders.length}
-            </Text>{" "}
-            đơn hàng cần theo dõi
+            </Text>
+            {ADMIN_STRINGS.header.subSuffix}
           </Text>
         </div>
       </div>
 
-      <Row gutter={[24, 24]} style={{ marginBottom: "40px" }}>
+      <Row gutter={[24, 24]} style={styles.rowMargin}>
         <Col xs={24} sm={8}>
-          <Card className="glass-effect" styles={{ body: { padding: "24px" } }}>
+          <Card className="glass-effect" styles={{ body: styles.cardBody }}>
             <Space direction="vertical" size={4}>
-              <Text
-                style={{
-                  color: "var(--text-muted)",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <ShoppingOutlined style={{ color: "var(--primary-color)" }} />
-                KHO HÀNG
+              <Text style={styles.cardTitleIconText}>
+                <ShoppingOutlined style={styles.ordersCountHighlight} />
+                {ADMIN_STRINGS.cards.stock}
               </Text>
-              <Title
-                level={2}
-                style={{
-                  margin: 0,
-                  color: "var(--text-main)",
-                  fontWeight: 800,
-                }}
-              >
+              <Title level={2} style={styles.cardTitleValue}>
                 {products.length}{" "}
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "var(--text-muted)",
-                    fontWeight: 400,
-                  }}
-                >
-                  Sản phẩm
+                <Text style={styles.cardSubText}>
+                  {ADMIN_STRINGS.cards.stockUnit}
                 </Text>
               </Title>
             </Space>
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card className="glass-effect" styles={{ body: { padding: "24px" } }}>
+          <Card className="glass-effect" styles={{ body: styles.cardBody }}>
             <Space direction="vertical" size={4}>
-              <Text
-                style={{
-                  color: "var(--text-muted)",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <HistoryOutlined style={{ color: "var(--primary-color)" }} />
-                ĐƠN HÀNG
+              <Text style={styles.cardTitleIconText}>
+                <HistoryOutlined style={styles.ordersCountHighlight} />
+                {ADMIN_STRINGS.cards.orders}
               </Text>
-              <Title
-                level={2}
-                style={{
-                  margin: 0,
-                  color: "var(--text-main)",
-                  fontWeight: 800,
-                }}
-              >
+              <Title level={2} style={styles.cardTitleValue}>
                 {orders.length}{" "}
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "var(--text-muted)",
-                    fontWeight: 400,
-                  }}
-                >
-                  Yêu cầu
+                <Text style={styles.cardSubText}>
+                  {ADMIN_STRINGS.cards.ordersUnit}
                 </Text>
               </Title>
             </Space>
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card className="glass-effect" styles={{ body: { padding: "24px" } }}>
+          <Card className="glass-effect" styles={{ body: styles.cardBody }}>
             <Space direction="vertical" size={4}>
-              <Text
-                style={{
-                  color: "var(--text-muted)",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <DollarOutlined style={{ color: "var(--primary-color)" }} />
-                DOANH THU THỰC
+              <Text style={styles.cardTitleIconText}>
+                <DollarOutlined style={styles.ordersCountHighlight} />
+                {ADMIN_STRINGS.cards.revenue}
               </Text>
-              <Title
-                level={2}
-                style={{
-                  margin: 0,
-                  color: "var(--primary-hover)",
-                  fontWeight: 800,
-                }}
-              >
-                {calculateTotalRevenue().toLocaleString("vi-VN")}đ
+              <Title level={2} style={styles.cardTitleRevenueValue}>
+                {calculateTotalRevenue(orders).toLocaleString("vi-VN")}đ
               </Title>
             </Space>
           </Card>
         </Col>
       </Row>
 
-      <Card className="glass-effect" styles={{ body: { padding: "24px" } }}>
+      <Card className="glass-effect" styles={{ body: styles.cardBody }}>
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
@@ -651,19 +350,19 @@ const AdminDashboard: React.FC = () => {
             {
               key: "products",
               label: (
-                <span style={{ fontSize: 16, color: "var(--text-main)" }}>
-                  <ShoppingOutlined /> Danh sách sản phẩm
+                <span style={styles.tabLabelText}>
+                  <ShoppingOutlined /> {ADMIN_STRINGS.tabs.productsList}
                 </span>
               ),
               children: (
                 <div>
-                  <div style={{ textAlign: "right", marginBottom: 20 }}>
+                  <div style={styles.tableActionsContainer}>
                     <BaseButton
                       type="primary"
                       icon={<PlusOutlined />}
                       onClick={handleAddProduct}
                     >
-                      Thêm sản phẩm mới
+                      {ADMIN_STRINGS.tabs.addProduct}
                     </BaseButton>
                   </div>
                   <Table
@@ -680,8 +379,8 @@ const AdminDashboard: React.FC = () => {
             {
               key: "orders",
               label: (
-                <span style={{ fontSize: 16, color: "var(--text-main)" }}>
-                  <HistoryOutlined /> Quản lý đơn hàng
+                <span style={styles.tabLabelText}>
+                  <HistoryOutlined /> {ADMIN_STRINGS.tabs.ordersManagement}
                 </span>
               ),
               children: (
@@ -698,8 +397,8 @@ const AdminDashboard: React.FC = () => {
             {
               key: "statistics",
               label: (
-                <span style={{ fontSize: 16, color: "var(--text-main)" }}>
-                  <BarChartOutlined /> Báo cáo & Thống kê
+                <span style={styles.tabLabelText}>
+                  <BarChartOutlined /> {ADMIN_STRINGS.tabs.statistics}
                 </span>
               ),
               children: <StatisticsTab />,
@@ -708,8 +407,8 @@ const AdminDashboard: React.FC = () => {
               key: "chat",
               label: (
                 <Badge count={totalUnread} offset={[10, 0]}>
-                  <span style={{ fontSize: 16, color: "var(--text-main)" }}>
-                    <MessageOutlined /> Chat Tư Vấn
+                  <span style={styles.tabLabelText}>
+                    <MessageOutlined /> {ADMIN_STRINGS.tabs.chat}
                   </span>
                 </Badge>
               ),
@@ -718,8 +417,8 @@ const AdminDashboard: React.FC = () => {
             {
               key: "notifications",
               label: (
-                <span style={{ fontSize: 16, color: "var(--text-main)" }}>
-                  <BellOutlined /> Quản lý thông báo
+                <span style={styles.tabLabelText}>
+                  <BellOutlined /> {ADMIN_STRINGS.tabs.notifications}
                 </span>
               ),
               children: <NotificationManagement />,
@@ -727,8 +426,8 @@ const AdminDashboard: React.FC = () => {
             {
               key: "vouchers",
               label: (
-                <span style={{ fontSize: 16, color: "var(--text-main)" }}>
-                  <GiftOutlined /> Mã giảm giá
+                <span style={styles.tabLabelText}>
+                  <GiftOutlined /> {ADMIN_STRINGS.tabs.vouchers}
                 </span>
               ),
               children: <VoucherManagement />,
@@ -736,8 +435,8 @@ const AdminDashboard: React.FC = () => {
             {
               key: "reviews",
               label: (
-                <span style={{ fontSize: 16, color: "var(--text-main)" }}>
-                  <StarOutlined /> Kiểm duyệt đánh giá
+                <span style={styles.tabLabelText}>
+                  <StarOutlined /> {ADMIN_STRINGS.tabs.reviews}
                 </span>
               ),
               children: <ReviewModeration />,
@@ -745,8 +444,8 @@ const AdminDashboard: React.FC = () => {
             {
               key: "banners",
               label: (
-                <span style={{ fontSize: 16, color: "var(--text-main)" }}>
-                  <PictureOutlined /> Quản lý banner
+                <span style={styles.tabLabelText}>
+                  <PictureOutlined /> {ADMIN_STRINGS.tabs.banners}
                 </span>
               ),
               children: <BannerManagement />,
@@ -757,8 +456,8 @@ const AdminDashboard: React.FC = () => {
 
       <Modal
         title={
-          <Title level={4} style={{ margin: 0 }}>
-            {editingId ? "Cập nhật thông tin sản phẩm" : "Thêm sản phẩm mới"}
+          <Title level={4} style={styles.modalTitle}>
+            {editingId ? ADMIN_STRINGS.modal.titleUpdate : ADMIN_STRINGS.modal.titleAdd}
           </Title>
         }
         open={isModalVisible}
@@ -766,37 +465,32 @@ const AdminDashboard: React.FC = () => {
         onOk={() => form.submit()}
         okButtonProps={{ loading: loading }}
         width={800}
-        style={{ top: 110 }}
+        style={styles.modalStyle}
         styles={{
-          body: {
-            maxHeight: "calc(100vh - 270px)",
-            overflowY: "auto",
-            overflowX: "hidden",
-            paddingRight: "8px",
-          },
+          body: styles.modalBody,
         }}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={onFinish}
-          style={{ marginTop: "20px" }}
+          style={styles.formContainer}
         >
           <Row gutter={24}>
             <Col span={16}>
               <Form.Item
                 name="name"
-                label="Tên sản phẩm"
+                label={ADMIN_STRINGS.modal.nameLabel}
                 rules={[
-                  { required: true, message: "Vui lòng nhập tên sản phẩm" },
+                  { required: true, message: ADMIN_STRINGS.modal.nameRequired },
                 ]}
               >
-                <Input size="large" placeholder="Nhập tên sản phẩm..." />
+                <Input size="large" placeholder={ADMIN_STRINGS.modal.namePlaceholder} />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="brand" label="Thương hiệu">
-                <Input size="large" placeholder="Ví dụ: Apple, Sony..." />
+              <Form.Item name="brand" label={ADMIN_STRINGS.modal.brandLabel}>
+                <Input size="large" placeholder={ADMIN_STRINGS.modal.brandPlaceholder} />
               </Form.Item>
             </Col>
           </Row>
@@ -805,12 +499,12 @@ const AdminDashboard: React.FC = () => {
             <Col span={8}>
               <Form.Item
                 name="originalPrice"
-                label="Giá bán gốc (đ)"
-                rules={[{ required: true, message: "Nhập giá gốc" }]}
+                label={ADMIN_STRINGS.modal.priceLabel}
+                rules={[{ required: true, message: ADMIN_STRINGS.modal.priceRequired }]}
               >
                 <InputNumber
                   size="large"
-                  style={{ width: "100%" }}
+                  style={styles.inputNumberWidth}
                   formatter={(value) =>
                     `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                   }
@@ -818,35 +512,21 @@ const AdminDashboard: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item name="discountPercent" label="Giảm giá (%)">
+              <Form.Item name="discountPercent" label={ADMIN_STRINGS.modal.discountLabel}>
                 <InputNumber
                   size="large"
                   min={0}
                   max={99}
-                  style={{ width: "100%" }}
+                  style={styles.inputNumberWidth}
                 />
               </Form.Item>
             </Col>
             <Col span={10}>
-              <div
-                style={{
-                  background: "var(--bg-secondary)",
-                  padding: "12px 16px",
-                  borderRadius: 12,
-                  marginTop: 30,
-                  border: "1px dashed var(--primary-color)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
+              <div style={styles.discountPreview}>
                 <Text style={{ color: "var(--text-muted)" }}>
-                  Giá sau giảm:
+                  {ADMIN_STRINGS.modal.discountPriceLabel}
                 </Text>
-                <Text
-                  strong
-                  style={{ color: "var(--primary-color)", fontSize: 18 }}
-                >
+                <Text strong style={styles.discountPrice}>
                   {livePrice.toLocaleString("vi-VN")} đ
                 </Text>
               </div>
@@ -857,8 +537,8 @@ const AdminDashboard: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="categoryId"
-                label="Danh mục sản phẩm"
-                rules={[{ required: true, message: "Chọn danh mục" }]}
+                label={ADMIN_STRINGS.modal.categoryLabel}
+                rules={[{ required: true, message: ADMIN_STRINGS.modal.categoryRequired }]}
               >
                 <Select
                   size="large"
@@ -873,23 +553,23 @@ const AdminDashboard: React.FC = () => {
             <Col span={6}>
               <Form.Item
                 name="stockQuantity"
-                label="Tồn kho"
-                rules={[{ required: true, message: "Nhập số" }]}
+                label={ADMIN_STRINGS.modal.stockLabel}
+                rules={[{ required: true, message: ADMIN_STRINGS.modal.stockRequired }]}
               >
-                <InputNumber size="large" style={{ width: "100%" }} />
+                <InputNumber size="large" style={styles.inputNumberWidth} />
               </Form.Item>
             </Col>
             <Col span={6}>
               <Form.Item
                 name="isBestSeller"
-                label="Bán chạy?"
+                label={ADMIN_STRINGS.modal.bestSellerLabel}
                 valuePropName="checked"
               >
                 <Select
                   size="large"
                   options={[
-                    { label: "Có", value: true },
-                    { label: "Không", value: false },
+                    { label: ADMIN_STRINGS.modal.yes, value: true },
+                    { label: ADMIN_STRINGS.modal.no, value: false },
                   ]}
                 />
               </Form.Item>
@@ -897,15 +577,15 @@ const AdminDashboard: React.FC = () => {
             <Col span={6}>
               <Form.Item
                 name="isActive"
-                label="Hiển thị?"
+                label={ADMIN_STRINGS.modal.activeLabel}
                 valuePropName="checked"
                 initialValue={true}
               >
                 <Select
                   size="large"
                   options={[
-                    { label: "Công khai", value: true },
-                    { label: "Tạm ẩn", value: false },
+                    { label: ADMIN_STRINGS.modal.public, value: true },
+                    { label: ADMIN_STRINGS.modal.hidden, value: false },
                   ]}
                 />
               </Form.Item>
@@ -915,7 +595,7 @@ const AdminDashboard: React.FC = () => {
           <Form.Item
             label={
               <Space>
-                <UploadOutlined /> Hình ảnh sản phẩm
+                <UploadOutlined /> {ADMIN_STRINGS.modal.imageLabel}
               </Space>
             }
           >
@@ -931,7 +611,7 @@ const AdminDashboard: React.FC = () => {
                   {fileList.length >= 1 ? null : (
                     <div>
                       <PlusOutlined />
-                      <div style={{ marginTop: 8 }}>Tải lên</div>
+                      <div style={styles.uploadButtonText}>{ADMIN_STRINGS.modal.uploadBtn}</div>
                     </div>
                   )}
                 </Upload>
@@ -939,8 +619,8 @@ const AdminDashboard: React.FC = () => {
               <Col span={18}>
                 <Form.Item name="imageUrl">
                   <Input
-                    placeholder="Hoặc dán URL ảnh tại đây"
-                    style={{ height: 102 }}
+                    placeholder={ADMIN_STRINGS.modal.urlPlaceholder}
+                    style={styles.imageUrlInput}
                     disabled={fileList.length > 0}
                   />
                 </Form.Item>
@@ -948,16 +628,16 @@ const AdminDashboard: React.FC = () => {
             </Row>
             <Form.Item
               name="moreImages"
-              label="Ảnh bổ sung (URLs cách nhau bởi dấu phẩy)"
+              label={ADMIN_STRINGS.modal.moreImagesLabel}
             >
               <Input.TextArea placeholder="URL1, URL2, URL3..." rows={2} />
             </Form.Item>
           </Form.Item>
 
-          <Form.Item name="description" label="Mô tả ngắn gọn">
+          <Form.Item name="description" label={ADMIN_STRINGS.modal.descLabel}>
             <Input.TextArea
               rows={2}
-              placeholder="Mô tả tóm tắt về sản phẩm..."
+              placeholder={ADMIN_STRINGS.modal.descPlaceholder}
             />
           </Form.Item>
 
@@ -965,14 +645,14 @@ const AdminDashboard: React.FC = () => {
             name="specifications"
             label={
               <Space>
-                <InfoCircleOutlined /> Thông số kỹ thuật chi tiết
+                <InfoCircleOutlined /> {ADMIN_STRINGS.modal.specsLabel}
               </Space>
             }
-            help="Định dạng: Tên thông số: Giá trị; (Ví dụ: RAM: 16GB; Chip: M3;)"
+            help={ADMIN_STRINGS.modal.specsHelp}
           >
             <Input.TextArea
               rows={4}
-              placeholder="Màn hình: 6.7 inch; Chip: A17 Pro; Pin: 29 giờ;"
+              placeholder={ADMIN_STRINGS.modal.specsPlaceholder}
             />
           </Form.Item>
         </Form>

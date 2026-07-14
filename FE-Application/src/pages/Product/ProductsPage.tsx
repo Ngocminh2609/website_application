@@ -14,7 +14,7 @@ import {
 } from "antd";
 import { FilterOutlined, RocketOutlined } from "@ant-design/icons";
 import { useSearchParams, useLocation } from "react-router-dom";
-import { useProducts } from "../../hooks/useProducts";
+import { useProducts } from "../../hooks/Product/useProducts";
 import ProductCard from "../../components/common/ProductCard";
 
 const { Title, Text } = Typography;

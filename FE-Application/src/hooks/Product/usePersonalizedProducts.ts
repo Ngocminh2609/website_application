@@ -1,17 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useProducts } from "./useProducts";
-import { trackingUtils } from "../utils/tracking";
-import type { Product } from "../types/product";
+import { trackingUtils } from "../../utils/tracking";
+import type { Product } from "../../types/product";
 
-// Cache để chống gọi API trùng lặp trong các render đồng thời (hoặc React Strict Mode)
 let activeFetchPromise: Promise<Product[]> | null = null;
 
 /**
  * Hook cung cấp danh sách sản phẩm được cá nhân hóa cho người dùng.
- * Thuật toán kết hợp:
- * 1. Sản phẩm đã xem gần đây (Recently Viewed)
- * 2. Sản phẩm thuộc danh mục quan tâm (Category Interest)
- * 3. Gợi ý ngẫu nhiên từ kho hàng cao cấp nếu chưa có dữ liệu
  */
 export const usePersonalizedProducts = (limit: number = 6) => {
   const { products, bestSellers, loading, fetchProducts, initializeHomeData } =
@@ -28,8 +23,8 @@ export const usePersonalizedProducts = (limit: number = 6) => {
       fetchProducts();
       initializeHomeData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products.length, loading]); // fetchProducts & initializeHomeData là useCallback ổn định, không cần trong deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products.length, loading]);
 
   useEffect(() => {
     const fetchPersonalized = async () => {
@@ -40,9 +35,8 @@ export const usePersonalizedProducts = (limit: number = 6) => {
           setIsFetchingServer(true);
           hasFetchedServer.current = true;
           const { recommendationApi } =
-            await import("../api/recommendationApi");
+            await import("../../api/recommendationApi");
 
-          // Nếu chưa có request nào đang chạy, tạo mới. Nếu có rồi, dùng chung.
           if (!activeFetchPromise) {
             activeFetchPromise = recommendationApi.getPersonalized(limit);
           }
@@ -57,8 +51,6 @@ export const usePersonalizedProducts = (limit: number = 6) => {
         } catch (e) {
           console.error("Lỗi khi lấy gợi ý từ server:", e);
         } finally {
-          // Xóa cache sau 2 giây để các lần render/remount tiếp theo (nếu có) dùng chung,
-          // đồng thời vẫn cho phép fetch lại data mới ở các lần truy cập trang sau.
           setTimeout(() => {
             activeFetchPromise = null;
           }, 2000);

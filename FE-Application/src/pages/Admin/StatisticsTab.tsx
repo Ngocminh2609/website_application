@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Card, Row, Col, Typography, Select, Spin, Empty } from "antd";
 import {
   XAxis,
@@ -11,87 +11,45 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { statisticsApi, type OrderStatistic } from "../../api/statisticsApi";
-import { notification } from "../../utils/notification";
+import { useStatisticsTabState } from "../../hooks/Admin/useStatisticsTabState";
+import { styles } from "./styles/statistics-tab.styles";
+import { STATS_STRINGS } from "../../constants/Admin/statistics-tab";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const StatisticsTab: React.FC = () => {
-  const [data, setData] = useState<OrderStatistic[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<
-    "daily" | "weekly" | "monthly" | "yearly"
-  >("monthly");
-
-  const fetchStats = async (selectedPeriod: string) => {
-    setLoading(true);
-    try {
-      let res: OrderStatistic[] = [];
-      switch (selectedPeriod) {
-        case "daily":
-          res = await statisticsApi.getDailyStats();
-          break;
-        case "weekly":
-          res = await statisticsApi.getWeeklyStats();
-          break;
-        case "monthly":
-          res = await statisticsApi.getMonthlyStats();
-          break;
-        case "yearly":
-          res = await statisticsApi.getYearlyStats();
-          break;
-      }
-      // Đảo ngược lại để hiển thị từ cũ đến mới trên biểu đồ
-      setData([...res].reverse());
-    } catch (error) {
-      notification.error("Không thể tải dữ liệu thống kê");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats(period);
-  }, [period]);
+  const { data, loading, setPeriod } = useStatisticsTabState();
 
   return (
-    <div style={{ marginTop: 20 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 30,
-        }}
-      >
-        <Title level={4} style={{ color: "var(--text-main)", margin: 0 }}>
-          Báo cáo doanh thu & Đơn hàng
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <Title level={4} style={styles.headerTitle}>
+          {STATS_STRINGS.headerTitle}
         </Title>
         <Select
           defaultValue="monthly"
-          style={{ width: 200 }}
+          style={styles.select}
           onChange={(value) =>
             setPeriod(value as "daily" | "weekly" | "monthly" | "yearly")
           }
         >
-          <Option value="daily">Theo Ngày (30 ngày gần nhất)</Option>
-          <Option value="weekly">Theo Tuần</Option>
-          <Option value="monthly">Theo Tháng</Option>
-          <Option value="yearly">Theo Năm</Option>
+          <Option value="daily">{STATS_STRINGS.periods.daily}</Option>
+          <Option value="weekly">{STATS_STRINGS.periods.weekly}</Option>
+          <Option value="monthly">{STATS_STRINGS.periods.monthly}</Option>
+          <Option value="yearly">{STATS_STRINGS.periods.yearly}</Option>
         </Select>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "100px" }}>
+        <div style={styles.spinnerContainer}>
           <Spin size="large" />
         </div>
       ) : data.length === 0 ? (
         <Empty
           description={
-            <Text style={{ color: "var(--text-muted)" }}>
-              Chưa có dữ liệu thống kê cho kỳ này
+            <Text style={styles.emptyText}>
+              {STATS_STRINGS.emptyText}
             </Text>
           }
         />
@@ -101,14 +59,14 @@ const StatisticsTab: React.FC = () => {
           <Col span={24}>
             <Card
               title={
-                <Text strong style={{ color: "var(--text-main)" }}>
-                  Biểu đồ Doanh thu (VND)
+                <Text strong style={styles.cardTitleText}>
+                  {STATS_STRINGS.revenueChartTitle}
                 </Text>
               }
               className="glass-effect"
-              styles={{ body: { padding: "24px 24px 40px 10px" } }}
+              styles={{ body: styles.cardBody }}
             >
-              <div style={{ width: "100%", height: 400 }}>
+              <div style={styles.chartContainerRevenue}>
                 <ResponsiveContainer>
                   <AreaChart data={data}>
                     <defs>
@@ -146,19 +104,14 @@ const StatisticsTab: React.FC = () => {
                       tickFormatter={(val) => `${(val / 1000000).toFixed(1)}M`}
                     />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--glass-bg)",
-                        border: "1px solid var(--glass-border)",
-                        borderRadius: "8px",
-                        color: "var(--text-main)",
-                      }}
-                      itemStyle={{ color: "#6366f1" }}
+                      contentStyle={styles.tooltip}
+                      itemStyle={styles.tooltipItemRevenue}
                       formatter={(value: number | string | undefined) => [
                         new Intl.NumberFormat("vi-VN", {
                           style: "currency",
                           currency: "VND",
                         }).format(Number(value || 0)),
-                        "Doanh thu",
+                        STATS_STRINGS.revenueLabel,
                       ]}
                     />
                     <Area
@@ -179,14 +132,14 @@ const StatisticsTab: React.FC = () => {
           <Col span={24}>
             <Card
               title={
-                <Text strong style={{ color: "var(--text-main)" }}>
-                  Thống kê lượng Đơn hàng
+                <Text strong style={styles.cardTitleText}>
+                  {STATS_STRINGS.ordersChartTitle}
                 </Text>
               }
               className="glass-effect"
-              styles={{ body: { padding: "24px 24px 40px 10px" } }}
+              styles={{ body: styles.cardBody }}
             >
-              <div style={{ width: "100%", height: 350 }}>
+              <div style={styles.chartContainerOrders}>
                 <ResponsiveContainer>
                   <BarChart data={data}>
                     <CartesianGrid
@@ -203,16 +156,11 @@ const StatisticsTab: React.FC = () => {
                       tick={{ fill: "var(--text-muted)", fontSize: 12 }}
                     />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--glass-bg)",
-                        border: "1px solid var(--glass-border)",
-                        borderRadius: "8px",
-                        color: "var(--text-main)",
-                      }}
-                      itemStyle={{ color: "#a855f7" }}
+                      contentStyle={styles.tooltip}
+                      itemStyle={styles.tooltipItemOrders}
                       formatter={(value: number | string | undefined) => [
                         value,
-                        "Đơn hàng",
+                        STATS_STRINGS.ordersLabel,
                       ]}
                     />
                     <Bar

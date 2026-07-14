@@ -21,7 +21,7 @@ import {
 } from "@ant-design/icons";
 import { useSearchParams, Link, useLocation } from "react-router-dom";
 import { productApi } from "../../api/productApi";
-import { useProducts } from "../../hooks/useProducts";
+import { useProducts } from "../../hooks/Product/useProducts";
 import type { Product } from "../../types/product";
 import ProductCard from "../../components/common/ProductCard";
 

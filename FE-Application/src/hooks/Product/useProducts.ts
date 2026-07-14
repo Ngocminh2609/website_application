@@ -1,7 +1,6 @@
 import { createContext, useContext } from "react";
-import type { Product } from "../types/product";
-
-import type { Category } from "../types/category";
+import type { Product } from "../../types/product";
+import type { Category } from "../../types/category";
 
 export interface ProductContextType {
   products: Product[];

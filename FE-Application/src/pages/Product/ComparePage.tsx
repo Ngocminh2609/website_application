@@ -1,5 +1,5 @@
 import React from "react";
-import { useCompare } from "../../hooks/useCompare";
+import { useCompare } from "../../hooks/Product/useCompare";
 import {
   Typography,
   Row,
@@ -18,7 +18,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { StarRating } from "../../components/common/ProductCard";
-import { useCart } from "../../hooks/useCart";
+import { useCart } from "../../hooks/Cart/useCart";
 
 const { Title, Text } = Typography;
 
