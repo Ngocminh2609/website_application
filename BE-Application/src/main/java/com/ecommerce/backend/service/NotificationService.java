@@ -31,10 +31,10 @@ public class NotificationService {
                 .type(type)
                 .isRead(false)
                 .build();
-        
+
         // 1. Lưu vào DB để quản lý trạng thái đọc
         notification = notificationRepository.save(notification);
-        
+
         // 2. Đẩy qua WebSocket ngay lập tức (Real-time)
         // Lưu ý: User subscribe vào /topic/notifications/{userId}
         messagingTemplate.convertAndSend("/topic/notifications/" + userId, notification);
@@ -47,7 +47,7 @@ public class NotificationService {
     @Transactional
     public void broadcastToAll(String message) {
         List<User> allUsers = userRepository.findAll();
-        
+
         // Tạo danh sách thông báo cho từng user
         List<Notification> notifications = allUsers.stream().map(user -> {
             String recipientId = (user.getRole().equals("ADMIN")) ? "admin" : "user-" + user.getId();
@@ -78,7 +78,7 @@ public class NotificationService {
     @Transactional
     public void markAsRead(Long id) {
         notificationRepository.findById(id).ifPresent(n -> {
-            n.setRead(true); 
+            n.setRead(true);
             notificationRepository.save(n);
         });
     }

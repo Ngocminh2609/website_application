@@ -21,8 +21,8 @@ public class CouponValidateResponse {
     private String message;
 
     public CouponValidateResponse(String code, String discountType, BigDecimal discountValue,
-                                   BigDecimal discountAmount, BigDecimal maxDiscountAmount,
-                                   BigDecimal finalAmount, String message) {
+                                  BigDecimal discountAmount, BigDecimal maxDiscountAmount,
+                                  BigDecimal finalAmount, String message) {
         this.code = code;
         this.discountType = discountType;
         this.discountValue = discountValue;

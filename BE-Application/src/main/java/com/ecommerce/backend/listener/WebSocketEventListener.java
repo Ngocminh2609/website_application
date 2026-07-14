@@ -25,7 +25,7 @@ public class WebSocketEventListener {
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = headerAccessor.getSessionId();
-        
+
         if (sessionId != null) {
             log.info("[VIEWER-SYSTEM] Ngắt kết nối socket: {}", sessionId);
             productViewerService.removeViewer(sessionId);

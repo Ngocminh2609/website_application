@@ -73,10 +73,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/notifications/broadcast").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/chat/**").authenticated()
-                        
+
                         // Cho phép WebSocket
                         .requestMatchers("/ws-chat/**").permitAll()
-                        
+
                         // Các yêu cầu khác yêu cầu đăng nhập cơ bản
                         .anyRequest().authenticated()
                 )
@@ -93,7 +93,7 @@ public class SecurityConfig {
     private Converter<Jwt, ? extends AbstractAuthenticationToken> keycloakJwtConverter() {
         JwtAuthenticationConverter delegate = new JwtAuthenticationConverter();
         delegate.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
-        
+
         return jwt -> {
             AbstractAuthenticationToken token = delegate.convert(jwt);
             syncUser(jwt);
@@ -112,16 +112,16 @@ public class SecurityConfig {
                     User user = new User();
                     user.setUsername(username);
                     user.setEmail(jwt.getClaimAsString("email"));
-                    
+
                     String fullName = jwt.getClaimAsString("name");
                     if (fullName == null) {
                         fullName = username;
                     }
                     user.setFullName(fullName);
-                    
+
                     // Mật khẩu placeholder cho tài khoản OAuth2 (JPA yêu cầu @NotBlank)
                     user.setPassword(passwordEncoder().encode("KEYCLOAK_OAUTH2_PLACEHOLDER_" + java.util.UUID.randomUUID()));
-                    
+
                     // Xác định vai trò từ Keycloak token
                     java.util.Map<String, Object> realmAccess = jwt.getClaim("realm_access");
                     String role = "USER";

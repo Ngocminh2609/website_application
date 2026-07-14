@@ -22,7 +22,7 @@ public class UserAddressService {
     public List<UserAddressDTO> getUserAddresses(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
-        
+
         return userAddressRepository.findByUserOrderByIsDefaultDescCreatedAtDesc(user)
                 .stream()
                 .map(this::convertToDTO)

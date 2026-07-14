@@ -37,7 +37,7 @@ public class ChatController {
             // Gửi tới khách hàng cụ thể
             recipientId = chatMessage.getRecipientId();
             recipientTopic = "/topic/user/" + recipientId;
-            
+
             // Gửi tin nhắn chat từ admin đến client
             messagingTemplate.convertAndSend(recipientTopic, chatMessage);
         } else {
@@ -46,7 +46,7 @@ public class ChatController {
             if (chatMessage.getIsBotResponse() == null || !chatMessage.getIsBotResponse()) {
 //                recipientId = "admin";
                 recipientTopic = "/topic/admin";
-                
+
                 // Gửi tin nhắn chat từ client đến admin
                 messagingTemplate.convertAndSend(recipientTopic, chatMessage);
             }

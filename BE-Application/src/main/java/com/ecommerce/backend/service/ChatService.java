@@ -31,7 +31,7 @@ public class ChatService {
                 .fullName(chatMessage.getFullName())
                 .isBotResponse(chatMessage.getIsBotResponse())
                 .build();
-        
+
         chatMessageRepository.save(entity);
     }
 

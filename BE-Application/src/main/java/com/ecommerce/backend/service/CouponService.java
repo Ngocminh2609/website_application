@@ -44,7 +44,7 @@ public class CouponService {
         // Kiểm tra ngưỡng đơn hàng tối thiểu
         if (orderAmount.compareTo(coupon.getMinOrderAmount()) < 0) {
             throw new RuntimeException(
-                "Đơn hàng tối thiểu " + coupon.getMinOrderAmount().toPlainString() + "đ để dùng mã này"
+                    "Đơn hàng tối thiểu " + coupon.getMinOrderAmount().toPlainString() + "đ để dùng mã này"
             );
         }
 
@@ -52,13 +52,13 @@ public class CouponService {
         BigDecimal finalAmount = orderAmount.subtract(discountAmount).max(BigDecimal.ZERO);
 
         return new CouponValidateResponse(
-            coupon.getCode(),
-            coupon.getDiscountType(),
-            coupon.getDiscountValue(),
-            discountAmount,
-            coupon.getMaxDiscountAmount(),
-            finalAmount,
-            "Áp dụng mã giảm giá thành công"
+                coupon.getCode(),
+                coupon.getDiscountType(),
+                coupon.getDiscountValue(),
+                discountAmount,
+                coupon.getMaxDiscountAmount(),
+                finalAmount,
+                "Áp dụng mã giảm giá thành công"
         );
     }
 

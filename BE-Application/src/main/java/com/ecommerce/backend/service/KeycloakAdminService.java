@@ -78,21 +78,21 @@ public class KeycloakAdminService {
         // Tách fullName thành firstName và lastName
         String[] nameParts = (fullName != null && !fullName.isBlank())
                 ? fullName.split(" ", 2)
-                : new String[]{ username, "" };
+                : new String[]{username, ""};
         String firstName = nameParts[0];
-        String lastName  = nameParts.length > 1 ? nameParts[1] : "";
+        String lastName = nameParts.length > 1 ? nameParts[1] : "";
 
         Map<String, Object> userRepresentation = Map.of(
-            "username",   username,
-            "email",      email,
-            "firstName",  firstName,
-            "lastName",   lastName,
-            "enabled",    true,
-            "credentials", List.of(Map.of(
-                "type",      "password",
-                "value",     password,
-                "temporary", false
-            ))
+                "username", username,
+                "email", email,
+                "firstName", firstName,
+                "lastName", lastName,
+                "enabled", true,
+                "credentials", List.of(Map.of(
+                        "type", "password",
+                        "value", password,
+                        "temporary", false
+                ))
         );
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(userRepresentation, headers);

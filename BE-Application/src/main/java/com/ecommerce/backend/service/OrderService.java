@@ -87,7 +87,7 @@ public class OrderService {
         if ("COD".equalsIgnoreCase(paymentMethod)) {
             clearCart(user.getId());
         }
-        
+
         return orderRepository.save(order);
     }
 
@@ -117,15 +117,15 @@ public class OrderService {
         // 1. Cập nhật trạng thái đơn hàng
         if ("00".equals(responseCode)) {
             order.setStatus("PAID");
-            
+
             // Xóa giỏ hàng của người dùng khi thanh toán thành công
             clearCart(order.getUser().getId());
 
             // Gửi thông báo cho khách hàng
             notificationService.sendToUser(
-                "user-" + order.getUser().getId(),
-                "Thanh toán thành công đơn hàng #" + order.getId() + ". Chúng tôi sẽ sớm giao hàng cho bạn!",
-                Notification.NotificationType.ORDER
+                    "user-" + order.getUser().getId(),
+                    "Thanh toán thành công đơn hàng #" + order.getId() + ". Chúng tôi sẽ sớm giao hàng cho bạn!",
+                    Notification.NotificationType.ORDER
             );
 
             // 3. Tiêu hao mã giảm giá nếu có
@@ -155,7 +155,7 @@ public class OrderService {
                 .secureHash(secureHash)
                 .rawData(allParams.toString())
                 .build();
-        
+
         transactionRepository.save(transaction);
     }
 
@@ -165,6 +165,7 @@ public class OrderService {
     public List<Order> getOrdersByUserId(Long userId) {
         return orderRepository.findByUserIdOrderByOrderDateDesc(userId);
     }
+
     /**
      * Lấy danh sách toàn bộ đơn hàng (Cho Admin).
      */

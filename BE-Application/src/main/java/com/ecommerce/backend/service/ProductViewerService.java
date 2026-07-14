@@ -22,7 +22,7 @@ public class ProductViewerService {
 
     // Map: ProductId -> Tập hợp các SessionId đang xem (Set giúp loại bỏ đếm lặp)
     private final Map<Long, Set<String>> productViewers = new ConcurrentHashMap<>();
-    
+
     // Map: SessionId -> ProductId để dọn dẹp khi ngắt kết nối
     private final Map<String, Long> sessionProductMap = new ConcurrentHashMap<>();
 
@@ -38,10 +38,10 @@ public class ProductViewerService {
         }
 
         sessionProductMap.put(sessionId, productId);
-        
+
         // Lấy hoặc tạo mới Set cho sản phẩm này
         Set<String> viewers = productViewers.computeIfAbsent(productId, k -> ConcurrentHashMap.newKeySet());
-        
+
         boolean added = viewers.add(sessionId);
         if (added) {
             int currentCount = viewers.size();
@@ -62,7 +62,7 @@ public class ProductViewerService {
                 if (removed) {
                     int currentCount = viewers.size();
                     log.info("[VIEWER-SYSTEM] --- Người rời khỏi SP {}. Còn lại: {} (Session: {})", productId, currentCount, sessionId);
-                    
+
                     if (currentCount == 0) {
                         productViewers.remove(productId);
                     }
@@ -75,8 +75,8 @@ public class ProductViewerService {
     private void broadcastViewerCount(Long productId, int count) {
         String destination = "/topic/product/" + productId + "/viewers";
         messagingTemplate.convertAndSend(destination, Map.of(
-            "productId", productId,
-            "viewerCount", count
+                "productId", productId,
+                "viewerCount", count
         ));
     }
 }

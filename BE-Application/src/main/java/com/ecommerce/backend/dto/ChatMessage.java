@@ -18,11 +18,11 @@ public class ChatMessage {
     private String recipientId; // ID người nhận
     private String content; // Nội dung tin nhắn
     private MessageType type; // Loại tin nhắn
-    
+
     // Thông tin bổ sung để phân biệt client theo email
     private String email; // Email của client (dùng làm key phân biệt)
     private String fullName; // Tên đầy đủ của client
-    
+
     // Đánh dấu tin nhắn có phải từ bot hay không
     private Boolean isBotResponse; // true nếu là câu trả lời từ bot, false/null nếu là tin nhắn thật cần admin xử lý
 

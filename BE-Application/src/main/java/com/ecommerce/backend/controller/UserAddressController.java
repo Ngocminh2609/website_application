@@ -33,8 +33,8 @@ public class UserAddressController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UserAddressDTO> updateAddress(
-            Authentication authentication, 
-            @PathVariable Long id, 
+            Authentication authentication,
+            @PathVariable Long id,
             @RequestBody UserAddressDTO addressDTO) {
         String username = jwtUserResolver.getCurrentUser().getUsername();
         return ResponseEntity.ok(userAddressService.updateAddress(username, id, addressDTO));

@@ -57,7 +57,7 @@ public class User implements UserDetails {
     private String phone;
 
     private String role; // Mặc định là 'USER'
-    
+
     private String themePreference = "light"; // Mặc định là giao diện sáng
 
     @Column(name = "created_at", updatable = false)

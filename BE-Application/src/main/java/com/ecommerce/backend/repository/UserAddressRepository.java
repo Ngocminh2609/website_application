@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface UserAddressRepository extends JpaRepository<UserAddress, Long> {
-    
+
     /**
      * Lấy danh sách địa chỉ của một người dùng cụ thể.
      */

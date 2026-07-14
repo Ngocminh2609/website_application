@@ -108,7 +108,7 @@ public class Product {
 
     /**
      * Đồng bộ giá cuối cùng (price) dựa trên giá gốc và phần trăm giảm giá.
-     * Quy tắc: 
+     * Quy tắc:
      * 1. Nếu có discountPercent > 0: tính discountPrice = originalPrice * (100 - %) / 100.
      * 2. price luôn là giá cuối cùng khách phải trả.
      */

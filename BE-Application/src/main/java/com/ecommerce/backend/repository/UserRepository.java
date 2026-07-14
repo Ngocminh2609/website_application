@@ -13,10 +13,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Tìm kiếm người dùng theo email để phục vụ Google Login
     Optional<User> findByEmail(String email);
-    
+
     // Kiểm tra sự tồn tại của email để tránh đăng ký trùng lặp
     boolean existsByEmail(String email);
-    
+
     // Kiểm tra sự tồn tại của tên đăng nhập
     boolean existsByUsername(String username);
 }

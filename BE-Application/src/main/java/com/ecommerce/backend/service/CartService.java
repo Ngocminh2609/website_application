@@ -23,7 +23,7 @@ public class CartService {
     private final ProductRepository productRepository;
 
     /**
-     * Lấy giỏ hàng của người dùng hiện tại. 
+     * Lấy giỏ hàng của người dùng hiện tại.
      * Nếu chưa có thì tạo mới một giỏ trống.
      */
     public Cart getCartByUser(User user) {
@@ -69,7 +69,7 @@ public class CartService {
     @Transactional
     public Cart updateItemQuantity(User user, Long cartItemId, Integer quantity) {
         Cart cart = getCartByUser(user);
-        
+
         Optional<CartItem> itemOptional = cart.getItems().stream()
                 .filter(item -> item.getId().equals(cartItemId))
                 .findFirst();
@@ -94,7 +94,7 @@ public class CartService {
     @Transactional
     public Cart removeItemFromCart(User user, Long cartItemId) {
         Cart cart = getCartByUser(user);
-        
+
         // Tìm và xóa mục cụ thể trong danh sách của giỏ hàng
         boolean removed = cart.getItems().removeIf(item -> item.getId().equals(cartItemId));
 

@@ -18,7 +18,8 @@ public class ProductViewerController {
 
     /**
      * Thông báo rằng người dùng đã vào trang chi tiết sản phẩm.
-     * @param productId ID sản phẩm
+     *
+     * @param productId      ID sản phẩm
      * @param headerAccessor Header để lấy sessionId
      */
     @MessageMapping("/product/{productId}/view")

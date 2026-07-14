@@ -25,7 +25,7 @@ public class OrderController {
     public ResponseEntity<List<Order>> getOrdersByUser(@RequestParam String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
-        
+
         List<Order> orders = orderService.getOrdersByUserId(user.getId());
         return ResponseEntity.ok(orders);
     }

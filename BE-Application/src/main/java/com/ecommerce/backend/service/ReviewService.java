@@ -108,7 +108,7 @@ public class ReviewService {
     public void approveReview(Long reviewId) {
         ProductReview review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review không tồn tại"));
-        
+
         review.setIsApproved(true);
         reviewRepository.save(review);
 

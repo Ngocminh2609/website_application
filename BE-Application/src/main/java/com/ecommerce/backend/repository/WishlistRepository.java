@@ -13,13 +13,13 @@ import java.util.Optional;
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
     // Tìm danh sách yêu thích của một người dùng cụ thể
     List<Wishlist> findByUser(User user);
-    
+
     // Kiểm tra xem một sản phẩm đã có trong danh sách yêu thích của người dùng chưa
     Optional<Wishlist> findByUserAndProduct(User user, Product product);
-    
+
     // Xóa sản phẩm khỏi danh sách yêu thích
     void deleteByUserAndProduct(User user, Product product);
-    
+
     // Đếm số lượng sản phẩm trong danh sách yêu thích của người dùng
     long countByUser(User user);
 }

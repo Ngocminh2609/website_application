@@ -57,10 +57,10 @@ public class RecommendationService {
 
         // 3. Lấy sản phẩm từ các danh mục đó (không trùng với sản phẩm đã xem)
         List<Product> recommendations = new ArrayList<>(recentlyViewed);
-        
+
         if (!topCategories.isEmpty()) {
             List<Long> viewedIds = recentlyViewed.stream().map(Product::getId).toList();
-            
+
             // Tìm sản phẩm cùng danh mục nhưng chưa xem
             List<Product> similarProducts = productRepository.findByCategoryNameIn(topCategories, PageRequest.of(0, limit));
             for (Product p : similarProducts) {

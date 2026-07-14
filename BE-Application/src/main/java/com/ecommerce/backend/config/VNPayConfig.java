@@ -73,7 +73,7 @@ public class VNPayConfig {
         } catch (Exception e) {
             ipAddress = "127.0.0.1";
         }
-        
+
         if ("0:0:0:0:0:0:0:1".equals(ipAddress)) {
             ipAddress = "127.0.0.1";
         }
