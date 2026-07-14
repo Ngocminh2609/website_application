@@ -1,0 +1,170 @@
+import type { CSSProperties } from "react";
+
+export const styles = {
+  layout: {
+    background: "transparent",
+    minHeight: "100vh",
+    paddingTop: "300px",
+  } as CSSProperties,
+  emptyContainer: {
+    padding: "50px 20px",
+    textAlign: "center",
+  } as CSSProperties,
+  layoutActive: {
+    background: "transparent",
+    minHeight: "100vh",
+    paddingTop: "20px",
+  } as CSSProperties,
+  mainContent: {
+    padding: "40px 5%",
+  } as CSSProperties,
+  headerRow: {
+    marginBottom: "40px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  } as CSSProperties,
+  title: {
+    margin: 0,
+  } as CSSProperties,
+  scrollContainer: {
+    paddingBottom: "20px",
+  } as CSSProperties,
+  specsColumn: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+    paddingTop: "428px",
+  } as CSSProperties,
+  specRowHeader: {
+    height: "50px",
+    fontWeight: 700,
+    display: "flex",
+    alignItems: "center",
+    color: "var(--text-muted)",
+  } as CSSProperties,
+  specsSubheader: {
+    height: "50px",
+    display: "flex",
+    alignItems: "center",
+  } as CSSProperties,
+  specSubheaderText: {
+    fontSize: "0.8rem",
+    color: "var(--primary-color)",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+  } as CSSProperties,
+  specSubheaderLine: {
+    flex: 1,
+    height: "1px",
+    background: "var(--glass-border)",
+    marginLeft: "12px",
+  } as CSSProperties,
+  specRowName: {
+    minHeight: "60px",
+    fontWeight: 600,
+    color: "var(--text-muted)",
+    display: "flex",
+    alignItems: "center",
+    padding: "10px",
+  } as CSSProperties,
+  cardCoverWrapper: {
+    position: "relative",
+    overflow: "hidden",
+    height: "260px",
+    background: "var(--bg-secondary)",
+  } as CSSProperties,
+  deleteBtnContainer: {
+    position: "absolute",
+    top: "12px",
+    right: "12px",
+    zIndex: 3,
+  } as CSSProperties,
+  deleteBtn: {
+    background: "var(--glass-bg)",
+    border: "none",
+    backdropFilter: "blur(4px)",
+    color: "#ff4d4f",
+  } as CSSProperties,
+  productImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    transition: "transform 0.5s ease",
+  } as CSSProperties,
+  card: {
+    borderRadius: "20px",
+    overflow: "hidden",
+    height: "auto",
+    display: "flex",
+    flexDirection: "column",
+    background: "var(--glass-bg)",
+    border: "1px solid var(--glass-border)",
+    backdropFilter: "blur(10px)",
+  } as CSSProperties,
+  cardBody: {
+    padding: "20px",
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+  } as CSSProperties,
+  cardTitle: {
+    marginBottom: "16px",
+    color: "inherit",
+    fontSize: "1.1rem",
+    height: "2.8em",
+    overflow: "hidden",
+    fontWeight: 600,
+  } as CSSProperties,
+  cartBtn: {
+    height: "42px",
+    borderRadius: "10px",
+    fontWeight: 600,
+  } as CSSProperties,
+  dataContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+    marginTop: "20px",
+  } as CSSProperties,
+  priceText: {
+    height: "50px",
+    display: "flex",
+    alignItems: "center",
+    fontSize: "1.2rem",
+    fontWeight: 700,
+    color: "var(--primary-color)",
+  } as CSSProperties,
+  brandWrapper: {
+    height: "50px",
+    display: "flex",
+    alignItems: "center",
+  } as CSSProperties,
+  ratingWrapper: {
+    height: "50px",
+    display: "flex",
+    alignItems: "center",
+  } as CSSProperties,
+  ratingReviewCount: {
+    marginLeft: "8px",
+  } as CSSProperties,
+  dividerRow: {
+    height: "50px",
+    display: "flex",
+    alignItems: "center",
+  } as CSSProperties,
+  dividerLine: {
+    flex: 1,
+    height: "1px",
+    background: "var(--glass-border)",
+  } as CSSProperties,
+  specValueBox: {
+    minHeight: "60px",
+    display: "flex",
+    alignItems: "center",
+    padding: "10px",
+    background: "var(--bg-secondary)",
+    borderRadius: "8px",
+  } as CSSProperties,
+};

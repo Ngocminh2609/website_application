@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Typography,
   Form,
@@ -18,18 +18,13 @@ import {
   UploadOutlined,
   CameraOutlined,
 } from "@ant-design/icons";
-import type { UploadProps } from "antd";
 import type { User } from "../../types/auth";
-import { userApi } from "../../api/userApi";
-import { fileApi } from "../../api/fileApi";
-import { useLocation } from "react-router-dom";
-import { ROLES } from "../../components/common/roles";
-import { notification } from "../../utils/notification";
+import { ROLES } from "../../components/common/Roles";
 import BaseButton from "../../components/common/BaseButton";
-import {
-  PROFILE_CARD_STYLE,
-  PROFILE_INPUT_STYLE,
-} from "../../styles/commonStyles";
+import { PROFILE_INPUT_STYLE } from "../../styles/commonStyles";
+import { useProfilePage } from "../../hooks/Profile/useProfilePage";
+import { styles } from "./styles/profile-page.styles";
+import { PROFILE_STRINGS } from "../../constants/Profile/profile";
 
 const { Title, Text } = Typography;
 
@@ -42,255 +37,96 @@ interface ProfilePageProps {
  * Tách form thành 2 tab để tránh submit chung gây nhầm lẫn giữa đổi info và đổi password.
  */
 const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
-  const [profileForm] = Form.useForm();
-  const [passwordForm] = Form.useForm();
-  const location = useLocation();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [savingPassword, setSavingPassword] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>();
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await userApi.getProfile();
-        setUser(data);
-        setAvatarUrl(data.avatarUrl);
-        profileForm.setFieldsValue({
-          fullName: data.fullName,
-          email: data.email,
-          phone: data.phone,
-          username: data.username,
-        });
-      } catch {
-        notification.error("Không thể tải thông tin hồ sơ");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
-  }, [profileForm, location.key]);
-
-  const handleSaveProfile = async (values: {
-    fullName: string;
-    email: string;
-    phone: string;
-  }) => {
-    setSavingProfile(true);
-    try {
-      const updated = await userApi.updateProfile({ ...values, avatarUrl });
-      // Đồng bộ lại localStorage và notify App để Navbar render lại ngay lập tức
-      const savedUser = localStorage.getItem("user");
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        localStorage.setItem("user", JSON.stringify({ ...parsed, ...updated }));
-      }
-      setUser(updated);
-      onUserUpdate(updated);
-      notification.success("Cập nhật hồ sơ thành công");
-    } catch (err: unknown) {
-      notification.error(
-        err instanceof Error ? err.message : "Cập nhật thất bại",
-      );
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
-  const handleChangePassword = async (values: {
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-  }) => {
-    if (values.newPassword !== values.confirmPassword) {
-      notification.error("Mật khẩu xác nhận không khớp");
-      return;
-    }
-    setSavingPassword(true);
-    try {
-      await userApi.changePassword({
-        currentPassword: values.currentPassword,
-        newPassword: values.newPassword,
-      });
-      notification.success("Đổi mật khẩu thành công");
-      passwordForm.resetFields();
-    } catch (err: unknown) {
-      notification.error(
-        err instanceof Error ? err.message : "Đổi mật khẩu thất bại",
-      );
-    } finally {
-      setSavingPassword(false);
-    }
-  };
-
-  // Upload ảnh đại diện: tải lên storage rồi lưu ngay vào DB, không cần bấm Lưu thay đổi
-  const uploadProps: UploadProps = {
-    showUploadList: false,
-    accept: "image/*",
-    beforeUpload: async (file) => {
-      setUploadingAvatar(true);
-      try {
-        const res = await fileApi.uploadImage(file, "user");
-        // Lưu ngay vào DB để tránh mất ảnh nếu người dùng không bấm Lưu thay đổi
-        await userApi.updateProfile({ avatarUrl: res.url });
-        setAvatarUrl(res.url);
-        onUserUpdate({ avatarUrl: res.url });
-        const savedUser = localStorage.getItem("user");
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser);
-          localStorage.setItem(
-            "user",
-            JSON.stringify({ ...parsed, avatarUrl: res.url }),
-          );
-        }
-        notification.success("Cập nhật ảnh đại diện thành công");
-      } catch {
-        notification.error("Tải ảnh lên thất bại");
-      } finally {
-        setUploadingAvatar(false);
-      }
-      return false; // Ngăn ant design tự upload
-    },
-  };
+  const {
+    profileForm,
+    passwordForm,
+    user,
+    loading,
+    savingProfile,
+    savingPassword,
+    avatarUrl,
+    setAvatarUrl,
+    uploadingAvatar,
+    handleSaveProfile,
+    handleChangePassword,
+    uploadProps,
+  } = useProfilePage(onUserUpdate);
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "60vh",
-        }}
-      >
+      <div style={styles.loadingContainer}>
         <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div
-      className="main-content animate-fade-in"
-      style={{
-        paddingTop: "100px",
-        paddingBottom: "80px",
-        color: "var(--text-main)",
-      }}
-    >
+    <div className="main-content animate-fade-in" style={styles.pageContainer}>
       {/* Header */}
-      <div style={{ marginBottom: "48px" }}>
-        <Text
-          style={{
-            color: "var(--primary-color)",
-            fontWeight: 700,
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            fontSize: "0.85rem",
-          }}
-        >
-          TÀI KHOẢN CỦA TÔI
+      <div style={styles.headerWrapper}>
+        <Text style={styles.headerSub}>
+          {PROFILE_STRINGS.accountMy}
         </Text>
-        <Title
-          level={2}
-          style={{
-            color: "var(--text-main)",
-            margin: "8px 0 0",
-            fontWeight: 800,
-          }}
-        >
-          Hồ Sơ Cá Nhân
+        <Title level={2} style={styles.headerTitle}>
+          {PROFILE_STRINGS.profileTitle}
         </Title>
       </div>
 
       <Row gutter={[48, 48]}>
         {/* Cột trái: Avatar + thông tin nhanh */}
         <Col xs={24} lg={7}>
-          <div style={{ ...PROFILE_CARD_STYLE, textAlign: "center" }}>
-            <div
-              style={{
-                position: "relative",
-                display: "inline-block",
-                marginBottom: "24px",
-              }}
-            >
+          <div style={styles.leftCard}>
+            <div style={styles.avatarWrapper}>
               <Avatar
                 size={120}
                 src={avatarUrl}
                 icon={!avatarUrl && <UserOutlined />}
-                style={{ background: "var(--primary-color)", fontSize: "48px" }}
+                style={styles.avatar}
                 onError={() => {
                   setAvatarUrl(undefined);
                   return false;
                 }}
               />
               <Upload {...uploadProps}>
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    right: 0,
-                    width: "36px",
-                    height: "36px",
-                    background: "var(--primary-color)",
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    border: "2px solid #0f172a",
-                  }}
-                >
+                <div style={styles.cameraBtn}>
                   {uploadingAvatar ? (
                     <Spin size="small" />
                   ) : (
-                    <CameraOutlined
-                      style={{ color: "#fff", fontSize: "16px" }}
-                    />
+                    <CameraOutlined style={styles.cameraIcon} />
                   )}
                 </div>
               </Upload>
             </div>
 
-            <Title
-              level={4}
-              style={{ color: "var(--text-main)", margin: "0 0 4px" }}
-            >
+            <Title level={4} style={styles.userNameText}>
               {user?.fullName || user?.username}
             </Title>
-            <Text style={{ color: "var(--text-muted)" }}>{user?.email}</Text>
+            <Text style={styles.userEmailText}>{user?.email}</Text>
 
-            <Divider
-              style={{ borderColor: "var(--glass-border)", margin: "24px 0" }}
-            />
+            <Divider style={styles.divider} />
 
-            <div style={{ textAlign: "left" }}>
+            <div style={styles.infoContainer}>
               {[
-                { label: "Tên đăng nhập", value: user?.username },
+                { label: PROFILE_STRINGS.labelUsername, value: user?.username },
                 {
-                  label: "Vai trò",
+                  label: PROFILE_STRINGS.labelRole,
                   value:
-                    user?.role === ROLES.ADMIN ? "Quản trị viên" : "Người dùng",
+                    user?.role === ROLES.ADMIN
+                      ? PROFILE_STRINGS.roleAdmin
+                      : PROFILE_STRINGS.roleUser,
                 },
                 {
-                  label: "Ngày tham gia",
+                  label: PROFILE_STRINGS.labelJoinedDate,
                   value: user?.createdAt
                     ? new Date(user.createdAt).toLocaleDateString("vi-VN")
                     : "-",
                 },
               ].map((item) => (
-                <div key={item.label} style={{ marginBottom: "16px" }}>
-                  <Text
-                    style={{
-                      color: "var(--text-muted)",
-                      fontSize: "0.8rem",
-                      display: "block",
-                    }}
-                  >
+                <div key={item.label} style={styles.infoItem}>
+                  <Text style={styles.infoItemLabel}>
                     {item.label}
                   </Text>
-                  <Text style={{ color: "var(--text-main)", fontWeight: 500 }}>
+                  <Text style={styles.infoItemValue}>
                     {item.value}
                   </Text>
                 </div>
@@ -300,18 +136,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
             <Upload {...uploadProps}>
               <BaseButton
                 icon={<UploadOutlined />}
-                style={{
-                  width: "100%",
-                  marginTop: "8px",
-                  background: "var(--glass-bg)",
-                  borderColor: "var(--glass-border)",
-                  color: "var(--text-main)",
-                  height: "42px",
-                  borderRadius: "10px",
-                }}
+                style={styles.uploadBtn}
                 loading={uploadingAvatar}
               >
-                Thay ảnh đại diện
+                {PROFILE_STRINGS.changeAvatarBtn}
               </BaseButton>
             </Upload>
           </div>
@@ -319,16 +147,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
 
         {/* Cột phải: Tabs form */}
         <Col xs={24} lg={17}>
-          <div style={PROFILE_CARD_STYLE}>
+          <div style={styles.leftCard}>
             <Tabs
               defaultActiveKey="profile"
               items={[
                 {
                   key: "profile",
                   label: (
-                    <span style={{ color: "inherit" }}>
-                      <EditOutlined style={{ marginRight: "8px" }} />
-                      Thông tin cá nhân
+                    <span style={styles.tabLabelText}>
+                      <EditOutlined style={styles.tabLabelIcon} />
+                      {PROFILE_STRINGS.tabProfile}
                     </span>
                   ),
                   children: (
@@ -336,35 +164,35 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                       form={profileForm}
                       layout="vertical"
                       onFinish={handleSaveProfile}
-                      style={{ marginTop: "24px" }}
+                      style={styles.profileForm}
                     >
                       <Row gutter={[24, 0]}>
                         <Col xs={24} md={12}>
                           <Form.Item
                             label={
-                              <Text style={{ color: "var(--text-main)" }}>
-                                Tên đầy đủ
+                              <Text style={styles.formItemLabel}>
+                                {PROFILE_STRINGS.inputFullName}
                               </Text>
                             }
                             name="fullName"
                             rules={[
                               {
                                 required: true,
-                                message: "Vui lòng nhập họ tên",
+                                message: PROFILE_STRINGS.validation.fullNameRequired,
                               },
                             ]}
                           >
                             <Input
                               style={PROFILE_INPUT_STYLE}
-                              placeholder="Nguyễn Văn A"
+                              placeholder={PROFILE_STRINGS.placeholders.fullName}
                             />
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
                           <Form.Item
                             label={
-                              <Text style={{ color: "var(--text-main)" }}>
-                                Tên đăng nhập
+                              <Text style={styles.formItemLabel}>
+                                {PROFILE_STRINGS.labelUsername}
                               </Text>
                             }
                             name="username"
@@ -372,8 +200,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                             <Input
                               style={{
                                 ...PROFILE_INPUT_STYLE,
-                                opacity: 0.5,
-                                cursor: "not-allowed",
+                                ...styles.disabledInput,
                               }}
                               disabled
                             />
@@ -382,67 +209,59 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                         <Col xs={24} md={12}>
                           <Form.Item
                             label={
-                              <Text style={{ color: "var(--text-main)" }}>
-                                Email
+                              <Text style={styles.formItemLabel}>
+                                {PROFILE_STRINGS.inputEmail}
                               </Text>
                             }
                             name="email"
                             rules={[
                               {
                                 required: true,
-                                message: "Vui lòng nhập email",
+                                message: PROFILE_STRINGS.validation.emailRequired,
                               },
-                              { type: "email", message: "Email không hợp lệ" },
+                              {
+                                type: "email",
+                                message: PROFILE_STRINGS.validation.emailInvalid,
+                              },
                             ]}
                           >
                             <Input
                               style={PROFILE_INPUT_STYLE}
-                              placeholder="example@email.com"
+                              placeholder={PROFILE_STRINGS.placeholders.email}
                             />
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
                           <Form.Item
                             label={
-                              <Text style={{ color: "var(--text-main)" }}>
-                                Số điện thoại
+                              <Text style={styles.formItemLabel}>
+                                {PROFILE_STRINGS.inputPhone}
                               </Text>
                             }
                             name="phone"
                             rules={[
                               {
                                 pattern: /^[0-9]{9,11}$/,
-                                message: "Số điện thoại không hợp lệ",
+                                message: PROFILE_STRINGS.validation.phoneInvalid,
                               },
                             ]}
                           >
                             <Input
                               style={PROFILE_INPUT_STYLE}
-                              placeholder="0901234567"
+                              placeholder={PROFILE_STRINGS.placeholders.phone}
                             />
                           </Form.Item>
                         </Col>
                       </Row>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "flex-end",
-                          marginTop: "8px",
-                        }}
-                      >
+                      <div style={styles.submitBtnWrapper}>
                         <BaseButton
                           type="primary"
                           htmlType="submit"
                           loading={savingProfile}
-                          style={{
-                            height: "46px",
-                            padding: "0 40px",
-                            borderRadius: "12px",
-                            fontWeight: 600,
-                          }}
+                          style={styles.profileSubmitBtn}
                         >
-                          Lưu thay đổi
+                          {PROFILE_STRINGS.submitSaveProfile}
                         </BaseButton>
                       </div>
                     </Form>
@@ -451,9 +270,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                 {
                   key: "password",
                   label: (
-                    <span style={{ color: "inherit" }}>
-                      <LockOutlined style={{ marginRight: "8px" }} />
-                      Đổi mật khẩu
+                    <span style={styles.tabLabelText}>
+                      <LockOutlined style={styles.tabLabelIcon} />
+                      {PROFILE_STRINGS.tabPassword}
                     </span>
                   ),
                   children: (
@@ -461,69 +280,69 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                       form={passwordForm}
                       layout="vertical"
                       onFinish={handleChangePassword}
-                      style={{ marginTop: "24px", maxWidth: "480px" }}
+                      style={styles.passwordForm}
                     >
                       <Form.Item
                         label={
-                          <Text style={{ color: "var(--text-main)" }}>
-                            Mật khẩu hiện tại
+                          <Text style={styles.formItemLabel}>
+                            {PROFILE_STRINGS.inputCurrentPassword}
                           </Text>
                         }
                         name="currentPassword"
                         rules={[
                           {
                             required: true,
-                            message: "Vui lòng nhập mật khẩu hiện tại",
+                            message: PROFILE_STRINGS.validation.currentPasswordRequired,
                           },
                         ]}
                       >
                         <Input.Password
                           style={PROFILE_INPUT_STYLE}
-                          placeholder="Nhập mật khẩu hiện tại"
+                          placeholder={PROFILE_STRINGS.placeholders.currentPassword}
                         />
                       </Form.Item>
 
                       <Form.Item
                         label={
-                          <Text style={{ color: "var(--text-main)" }}>
-                            Mật khẩu mới
+                          <Text style={styles.formItemLabel}>
+                            {PROFILE_STRINGS.inputNewPassword}
                           </Text>
                         }
                         name="newPassword"
                         rules={[
                           {
                             required: true,
-                            message: "Vui lòng nhập mật khẩu mới",
+                            message: PROFILE_STRINGS.validation.newPasswordRequired,
                           },
                           {
                             min: 6,
-                            message: "Mật khẩu phải có ít nhất 6 ký tự",
+                            message: PROFILE_STRINGS.validation.newPasswordMinLen,
                           },
                         ]}
                       >
                         <Input.Password
                           style={PROFILE_INPUT_STYLE}
-                          placeholder="Tối thiểu 6 ký tự"
+                          placeholder={PROFILE_STRINGS.placeholders.newPassword}
                         />
                       </Form.Item>
 
                       <Form.Item
                         label={
-                          <Text style={{ color: "var(--text-main)" }}>
-                            Xác nhận mật khẩu mới
+                          <Text style={styles.formItemLabel}>
+                            {PROFILE_STRINGS.inputConfirmPassword}
                           </Text>
                         }
                         name="confirmPassword"
                         rules={[
                           {
                             required: true,
-                            message: "Vui lòng xác nhận mật khẩu",
+                            message: PROFILE_STRINGS.validation.confirmPasswordRequired,
                           },
                         ]}
                       >
                         <Input.Password
                           style={PROFILE_INPUT_STYLE}
-                          placeholder="Nhập lại mật khẩu mới"
+                          placeholder={PROFILE_STRINGS.placeholders.confirmPassword}
                         />
                       </Form.Item>
 
@@ -531,14 +350,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                         type="primary"
                         htmlType="submit"
                         loading={savingPassword}
-                        style={{
-                          height: "46px",
-                          padding: "0 40px",
-                          borderRadius: "12px",
-                          fontWeight: 600,
-                        }}
+                        style={styles.passwordSubmitBtn}
                       >
-                        Cập nhật mật khẩu
+                        {PROFILE_STRINGS.submitChangePassword}
                       </BaseButton>
                     </Form>
                   ),

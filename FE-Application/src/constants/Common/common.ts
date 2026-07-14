@@ -52,4 +52,9 @@ export const COMMON_STRINGS = {
     adminLabel: "Tư vấn viên",
     typingText: "typing...",
   },
+  offlinePage: {
+    title: "Mất kết nối internet",
+    subtitle: "Bạn đang ở chế độ ngoại tuyến. Một số tính năng có thể không khả dụng. Vui lòng kiểm tra lại đường truyền.",
+    retryBtn: "Thử lại",
+  },
 };

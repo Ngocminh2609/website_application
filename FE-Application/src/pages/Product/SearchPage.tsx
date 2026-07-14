@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   Layout,
   Typography,
@@ -19,11 +19,12 @@ import {
   RocketOutlined,
   HomeOutlined,
 } from "@ant-design/icons";
-import { useSearchParams, Link, useLocation } from "react-router-dom";
-import { productApi } from "../../api/productApi";
-import { useProducts } from "../../hooks/Product/useProducts";
-import type { Product } from "../../types/product";
+import { Link } from "react-router-dom";
+import { useSearchPage } from "../../hooks/Product/useSearchPage";
 import ProductCard from "../../components/common/ProductCard";
+import { getUniqueBrands, filterProducts } from "./helper";
+import { styles } from "./styles/search-page.styles";
+import { PRODUCT_STRINGS } from "../../constants/Product/product";
 
 const { Title, Text } = Typography;
 
@@ -32,109 +33,44 @@ const { Title, Text } = Typography;
  * Hỗ trợ tìm kiếm thời gian thực qua URL và lọc kết quả thông minh.
  */
 const SearchPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const location = useLocation();
-  const query = searchParams.get("q") || "";
+  const {
+    query,
+    categories,
+    products,
+    loading,
+    selectedBrands,
+    setSelectedBrands,
+    selectedCategories,
+    setSelectedCategories,
+    priceRange,
+    setPriceRange,
+  } = useSearchPage();
 
-  const { categories, initializeHomeData } = useProducts();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // Trạng thái bộ lọc
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([
-    0, 100000000,
-  ]);
-
-  useEffect(() => {
-    const fetchSearchResults = async () => {
-      if (!query) {
-        setProducts([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        // Nếu query là số, thử tìm theo ID trước để hỗ trợ khách hàng tìm kiếm chính xác
-        const isNumeric = /^\d+$/.test(query);
-        let searchData: Product[] = [];
-
-        if (isNumeric) {
-          try {
-            const productById = await productApi.getProductById(
-              parseInt(query),
-            );
-            if (productById) searchData = [productById];
-          } catch {
-            // Nếu không tìm thấy theo ID thì bỏ qua để tìm theo tên
-          }
-        }
-
-        // Luôn tìm kiếm theo tên để mở rộng kết quả
-        const resultsByName = await productApi.searchProducts(query);
-
-        // Kết hợp kết quả (loại bỏ trùng lặp nếu có)
-        const combined = [...searchData];
-        resultsByName.forEach((p) => {
-          if (!combined.some((cp) => cp.id === p.id)) {
-            combined.push(p);
-          }
-        });
-
-        setProducts(combined);
-
-        // Đảm bảo categories được load cho sidebar
-        await initializeHomeData();
-      } catch (error) {
-        console.error("Lỗi khi tìm kiếm sản phẩm:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSearchResults();
-  }, [query, initializeHomeData, location.key]);
+  const strings = PRODUCT_STRINGS.searchPage;
 
   // Trích xuất danh sách thương hiệu duy nhất từ kết quả
   const brands = useMemo(() => {
-    const uniqueBrands = new Set(
-      products.map((p) => p.brand).filter(Boolean) as string[],
-    );
-    return Array.from(uniqueBrands);
+    return getUniqueBrands(products);
   }, [products]);
 
   // Logic lọc sản phẩm tại Client
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      const matchBrand =
-        selectedBrands.length === 0 ||
-        (p.brand && selectedBrands.includes(p.brand));
-      const matchCategory =
-        selectedCategories.length === 0 ||
-        (p.category && selectedCategories.includes(p.category.id));
-      const matchPrice = p.price >= priceRange[0] && p.price <= priceRange[1];
-      return matchBrand && matchCategory && matchPrice;
-    });
+    return filterProducts(
+      products,
+      selectedBrands,
+      selectedCategories,
+      priceRange,
+    );
   }, [products, selectedBrands, selectedCategories, priceRange]);
 
   if (loading) {
     return (
-      <div
-        style={{ textAlign: "center", padding: "150px 0", minHeight: "100vh" }}
-      >
+      <div style={styles.loadingContainer}>
         <Spin
           size="large"
           tip={
-            <Text
-              style={{
-                color: "var(--text-muted)",
-                marginTop: "20px",
-                display: "block",
-              }}
-            >
-              Vũ trụ Tech Nova đang tìm kiếm...
+            <Text style={styles.loadingText}>
+              {strings.loading}
             </Text>
           }
         />
@@ -143,104 +79,69 @@ const SearchPage: React.FC = () => {
   }
 
   return (
-    <Layout
-      style={{
-        background: "transparent",
-        minHeight: "100vh",
-        paddingTop: "100px",
-      }}
-    >
+    <Layout style={styles.layout}>
       <div className="main-content">
         {/* BREADCRUMB */}
         <Breadcrumb
           items={[
             {
               title: (
-                <Link to="/">
+                <Link to="/" style={styles.breadcrumbLink}>
                   <HomeOutlined /> Trang chủ
                 </Link>
               ),
             },
             {
               title: (
-                <span style={{ color: "var(--text-main)" }}>
+                <span style={styles.breadcrumbActive}>
                   Tìm kiếm: "{query}"
                 </span>
               ),
             },
           ]}
-          style={{ marginBottom: "24px" }}
+          style={styles.breadcrumbContainer}
         />
 
         <Row gutter={[40, 40]}>
           {/* BỘ LỌC (SIDEBAR) */}
           <Col xs={24} lg={6}>
-            <div style={{ position: "sticky", top: "100px" }}>
+            <div style={styles.sidebarWrapper}>
               <Card
                 title={
-                  <Title
-                    level={4}
-                    style={{ margin: 0, color: "var(--text-main)" }}
-                  >
-                    <FilterOutlined /> LỌC KẾT QUẢ
+                  <Title level={4} style={styles.filterCardTitle}>
+                    <FilterOutlined /> {strings.filterTitle}
                   </Title>
                 }
                 className="glass-effect"
                 bordered={false}
-                styles={{ body: { padding: "24px" } }}
+                styles={{ body: styles.filterCardBody }}
               >
-                <Space
-                  direction="vertical"
-                  size="large"
-                  style={{ width: "100%" }}
-                >
+                <Space direction="vertical" size="large" style={styles.fullWidthSpace}>
                   {brands.length > 0 && (
                     <div>
-                      <Text
-                        strong
-                        style={{
-                          color: "var(--text-main)",
-                          display: "block",
-                          marginBottom: "15px",
-                        }}
-                      >
-                        THƯƠNG HIỆU
+                      <Text strong style={styles.filterSectionTitle}>
+                        {strings.brandLabel}
                       </Text>
                       <Checkbox.Group
                         options={brands}
                         value={selectedBrands}
                         onChange={(vals) => setSelectedBrands(vals as string[])}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "8px",
-                        }}
+                        style={styles.checkboxGroup}
                         className="premium-checkbox"
                       />
                     </div>
                   )}
 
                   <div>
-                    <Text
-                      strong
-                      style={{
-                        color: "var(--text-main)",
-                        display: "block",
-                        marginBottom: "15px",
-                      }}
-                    >
-                      CHUYÊN MỤC
+                    <Text strong style={styles.filterSectionTitle}>
+                      {strings.categoryLabel}
                     </Text>
                     <Checkbox.Group
                       value={selectedCategories}
                       onChange={(vals) =>
                         setSelectedCategories(vals as number[])
                       }
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                      }}
+                      style={styles.checkboxGroup}
                       className="premium-checkbox"
                     >
                       {categories.map((cat) => (
@@ -256,15 +157,8 @@ const SearchPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <Text
-                      strong
-                      style={{
-                        color: "var(--text-main)",
-                        display: "block",
-                        marginBottom: "15px",
-                      }}
-                    >
-                      KHOẢNG GIÁ (VND)
+                    <Text strong style={styles.filterSectionTitle}>
+                      {strings.priceRangeLabel}
                     </Text>
                     <Slider
                       range
@@ -273,29 +167,13 @@ const SearchPage: React.FC = () => {
                       step={1000000}
                       value={priceRange}
                       onChange={(val) => setPriceRange(val as [number, number])}
-                      trackStyle={[{ backgroundColor: "var(--primary-color)" }]}
+                      trackStyle={[styles.sliderTrack]}
                     />
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginTop: "8px",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "var(--primary-color)",
-                          fontWeight: 600,
-                        }}
-                      >
+                    <div style={styles.sliderPriceRow}>
+                      <Text style={styles.sliderPriceText}>
                         {priceRange[0].toLocaleString()} ₫
                       </Text>
-                      <Text
-                        style={{
-                          color: "var(--primary-color)",
-                          fontWeight: 600,
-                        }}
-                      >
+                      <Text style={styles.sliderPriceText}>
                         {priceRange[1].toLocaleString()} ₫
                       </Text>
                     </div>
@@ -307,31 +185,13 @@ const SearchPage: React.FC = () => {
 
           {/* DANH SÁCH KẾT QUẢ */}
           <Col xs={24} lg={18}>
-            <div
-              style={{
-                marginBottom: "40px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-end",
-              }}
-            >
+            <div style={styles.headerRow}>
               <div>
-                <Title
-                  level={2}
-                  style={{
-                    color: "var(--text-main)",
-                    margin: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                  }}
-                >
+                <Title level={2} style={styles.headerTitle}>
                   <SearchOutlined style={{ color: "var(--primary-color)" }} />
-                  Kết quả tìm kiếm
+                  {strings.titlePrefix}
                 </Title>
-                <Text
-                  style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}
-                >
+                <Text style={styles.headerSubtitle}>
                   Tìm thấy <b>{filteredProducts.length}</b> sản phẩm cho từ khóa
                   "<b>{query}</b>"
                 </Text>
@@ -353,29 +213,15 @@ const SearchPage: React.FC = () => {
                 ))}
               </Row>
             ) : (
-              <div
-                style={{
-                  padding: "100px 40px",
-                  textAlign: "center",
-                  background: "var(--glass-bg)",
-                  border: "1px solid var(--glass-border)",
-                  borderRadius: "32px",
-                }}
-              >
+              <div style={styles.emptyResultContainer}>
                 <Empty
                   image={Empty.PRESENTED_IMAGE_DEFAULT}
                   description={
                     <Space direction="vertical" size="small">
-                      <Text
-                        style={{
-                          color: "var(--text-main)",
-                          fontSize: "1.2rem",
-                          fontWeight: 600,
-                        }}
-                      >
+                      <Text style={styles.emptyTitle}>
                         Rất tiếc, Tech Nova không tìm thấy sản phẩm nào!
                       </Text>
-                      <Text style={{ color: "var(--text-muted)" }}>
+                      <Text style={styles.emptySubtitle}>
                         Hãy thử điều chỉnh lại từ khóa hoặc bộ lọc để có kết quả
                         tốt hơn.
                       </Text>

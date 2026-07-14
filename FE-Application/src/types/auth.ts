@@ -1,3 +1,5 @@
+import { ROLES } from "../components/common/Roles";
+
 /**
  * Định nghĩa cấu trúc dữ liệu cho người dùng.
  */
@@ -8,7 +10,7 @@ export interface User {
   fullName: string;
   avatarUrl?: string;
   phone?: string;
-  role: "USER" | "ADMIN";
+  role: typeof ROLES.USER | typeof ROLES.ADMIN;
   themePreference?: "light" | "dark";
   createdAt?: string;
 }

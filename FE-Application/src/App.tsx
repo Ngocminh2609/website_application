@@ -35,7 +35,7 @@ import CompareBar from "./components/common/CompareBar";
 import ComparePage from "./pages/Product/ComparePage";
 import ReloadPrompt from "./components/pwa/ReloadPrompt";
 import ScrollToTop from "./components/common/ScrollToTop";
-import { ROLES } from "./components/common/roles";
+import { ROLES } from "./components/common/Roles";
 
 // Thay thế bằng Client ID của bạn từ Google Cloud Console
 const GOOGLE_CLIENT_ID =

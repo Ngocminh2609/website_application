@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Typography, Row, Col, Space, Divider, Spin, Carousel } from "antd";
 import {
     ThunderboltFilled,
@@ -6,16 +6,14 @@ import {
     StarFilled,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { useProducts } from "../../hooks/Product/useProducts";
-import type { Product } from "../../types/product";
-import type { Banner } from "../../types/banner";
-import { bannerApi } from "../../api/bannerApi";
 import ProductCard from "../../components/common/ProductCard";
 import BaseButton from "../../components/common/BaseButton";
 import PersonalizedRecommendations from "../../components/common/PersonalizedRecommendations";
-import { getDisplayProducts, formatBrandsData, resolveBanners } from "./helper";
+import { getDisplayProducts } from "./helper";
 import { styles } from "./styles/home-page.styles";
 import { HOME_STRINGS } from "../../constants/Home/home-page";
+
+import { useHomePage } from "../../hooks/Home/useHomePage";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -29,48 +27,14 @@ const HomePage: React.FC = () => {
         flashSales,
         bestSellers,
         categories,
-        loading: productLoading,
-        initializeHomeData,
-        fetchProductsByBrand,
-    } = useProducts();
-    const [brandsData, setBrandsData] = useState<
-        { id: string; name: string; products: Product[] }[]
-    >([]);
-    const [banners, setBanners] = useState<Banner[]>([]);
-    const [loadingBrands, setLoadingBrands] = useState<boolean>(true);
+        productLoading,
+        brandsData,
+        banners,
+        loadingBrands,
+    } = useHomePage();
 
     const displayFlashSales = getDisplayProducts(flashSales, "Flash Sale");
     const displayBestSellers = getDisplayProducts(bestSellers, "Bán Chạy", 5);
-
-    useEffect(() => {
-        const fetchHomeData = async () => {
-            try {
-                setLoadingBrands(true);
-                // Khởi tạo các danh sách chính (Flash Sale, Best Seller, Categories) từ Context để tránh gọi trùng
-                await initializeHomeData();
-
-                // Sử dụng hàm từ context để đảm bảo cơ chế Single Flight (không gọi trùng lặp Apple/Samsung)
-                const [apple, samsung, activeBanners] = await Promise.all([
-                    fetchProductsByBrand("Apple"),
-                    fetchProductsByBrand("Samsung"),
-                    bannerApi.getActiveBanners().catch((err) => {
-                        console.error("Lỗi khi tải banners:", err);
-                        return [];
-                    }),
-                ]);
-
-                setBrandsData(formatBrandsData(apple, samsung));
-                setBanners(resolveBanners(activeBanners));
-            } catch (error) {
-                console.error("Lỗi khi tải trang chủ:", error);
-            } finally {
-                setLoadingBrands(false);
-            }
-        };
-
-        fetchHomeData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Chỉ chạy 1 lần khi mount - initializeHomeData & fetchProductsByBrand là useCallback ổn định
 
     if (productLoading || loadingBrands) {
         return (

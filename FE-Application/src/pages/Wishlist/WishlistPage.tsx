@@ -1,11 +1,12 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Row, Col, Typography, Empty, Breadcrumb, Button } from "antd";
 import { HeartFilled, DeleteOutlined, HomeOutlined } from "@ant-design/icons";
-import { useWishlist } from "../../hooks/Wishlist/useWishlist";
+import { useWishlistPage } from "../../hooks/Wishlist/useWishlistPage";
 import type { Product } from "../../types/product";
 import ProductCard from "../../components/common/ProductCard";
-import { Link, useLocation } from "react-router-dom";
-import { WISHLIST_EMPTY_CARD_STYLE } from "../../styles/commonStyles";
+import { Link } from "react-router-dom";
+import { styles } from "./styles/wishlist-page.styles";
+import { WISHLIST_STRINGS } from "../../constants/Wishlist/wishlist";
 
 const { Title, Text } = Typography;
 
@@ -13,69 +14,44 @@ const { Title, Text } = Typography;
  * WishlistPage - Trang hiển thị danh sách sản phẩm yêu thích của người dùng.
  */
 const WishlistPage: React.FC = () => {
-  const { wishlistItems, removeFromWishlist, refreshWishlist } = useWishlist();
-  const location = useLocation();
-
-  useEffect(() => {
-    refreshWishlist();
-  }, [refreshWishlist, location.key]);
+  const { wishlistItems, removeFromWishlist } = useWishlistPage();
 
   return (
     <div className="main-content">
-      <Breadcrumb style={{ marginBottom: "24px" }}>
+      <Breadcrumb style={styles.breadcrumb}>
         <Breadcrumb.Item>
           <Link to="/">
-            <HomeOutlined /> Trang chủ
+            <HomeOutlined /> {WISHLIST_STRINGS.breadcrumbHome}
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <span style={{ color: "var(--text-main)" }}>Danh sách yêu thích</span>
+          <span style={styles.breadcrumbActive}>
+            {WISHLIST_STRINGS.breadcrumbWishlist}
+          </span>
         </Breadcrumb.Item>
       </Breadcrumb>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          marginBottom: "40px",
-        }}
-      >
-        <HeartFilled style={{ fontSize: "36px", color: "#f43f5e" }} />
-        <Title level={1} style={{ margin: 0, color: "var(--text-main)" }}>
-          Danh sách yêu thích
+      <div style={styles.headerRow}>
+        <HeartFilled style={styles.headerIcon} />
+        <Title level={1} style={styles.headerTitle}>
+          {WISHLIST_STRINGS.title}
         </Title>
-        <Text
-          style={{
-            fontSize: "18px",
-            marginLeft: "auto",
-            color: "var(--text-muted)",
-          }}
-        >
-          ({wishlistItems.length} sản phẩm)
+        <Text style={styles.headerCount}>
+          ({wishlistItems.length} {WISHLIST_STRINGS.productCountSuffix})
         </Text>
       </div>
 
       {wishlistItems.length === 0 ? (
-        <div style={WISHLIST_EMPTY_CARD_STYLE}>
+        <div style={styles.emptyCard}>
           <Empty
             image={Empty.PRESENTED_IMAGE_DEFAULT}
             description={
-              <div style={{ marginTop: "24px" }}>
-                <Text
-                  style={{
-                    fontSize: "20px",
-                    display: "block",
-                    marginBottom: "12px",
-                    color: "var(--text-main)",
-                    fontWeight: 600,
-                  }}
-                >
-                  Danh sách yêu thích hiện đang trống
+              <div style={styles.emptyDescriptionWrapper}>
+                <Text style={styles.emptyTitle}>
+                  {WISHLIST_STRINGS.emptyTitle}
                 </Text>
-                <Text style={{ color: "var(--text-muted)", fontSize: "16px" }}>
-                  Hãy thêm những sản phẩm bạn yêu thích để dễ dàng mua sắm sau
-                  này.
+                <Text style={styles.emptySubtitle}>
+                  {WISHLIST_STRINGS.emptySubtitle}
                 </Text>
               </div>
             }
@@ -84,9 +60,9 @@ const WishlistPage: React.FC = () => {
               <Button
                 type="primary"
                 size="large"
-                style={{ marginTop: "24px", borderRadius: "8px" }}
+                style={styles.continueShoppingBtn}
               >
-                Tiếp tục mua sắm
+                {WISHLIST_STRINGS.continueShopping}
               </Button>
             </Link>
           </Empty>
@@ -103,25 +79,15 @@ const WishlistPage: React.FC = () => {
               className="grid-5-cols-col"
               key={product.id}
             >
-              <div style={{ position: "relative" }}>
+              <div style={styles.productCardWrapper}>
                 <ProductCard product={product} />
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "12px",
-                    right: "12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                    zIndex: 2,
-                  }}
-                >
+                <div style={styles.actionButtonsContainer}>
                   <Button
                     shape="circle"
                     danger
                     icon={<DeleteOutlined />}
                     onClick={() => removeFromWishlist(product.id)}
-                    title="Xóa khỏi yêu thích"
+                    title={WISHLIST_STRINGS.removeBtnTooltip}
                   />
                 </div>
               </div>

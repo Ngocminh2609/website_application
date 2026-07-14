@@ -49,7 +49,7 @@ import {
 } from "../../styles/commonStyles";
 import { styles } from "./styles/Navbar.styles";
 import { LAYOUT_STRINGS } from "../../constants/Layout/layout";
-import { ROLES } from "../common/roles";
+import { ROLES } from "../common/Roles";
 
 const { navbar: nvStrings } = LAYOUT_STRINGS;
 
