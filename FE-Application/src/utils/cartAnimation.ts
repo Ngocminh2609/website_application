@@ -1,3 +1,5 @@
+import { getFlyerInitialStyles } from "./styles/cart-animation.styles";
+
 /**
  * Hàm tạo hiệu ứng "bay" từ sản phẩm vào giỏ hàng.
  * @param sourceEl Phần tử nguồn (thường là ảnh sản phẩm)
@@ -18,20 +20,7 @@ export const flyToCart = (
   const flyer = sourceEl.cloneNode(true) as HTMLElement;
 
   // Thiết lập style cơ bản cho flyer
-  const initialStyles: Partial<CSSStyleDeclaration> = {
-    position: "fixed",
-    top: `${sourceRect.top}px`,
-    left: `${sourceRect.left}px`,
-    width: `${sourceRect.width}px`,
-    height: `${sourceRect.height}px`,
-    zIndex: "9999",
-    pointerEvents: "none",
-    borderRadius: "12px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-    transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)", // Sử dụng curve chuyên nghiệp
-    transformOrigin: "center center",
-    opacity: "1",
-  };
+  const initialStyles = getFlyerInitialStyles(sourceRect);
 
   Object.assign(flyer.style, initialStyles);
 

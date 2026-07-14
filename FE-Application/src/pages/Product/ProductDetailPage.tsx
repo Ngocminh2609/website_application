@@ -31,7 +31,7 @@ import { StarRating } from "../../components/common/ProductCard";
 import { useProductDetailPage } from "../../hooks/Product/useProductDetailPage";
 import BaseButton from "../../components/common/BaseButton";
 import BaseInput from "../../components/common/BaseInput";
-import { ROLES } from "../../components/common/Roles";
+import { ROLES } from "../../components/common/Commons";
 import PersonalizedRecommendations from "../../components/common/PersonalizedRecommendations";
 import RealTimeViewerCount from "../../components/product/RealTimeViewerCount";
 import { useCompare } from "../../hooks/Product/useCompare";

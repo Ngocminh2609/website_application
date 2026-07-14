@@ -1,3 +1,5 @@
+import { UTILS_STRINGS } from "../constants/Utils/utils";
+
 /**
  * Tiện ích xử lý URL cho môi trường Production.
  * Đảm bảo giao thức (http/https) đồng bộ với trình duyệt.
@@ -7,9 +9,9 @@ export const getBaseApiUrl = () => {
 
   if (!url) {
     console.warn(
-      "CẢNH BÁO: VITE_API_URL không được định nghĩa, sử dụng fallback localhost",
+      UTILS_STRINGS.url.warnApiUrlUndefined,
     );
-    url = "http://localhost:8080/api";
+    url = UTILS_STRINGS.url.fallbackApiUrl;
   }
 
   if (window.location.protocol === "https:" && url.startsWith("http:")) {
@@ -43,6 +45,6 @@ export const getWsUrl = () => {
 // Tach biet khoi VITE_API_URL (Spring Boot) vi storage chay tren endpoint/port khac
 export const getStorageUrl = (bucket: string, fileName: string) => {
   const storageBase =
-    import.meta.env.VITE_STORAGE_URL || "http://localhost:9000";
+    import.meta.env.VITE_STORAGE_URL || UTILS_STRINGS.url.fallbackStorageUrl;
   return `${storageBase}/${bucket}/${fileName}`;
 };

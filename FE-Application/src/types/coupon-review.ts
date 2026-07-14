@@ -1,10 +1,12 @@
+import type { DISCOUNT_TYPES } from "../components/common/Commons";
+
 /**
  * Định nghĩa kiểu dữ liệu cho hệ thống mã giảm giá và đánh giá sản phẩm.
  */
 
 export interface CouponValidateResponse {
   code: string;
-  discountType: "PERCENT" | "FIXED";
+  discountType: typeof DISCOUNT_TYPES.PERCENT | typeof DISCOUNT_TYPES.FIXED;
   discountValue: number;
   discountAmount: number;
   maxDiscountAmount?: number;
@@ -15,7 +17,7 @@ export interface CouponValidateResponse {
 export interface Coupon {
   id: number;
   code: string;
-  discountType: "PERCENT" | "FIXED";
+  discountType: typeof DISCOUNT_TYPES.PERCENT | typeof DISCOUNT_TYPES.FIXED;
   discountValue: number;
   minOrderAmount: number;
   maxDiscountAmount?: number;

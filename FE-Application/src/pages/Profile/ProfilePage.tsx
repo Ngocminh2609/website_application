@@ -19,7 +19,7 @@ import {
   CameraOutlined,
 } from "@ant-design/icons";
 import type { User } from "../../types/auth";
-import { ROLES } from "../../components/common/Roles";
+import { ROLES } from "../../components/common/Commons";
 import BaseButton from "../../components/common/BaseButton";
 import { PROFILE_INPUT_STYLE } from "../../styles/commonStyles";
 import { useProfilePage } from "../../hooks/Profile/useProfilePage";

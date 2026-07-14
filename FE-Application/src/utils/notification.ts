@@ -1,4 +1,5 @@
 import { notification as antdNotification } from "antd";
+import { UTILS_STRINGS } from "../constants/Utils/utils";
 
 /**
  * Tiện ích thông báo tập trung (Centralized Notification).
@@ -6,9 +7,9 @@ import { notification as antdNotification } from "antd";
  */
 export const notification = {
   // Thông báo thành công mặc định
-  success: (msg: string = "Thao tác thành công!") => {
+  success: (msg: string = UTILS_STRINGS.notification.successMsg) => {
     antdNotification.success({
-      message: "Thành công",
+      message: UTILS_STRINGS.notification.successTitle,
       description: msg,
       placement: "topRight",
       duration: 3,
@@ -16,9 +17,9 @@ export const notification = {
   },
 
   // Thông báo lỗi mặc định
-  error: (msg: string = "Đã có lỗi xảy ra, vui lòng thử lại sau.") => {
+  error: (msg: string = UTILS_STRINGS.notification.errorMsg) => {
     antdNotification.error({
-      message: "Lỗi hệ thống",
+      message: UTILS_STRINGS.notification.errorTitle,
       description: msg,
       placement: "topRight",
       duration: 4,
@@ -28,7 +29,7 @@ export const notification = {
   // Thông báo thông tin
   info: (msg: string) => {
     antdNotification.info({
-      message: "Thông tin",
+      message: UTILS_STRINGS.notification.infoTitle,
       description: msg,
       placement: "topRight",
       duration: 3,
@@ -38,7 +39,7 @@ export const notification = {
   // Thông báo cảnh báo
   warning: (msg: string) => {
     antdNotification.warning({
-      message: "Cảnh báo",
+      message: UTILS_STRINGS.notification.warningTitle,
       description: msg,
       placement: "topRight",
       duration: 3,
@@ -48,23 +49,21 @@ export const notification = {
   // Các hàm helper cho từng nghiệp vụ cụ thể (DRY)
   auth: {
     loginSuccess: () =>
-      notification.success("Chào mừng bạn quay trở lại với Tech Nova!"),
+      notification.success(UTILS_STRINGS.notification.auth.loginSuccess),
     loginError: () =>
-      notification.error("Tên đăng nhập hoặc mật khẩu không chính xác."),
+      notification.error(UTILS_STRINGS.notification.auth.loginError),
     registerSuccess: () =>
-      notification.success("Tài khoản của bạn đã được tạo thành công!"),
+      notification.success(UTILS_STRINGS.notification.auth.registerSuccess),
     registerError: () =>
-      notification.error(
-        "Không thể tạo tài khoản. Vui lòng kiểm tra lại thông tin hoặc thử một email khác.",
-      ),
+      notification.error(UTILS_STRINGS.notification.auth.registerError),
     logoutSuccess: () =>
-      notification.success("Bạn đã đăng xuất khỏi hệ thống."),
+      notification.success(UTILS_STRINGS.notification.auth.logoutSuccess),
   },
 
   product: {
     addCartSuccess: () =>
-      notification.success("Đã thêm sản phẩm vào giỏ hàng thành công!"),
+      notification.success(UTILS_STRINGS.notification.product.addCartSuccess),
     loadError: () =>
-      notification.error("Không thể tải danh sách sản phẩm lúc này."),
+      notification.error(UTILS_STRINGS.notification.product.loadError),
   },
 };

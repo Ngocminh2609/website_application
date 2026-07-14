@@ -35,7 +35,7 @@ import CompareBar from "./components/common/CompareBar";
 import ComparePage from "./pages/Product/ComparePage";
 import ReloadPrompt from "./components/pwa/ReloadPrompt";
 import ScrollToTop from "./components/common/ScrollToTop";
-import { ROLES } from "./components/common/Roles";
+import { ROLES, THEMES } from "./components/common/Commons";
 
 // Thay thế bằng Client ID của bạn từ Google Cloud Console
 const GOOGLE_CLIENT_ID =
@@ -56,10 +56,10 @@ const App: React.FC = () => {
   });
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    // Ưu tiên tùy chọn của người dùng nếu đã đăng nhập, nếu không dùng localStorage hoặc default dark
-    if (user?.themePreference) return user.themePreference === "dark";
+    // Ưu tiên tùy chọn của người dùng nếu đã đăng nhập, nếu không dùng localStorage hoặc default light
+    if (user?.themePreference) return user.themePreference === THEMES.DARK;
     const savedTheme = localStorage.getItem("theme");
-    return savedTheme ? savedTheme === "dark" : true; // Mặc định dark theo yêu cầu aesthetics
+    return savedTheme ? savedTheme === THEMES.DARK : false; // Mặc định light
   });
 
   // Xử lý OAuth2 redirect code từ Keycloak (cho Google Login hoặc User Registration)

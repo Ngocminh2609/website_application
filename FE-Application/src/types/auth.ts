@@ -1,4 +1,4 @@
-import { ROLES } from "../components/common/Roles";
+import { ROLES, THEMES } from "../components/common/Commons";
 
 /**
  * Định nghĩa cấu trúc dữ liệu cho người dùng.
@@ -11,7 +11,7 @@ export interface User {
   avatarUrl?: string;
   phone?: string;
   role: typeof ROLES.USER | typeof ROLES.ADMIN;
-  themePreference?: "light" | "dark";
+  themePreference?: typeof THEMES.LIGHT | typeof THEMES.DARK;
   createdAt?: string;
 }
 
