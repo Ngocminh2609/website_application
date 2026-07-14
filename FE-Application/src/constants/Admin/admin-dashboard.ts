@@ -70,5 +70,13 @@ export const ADMIN_STRINGS = {
     deleteProductError: "Lỗi khi xóa sản phẩm",
     updateOrderError: "Lỗi cập nhật đơn hàng",
     deleteOrderError: "Lỗi khi xóa đơn hàng",
-  }
+  },
+  orderStatus: {
+    pending: "Chờ thanh toán",
+    paid: "Đã thanh toán",
+    shipping: "Đang giao hàng",
+    delivered: "Đã giao hàng",
+    failed: "Lỗi giao dịch",
+    cancelled: "Đã hủy",
+  },
 };

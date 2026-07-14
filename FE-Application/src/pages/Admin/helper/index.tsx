@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import type { Order } from "../../../api/orderApi";
 import dayjs from "dayjs";
+import { ADMIN_STRINGS } from "../../../constants/Admin/admin-dashboard";
 
 /**
  * Tính tổng doanh thu thực từ danh sách đơn hàng
@@ -30,37 +31,37 @@ export const getStatusTag = (status: string) => {
     case "PENDING":
       return (
         <Tag icon={<ClockCircleOutlined />} color="warning">
-          Chờ thanh toán
+          {ADMIN_STRINGS.orderStatus.pending}
         </Tag>
       );
     case "PAID":
       return (
         <Tag icon={<CheckCircleOutlined />} color="processing">
-          Đã thanh toán
+          {ADMIN_STRINGS.orderStatus.paid}
         </Tag>
       );
     case "SHIPPING":
       return (
         <Tag icon={<CarOutlined />} color="blue">
-          Đang giao hàng
+          {ADMIN_STRINGS.orderStatus.shipping}
         </Tag>
       );
     case "DELIVERED":
       return (
         <Tag icon={<CheckCircleOutlined />} color="success">
-          Đã giao hàng
+          {ADMIN_STRINGS.orderStatus.delivered}
         </Tag>
       );
     case "FAILED":
       return (
         <Tag icon={<StopOutlined />} color="error">
-          Lỗi giao dịch
+          {ADMIN_STRINGS.orderStatus.failed}
         </Tag>
       );
     case "CANCELLED":
       return (
         <Tag icon={<StopOutlined />} color="default">
-          Đã hủy
+          {ADMIN_STRINGS.orderStatus.cancelled}
         </Tag>
       );
     default:
@@ -99,4 +100,3 @@ export const formatDateDayjs = (
 export const calculateUsagePercentage = (usedCount: number, usageLimit: number): number => {
   return Math.min(100, (usedCount / (usageLimit || 1)) * 100);
 };
-
