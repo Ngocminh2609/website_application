@@ -10,6 +10,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.ecommerce.backend.constant.service.ProductViewerServiceConstants.*;
+
 /**
  * Service quản lý số lượng người đang xem sản phẩm theo thời gian thực.
  */
@@ -45,7 +47,7 @@ public class ProductViewerService {
         boolean added = viewers.add(sessionId);
         if (added) {
             int currentCount = viewers.size();
-            log.info("[VIEWER-SYSTEM] +++ Người mới vào xem SP {}. Tổng thực tế: {} (Session: {})", productId, currentCount, sessionId);
+            log.info(LOG_VIEWER_JOIN, productId, currentCount, sessionId);
             broadcastViewerCount(productId, currentCount);
         }
     }
@@ -61,7 +63,7 @@ public class ProductViewerService {
                 boolean removed = viewers.remove(sessionId);
                 if (removed) {
                     int currentCount = viewers.size();
-                    log.info("[VIEWER-SYSTEM] --- Người rời khỏi SP {}. Còn lại: {} (Session: {})", productId, currentCount, sessionId);
+                    log.info(LOG_VIEWER_LEAVE, productId, currentCount, sessionId);
 
                     if (currentCount == 0) {
                         productViewers.remove(productId);
@@ -73,10 +75,10 @@ public class ProductViewerService {
     }
 
     private void broadcastViewerCount(Long productId, int count) {
-        String destination = "/topic/product/" + productId + "/viewers";
+        String destination = TOPIC_PRODUCT_PREFIX + productId + TOPIC_PRODUCT_SUFFIX;
         messagingTemplate.convertAndSend(destination, Map.of(
-                "productId", productId,
-                "viewerCount", count
+                KEY_PRODUCT_ID, productId,
+                KEY_VIEWER_COUNT, count
         ));
     }
 }

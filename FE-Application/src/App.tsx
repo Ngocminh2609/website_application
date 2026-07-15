@@ -93,6 +93,7 @@ const App: React.FC = () => {
           if (response.ok) {
             const tokenData = await response.json();
             const accessToken = tokenData.access_token;
+            const refreshToken = tokenData.refresh_token;
 
             // Giải mã token để lấy thông tin User (hỗ trợ UTF-8 tiếng Việt)
             const base64Url = accessToken.split(".")[1];
@@ -119,8 +120,24 @@ const App: React.FC = () => {
             };
 
             localStorage.setItem("token", accessToken);
+            if (refreshToken) {
+              localStorage.setItem("refresh_token", refreshToken);
+            }
             localStorage.setItem("user", JSON.stringify(newUser));
-            setUser(newUser);
+            localStorage.removeItem("remember_me_oauth");
+
+            // Gọi API lấy thông tin profile đầy đủ (bao gồm avatarUrl) từ database của backend
+            userApi.getProfile()
+              .then((profile) => {
+                const mergedUser = { ...newUser, ...profile };
+                localStorage.setItem("user", JSON.stringify(mergedUser));
+                setUser(mergedUser);
+              })
+              .catch((err) => {
+                console.error("Lỗi khi đồng bộ profile sau Google Login:", err);
+                setUser(newUser);
+              });
+
             notification.auth.loginSuccess();
 
             // Xóa query parameters trên thanh địa chỉ mà không reload trang
@@ -187,15 +204,26 @@ const App: React.FC = () => {
     return user ? `user-${user.id}` : null;
   };
 
-  const handleLoginSuccess = () => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+  const handleLoginSuccess = async () => {
+    try {
+      const profile = await userApi.getProfile();
+      const savedUser = localStorage.getItem("user");
+      const baseUser = savedUser ? JSON.parse(savedUser) : {};
+      const mergedUser = { ...baseUser, ...profile };
+      localStorage.setItem("user", JSON.stringify(mergedUser));
+      setUser(mergedUser);
+    } catch (err) {
+      console.error("Lỗi khi tải thông tin chi tiết user sau login:", err);
+      const savedUser = localStorage.getItem("user");
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
     setUser(null);
     notification.auth.logoutSuccess();

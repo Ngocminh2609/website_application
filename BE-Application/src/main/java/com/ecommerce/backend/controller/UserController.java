@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+import static com.ecommerce.backend.constant.controller.UserConstants.*;
+
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -35,13 +37,13 @@ public class UserController {
     public ResponseEntity<Map<String, String>> changePassword(@RequestBody ChangePasswordRequest request) {
         User user = jwtUserResolver.getCurrentUser();
         userService.changePassword(user.getUsername(), request);
-        return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công"));
+        return ResponseEntity.ok(Map.of(RESPONSE_KEY_MESSAGE, SUCCESS_PASSWORD_CHANGE));
     }
 
     @PutMapping("/me/theme")
     public ResponseEntity<Map<String, String>> updateTheme(@RequestBody Map<String, String> request) {
         User user = jwtUserResolver.getCurrentUser();
-        userService.updateTheme(user.getUsername(), request.get("theme"));
-        return ResponseEntity.ok(Map.of("message", "Cập nhật giao diện thành công"));
+        userService.updateTheme(user.getUsername(), request.get(REQUEST_KEY_THEME));
+        return ResponseEntity.ok(Map.of(RESPONSE_KEY_MESSAGE, SUCCESS_THEME_UPDATE));
     }
 }

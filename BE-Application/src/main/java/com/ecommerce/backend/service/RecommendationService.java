@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.ecommerce.backend.constant.service.RecommendationServiceConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class RecommendationService {
@@ -29,7 +31,7 @@ public class RecommendationService {
     @Transactional
     public void trackProductView(User user, Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(ERROR_PRODUCT_NOT_FOUND));
 
         UserProductView view = viewRepository.findByUserAndProduct(user, product)
                 .orElseGet(() -> UserProductView.builder()

@@ -6,19 +6,21 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import static com.ecommerce.backend.constant.dto.RegisterRequestConstants.*;
+
 @Getter
 @Setter
 public class RegisterRequest {
-    @NotBlank(message = "Tên đăng nhập không được để trống")
-    @Size(min = 3, max = 50, message = "Tên đăng nhập phải từ 3 đến 50 ký tự")
+    @NotBlank(message = ERROR_USERNAME_REQUIRED)
+    @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH, message = ERROR_USERNAME_SIZE)
     private String username;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
-    @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự")
+    @NotBlank(message = ERROR_PASSWORD_REQUIRED)
+    @Size(min = PASSWORD_MIN_LENGTH, message = ERROR_PASSWORD_SIZE)
     private String password;
 
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không đúng định dạng")
+    @NotBlank(message = ERROR_EMAIL_REQUIRED)
+    @Email(message = ERROR_EMAIL_INVALID)
     private String email;
 
     private String fullName;

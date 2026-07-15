@@ -12,6 +12,8 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.ecommerce.backend.constant.service.CouponServiceConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class CouponService {
@@ -24,27 +26,27 @@ public class CouponService {
      */
     public CouponValidateResponse validateCoupon(String code, BigDecimal orderAmount) {
         Coupon coupon = couponRepository.findByCodeIgnoreCase(code)
-                .orElseThrow(() -> new RuntimeException("Mã giảm giá không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(ERROR_COUPON_NOT_FOUND));
 
         // Kiểm tra trạng thái hoạt động
         if (coupon.getIsActive() == null || !coupon.getIsActive()) {
-            throw new RuntimeException("Mã giảm giá đã bị vô hiệu hóa");
+            throw new RuntimeException(ERROR_COUPON_INACTIVE);
         }
 
         // Kiểm tra hết hạn
         if (coupon.getExpiresAt() != null && coupon.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Mã giảm giá đã hết hạn");
+            throw new RuntimeException(ERROR_COUPON_EXPIRED);
         }
 
         // Kiểm tra đã dùng hết lượt chưa
         if (coupon.getUsageLimit() != null && coupon.getUsedCount() >= coupon.getUsageLimit()) {
-            throw new RuntimeException("Mã giảm giá đã được sử dụng hết");
+            throw new RuntimeException(ERROR_COUPON_LIMIT_REACHED);
         }
 
         // Kiểm tra ngưỡng đơn hàng tối thiểu
         if (orderAmount.compareTo(coupon.getMinOrderAmount()) < 0) {
             throw new RuntimeException(
-                    "Đơn hàng tối thiểu " + coupon.getMinOrderAmount().toPlainString() + "đ để dùng mã này"
+                    ERROR_MIN_ORDER_PREFIX + coupon.getMinOrderAmount().toPlainString() + ERROR_MIN_ORDER_SUFFIX
             );
         }
 
@@ -58,7 +60,7 @@ public class CouponService {
                 discountAmount,
                 coupon.getMaxDiscountAmount(),
                 finalAmount,
-                "Áp dụng mã giảm giá thành công"
+                SUCCESS_COUPON_APPLIED
         );
     }
 
@@ -87,7 +89,7 @@ public class CouponService {
     @Transactional
     public void updateCouponStatus(Long id, boolean active) {
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy mã giảm giá"));
+                .orElseThrow(() -> new RuntimeException(ERROR_COUPON_ID_NOT_FOUND));
         coupon.setIsActive(active);
         couponRepository.save(coupon);
     }
@@ -104,7 +106,7 @@ public class CouponService {
     private BigDecimal calculateDiscountAmount(Coupon coupon, BigDecimal orderAmount) {
         BigDecimal discountAmount;
 
-        if ("PERCENT".equals(coupon.getDiscountType())) {
+        if (DISCOUNT_TYPE_PERCENT.equals(coupon.getDiscountType())) {
             discountAmount = orderAmount
                     .multiply(coupon.getDiscountValue())
                     .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);

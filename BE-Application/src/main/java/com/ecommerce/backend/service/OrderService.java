@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.ecommerce.backend.constant.service.OrderServiceConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -30,10 +32,10 @@ public class OrderService {
     @Transactional
     public Order createOrderFromCart(User user, String shippingAddress, String phoneNumber, String couponCode, String paymentMethod) {
         Cart cart = cartRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy giỏ hàng!"));
+                .orElseThrow(() -> new RuntimeException(ERROR_CART_NOT_FOUND));
 
         if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("Giỏ hàng trống!");
+            throw new RuntimeException(ERROR_CART_EMPTY);
         }
 
         // Tính tổng tiền sản phẩm (chưa giảm giá)
@@ -52,7 +54,7 @@ public class OrderService {
                 validatedCode = couponResult.getCode();
             } catch (Exception e) {
                 // Nếu lỗi validate, có thể ném exception hoặc bỏ qua coupon. Ở đây ta ném exception để user biết.
-                throw new RuntimeException("Mã giảm giá không hợp lệ: " + e.getMessage());
+                throw new RuntimeException(ERROR_COUPON_INVALID_PREFIX + e.getMessage());
             }
         }
 
@@ -63,10 +65,10 @@ public class OrderService {
         Order order = Order.builder()
                 .user(user)
                 .totalAmount(totalAmount)
-                .status("PENDING")
+                .status(STATUS_PENDING)
                 .shippingAddress(shippingAddress)
                 .phoneNumber(phoneNumber)
-                .paymentMethod(paymentMethod != null ? paymentMethod : "VNPAY")
+                .paymentMethod(paymentMethod != null ? paymentMethod : METHOD_VNPAY)
                 .appliedCouponCode(validatedCode)
                 .couponDiscount(discountAmount)
                 .build();
@@ -84,7 +86,7 @@ public class OrderService {
         order.setItems(orderItems);
 
         // Xóa giỏ hàng luôn nếu là COD
-        if ("COD".equalsIgnoreCase(paymentMethod)) {
+        if (METHOD_COD.equalsIgnoreCase(paymentMethod)) {
             clearCart(user.getId());
         }
 
@@ -112,19 +114,19 @@ public class OrderService {
         // Giả sử txnRef chính là Order ID.
         Long orderId = Long.parseLong(txnRef);
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng ID: " + txnRef));
+                .orElseThrow(() -> new RuntimeException(ERROR_ORDER_NOT_FOUND_PREFIX + txnRef));
 
         // 1. Cập nhật trạng thái đơn hàng
-        if ("00".equals(responseCode)) {
-            order.setStatus("PAID");
+        if (VNP_RESPONSE_CODE_SUCCESS.equals(responseCode)) {
+            order.setStatus(STATUS_PAID);
 
             // Xóa giỏ hàng của người dùng khi thanh toán thành công
             clearCart(order.getUser().getId());
 
             // Gửi thông báo cho khách hàng
             notificationService.sendToUser(
-                    "user-" + order.getUser().getId(),
-                    "Thanh toán thành công đơn hàng #" + order.getId() + ". Chúng tôi sẽ sớm giao hàng cho bạn!",
+                    RECIPIENT_USER_PREFIX + order.getUser().getId(),
+                    MSG_PAID_PREFIX + order.getId() + MSG_PAID_SUFFIX,
                     Notification.NotificationType.ORDER
             );
 
@@ -133,12 +135,12 @@ public class OrderService {
                 try {
                     couponService.consumeCoupon(order.getAppliedCouponCode());
                 } catch (Exception e) {
-                    System.err.println("Không thể tiêu hao mã giảm giá: " + e.getMessage());
+                    System.err.println(LOG_COUPON_CONSUME_FAILED + e.getMessage());
                     // Không ném exception ở đây để tránh rollback nghiệp vụ chính là thanh toán
                 }
             }
         } else {
-            order.setStatus("FAILED");
+            order.setStatus(STATUS_FAILED);
         }
         orderRepository.save(order);
 
@@ -146,12 +148,12 @@ public class OrderService {
         PaymentTransaction transaction = PaymentTransaction.builder()
                 .order(order)
                 .vnp_TxnRef(txnRef)
-                .vnp_TransactionNo(allParams.get("vnp_TransactionNo"))
+                .vnp_TransactionNo(allParams.get(VNP_KEY_TXN_NO))
                 .vnp_ResponseCode(responseCode)
-                .vnp_Amount(new BigDecimal(allParams.get("vnp_Amount")).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP))
-                .vnp_BankCode(allParams.get("vnp_BankCode"))
-                .vnp_PayDate(allParams.get("vnp_PayDate"))
-                .vnp_TransactionStatus(allParams.get("vnp_TransactionStatus"))
+                .vnp_Amount(new BigDecimal(allParams.get(VNP_KEY_AMOUNT)).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP))
+                .vnp_BankCode(allParams.get(VNP_KEY_BANK_CODE))
+                .vnp_PayDate(allParams.get(VNP_KEY_PAY_DATE))
+                .vnp_TransactionStatus(allParams.get(VNP_KEY_TXN_STATUS))
                 .secureHash(secureHash)
                 .rawData(allParams.toString())
                 .build();
@@ -179,21 +181,21 @@ public class OrderService {
     @Transactional
     public void updateOrderStatus(Long orderId, String status) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng ID: " + orderId));
+                .orElseThrow(() -> new RuntimeException(ERROR_ORDER_NOT_FOUND_PREFIX + orderId));
         order.setStatus(status);
         orderRepository.save(order);
 
         // Gửi thông báo cho khách hàng về thay đổi trạng thái
         String message = getStatusChangeMessage(order.getId(), status);
-        notificationService.sendToUser("user-" + order.getUser().getId(), message, Notification.NotificationType.ORDER);
+        notificationService.sendToUser(RECIPIENT_USER_PREFIX + order.getUser().getId(), message, Notification.NotificationType.ORDER);
     }
 
     private String getStatusChangeMessage(Long orderId, String status) {
         return switch (status) {
-            case "SHIPPING" -> "Đơn hàng #" + orderId + " đang trên đường giao đến bạn.";
-            case "DELIVERED" -> "Chúc mừng! Đơn hàng #" + orderId + " đã được giao thành công.";
-            case "CANCELLED" -> "Đơn hàng #" + orderId + " đã bị hủy.";
-            default -> "Cập nhật trạng thái mới cho đơn hàng #" + orderId + ": " + status;
+            case STATUS_SHIPPING -> MSG_ORDER_PREFIX + orderId + MSG_SHIPPING_SUFFIX;
+            case STATUS_DELIVERED -> MSG_DELIVERED_PREFIX + orderId + MSG_DELIVERED_SUFFIX;
+            case STATUS_CANCELLED -> MSG_ORDER_PREFIX + orderId + MSG_CANCELLED_SUFFIX;
+            default -> MSG_STATUS_UPDATE_PREFIX + orderId + MSG_STATUS_UPDATE_SEPARATOR + status;
         };
     }
 
@@ -203,7 +205,7 @@ public class OrderService {
     @Transactional
     public void deleteOrder(Long orderId) {
         if (!orderRepository.existsById(orderId)) {
-            throw new RuntimeException("Không tìm thấy đơn hàng để xóa");
+            throw new RuntimeException(ERROR_ORDER_DELETE_NOT_FOUND);
         }
         orderRepository.deleteById(orderId);
     }

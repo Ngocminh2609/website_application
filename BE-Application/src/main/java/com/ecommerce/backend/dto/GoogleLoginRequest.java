@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import static com.ecommerce.backend.constant.dto.GoogleLoginRequestConstants.*;
+
 /**
  * DTO nhận Token ID từ Google gửi về từ Frontend.
  */
@@ -14,6 +16,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GoogleLoginRequest {
-    @NotBlank(message = "Google Token không được để trống")
+    @NotBlank(message = ERROR_TOKEN_REQUIRED)
     private String token;
 }

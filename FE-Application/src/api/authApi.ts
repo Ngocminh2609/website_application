@@ -30,13 +30,16 @@ export const authApi = {
   /**
    * Đăng nhập hệ thống bằng tài khoản mật khẩu trực tiếp qua Keycloak Token Endpoint.
    */
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
+  login: async (data: LoginRequest, remember: boolean = false): Promise<AuthResponse> => {
     const params = new URLSearchParams();
     params.append("grant_type", "password");
     params.append("client_id", "ecommerce-backend");
     params.append("client_secret", "ecommerce-backend-secret-placeholder");
     params.append("username", data.username);
     params.append("password", data.password);
+    if (remember) {
+      params.append("scope", "offline_access");
+    }
 
     const response = await fetch(
       "http://localhost:8180/realms/ecommerce/protocol/openid-connect/token",
@@ -57,6 +60,7 @@ export const authApi = {
 
     const tokenData = await response.json();
     const accessToken = tokenData.access_token;
+    const refreshToken = tokenData.refresh_token;
 
     // Giải mã JWT để lấy thông tin user hiển thị trên UI (hỗ trợ UTF-8 tiếng Việt)
     const base64Url = accessToken.split(".")[1];
@@ -75,6 +79,7 @@ export const authApi = {
     return {
       message: "Đăng nhập thành công",
       token: accessToken,
+      refreshToken: refreshToken,
       user: {
         id: 1, // Dùng mock ID vì Keycloak dùng string UUID
         username: payload.preferred_username || payload.sub,
@@ -90,6 +95,7 @@ export const authApi = {
    */
   logout: async (): Promise<string> => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
     window.location.href = "/login";
     return "Đăng xuất thành công";
@@ -99,12 +105,17 @@ export const authApi = {
    * Đăng nhập bằng Google.
    * Chuyển hướng người dùng qua luồng đăng nhập mạng xã hội của Keycloak.
    */
-  googleLogin: async (): Promise<void> => {
+  googleLogin: async (remember: boolean = false): Promise<void> => {
+    if (remember) {
+      localStorage.setItem("remember_me_oauth", "true");
+    } else {
+      localStorage.removeItem("remember_me_oauth");
+    }
     const googleLoginUrl =
       `http://localhost:8180/realms/ecommerce/protocol/openid-connect/auth` +
       `?client_id=ecommerce-backend` +
       `&response_type=code` +
-      `&scope=openid` +
+      `&scope=${remember ? "openid offline_access" : "openid"}` +
       `&kc_idp_hint=google` +
       `&redirect_uri=${encodeURIComponent("http://localhost:5173")}`;
     window.location.href = googleLoginUrl;

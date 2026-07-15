@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+import static com.ecommerce.backend.constant.service.CategoryServiceConstants.*;
+
 @Service
 public class CategoryService {
 
@@ -37,7 +39,7 @@ public class CategoryService {
             category.setName(categoryDetails.getName());
             category.setDescription(categoryDetails.getDescription());
             return categoryRepository.save(category);
-        }).orElseThrow(() -> new RuntimeException("Category not found with id " + id));
+        }).orElseThrow(() -> new RuntimeException(ERROR_CATEGORY_NOT_FOUND + id));
     }
 
     public void deleteCategory(Long id) {

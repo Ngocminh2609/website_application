@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.ecommerce.backend.constant.controller.OrderConstants.*;
+
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
@@ -24,7 +26,7 @@ public class OrderController {
     @GetMapping("/user")
     public ResponseEntity<List<Order>> getOrdersByUser(@RequestParam String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
 
         List<Order> orders = orderService.getOrdersByUserId(user.getId());
         return ResponseEntity.ok(orders);
@@ -44,7 +46,7 @@ public class OrderController {
     @PutMapping("/admin/{id}/status")
     public ResponseEntity<String> updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
         orderService.updateOrderStatus(id, status);
-        return ResponseEntity.ok("Cập nhật trạng thái thành công");
+        return ResponseEntity.ok(SUCCESS_STATUS_UPDATE);
     }
 
     /**
@@ -53,6 +55,6 @@ public class OrderController {
     @DeleteMapping("/admin/{id}")
     public ResponseEntity<String> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
-        return ResponseEntity.ok("Xóa đơn hàng thành công");
+        return ResponseEntity.ok(SUCCESS_ORDER_DELETE);
     }
 }

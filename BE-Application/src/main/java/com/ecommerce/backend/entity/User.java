@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+import static com.ecommerce.backend.constant.entity.UserConstants.*;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -37,16 +39,16 @@ public class User implements UserDetails {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @NotBlank(message = "Tên đăng nhập không được để trống")
+    @NotBlank(message = ERROR_USERNAME_REQUIRED)
     @Column(unique = true, nullable = false)
     private String username;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
-    @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự")
+    @NotBlank(message = ERROR_PASSWORD_REQUIRED)
+    @Size(min = PASSWORD_MIN_LENGTH, message = ERROR_PASSWORD_SIZE)
     @JsonIgnore // Không bao giờ gửi mật khẩu về phía hiển thị (Frontend) để đảm bảo an toàn
     private String password;
 
-    @Email(message = "Email không hợp lệ")
+    @Email(message = ERROR_EMAIL_INVALID)
     @Column(unique = true)
     private String email;
 
@@ -58,7 +60,7 @@ public class User implements UserDetails {
 
     private String role; // Mặc định là 'USER'
 
-    private String themePreference = "light"; // Mặc định là giao diện sáng
+    private String themePreference = DEFAULT_THEME; // Mặc định là giao diện sáng
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -80,7 +82,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        return List.of(new SimpleGrantedAuthority(ROLE_PREFIX + role));
     }
 
 

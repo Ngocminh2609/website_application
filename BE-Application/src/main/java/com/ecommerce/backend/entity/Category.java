@@ -11,6 +11,8 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.ecommerce.backend.constant.entity.CategoryConstants.*;
+
 @Entity
 @Table(name = "categories")
 @Getter
@@ -25,7 +27,7 @@ public class Category {
     private Long id;
 
     // Đảm bảo tên danh mục không được để trống để giữ tính nhất quán của dữ liệu
-    @NotBlank(message = "Tên danh mục không được để trống")
+    @NotBlank(message = ERROR_NAME_REQUIRED)
     @Column(nullable = false)
     private String name;
 

@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.ecommerce.backend.constant.entity.OrderConstants.*;
+
 @Entity
 @Table(name = "orders")
 @Getter
@@ -29,9 +31,9 @@ public class Order {
     private BigDecimal totalAmount;
 
     @Column(length = 20, nullable = false)
-    private String status = "PENDING"; // PENDING, PAID, FAILED, SHIPPING, DELIVERED, CANCELLED
+    private String status = DEFAULT_STATUS; // PENDING, PAID, FAILED, SHIPPING, DELIVERED, CANCELLED
 
-    private String paymentMethod = "VNPAY";
+    private String paymentMethod = DEFAULT_PAYMENT_METHOD;
 
     @Column(columnDefinition = "TEXT")
     private String shippingAddress;

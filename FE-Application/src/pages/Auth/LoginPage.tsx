@@ -1,5 +1,5 @@
 import React from "react";
-import { Form, Typography, Divider } from "antd";
+import { Form, Typography, Divider, Checkbox } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
@@ -23,7 +23,8 @@ interface LoginPageProps {
  */
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
-  const { loading, onFinish, handleGoogleSuccess } = useLoginState(onLoginSuccess);
+  const [form] = Form.useForm();
+  const { loading, onFinish, handleGoogleSuccess } = useLoginState(onLoginSuccess, form);
 
   return (
     <div style={styles.loginCard} className="animate-fade-up">
@@ -39,11 +40,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         </Text>
       </div>
 
-      <Form<LoginRequest>
+      <Form<LoginRequest & { remember?: boolean }>
+        form={form}
         name="login"
         onFinish={onFinish}
         layout="vertical"
         size="large"
+        initialValues={{ remember: false }}
       >
         <Form.Item
           name="username"
@@ -63,6 +66,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             prefix={<LockOutlined style={styles.inputPrefix} />}
             placeholder={LOGIN_STRINGS.passwordPlaceholder}
           />
+        </Form.Item>
+
+        <Form.Item name="remember" valuePropName="checked" style={{ marginBottom: 16 }}>
+          <Checkbox>{LOGIN_STRINGS.rememberMe}</Checkbox>
         </Form.Item>
 
         <Form.Item>

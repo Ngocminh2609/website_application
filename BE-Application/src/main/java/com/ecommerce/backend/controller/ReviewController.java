@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.ecommerce.backend.constant.controller.ReviewConstants.*;
+
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
@@ -34,8 +36,8 @@ public class ReviewController {
      */
     @PostMapping("/product/{productId}")
     public ResponseEntity<ProductReview> createReview(
-            @PathVariable Long productId,
-            @Valid @RequestBody ReviewRequest request) {
+             @PathVariable Long productId,
+             @Valid @RequestBody ReviewRequest request) {
         User currentUser = jwtUserResolver.getCurrentUser();
         return ResponseEntity.ok(reviewService.createReview(productId, currentUser.getId(), request));
     }
@@ -64,6 +66,6 @@ public class ReviewController {
     public ResponseEntity<String> deleteReview(@PathVariable Long reviewId) {
         User currentUser = jwtUserResolver.getCurrentUser();
         reviewService.deleteReview(reviewId, currentUser.getId(), currentUser.getRole());
-        return ResponseEntity.ok("Xóa đánh giá thành công");
+        return ResponseEntity.ok(SUCCESS_DELETE);
     }
 }

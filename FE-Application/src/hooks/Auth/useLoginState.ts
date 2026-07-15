@@ -5,8 +5,9 @@ import { notification } from "../../utils/notification";
 import type { LoginRequest, AuthResponse } from "../../types/auth";
 import { storeAuthSession } from "../../pages/Auth/helper";
 import { LOGIN_STRINGS } from "../../constants/Auth/auth";
+import type { FormInstance } from "antd";
 
-export const useLoginState = (onLoginSuccess: () => void) => {
+export const useLoginState = (onLoginSuccess: () => void, form?: FormInstance) => {
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
@@ -19,10 +20,10 @@ export const useLoginState = (onLoginSuccess: () => void) => {
     }
   };
 
-  const onFinish = async (values: LoginRequest) => {
+  const onFinish = async (values: LoginRequest & { remember?: boolean }) => {
     setLoading(true);
     try {
-      const response = await authApi.login(values);
+      const response = await authApi.login(values, !!values.remember);
       handleAuthResponse(response);
     } catch {
       notification.auth.loginError();
@@ -34,7 +35,8 @@ export const useLoginState = (onLoginSuccess: () => void) => {
   const handleGoogleSuccess = async () => {
     setLoading(true);
     try {
-      await authApi.googleLogin();
+      const remember = form?.getFieldValue("remember") || false;
+      await authApi.googleLogin(remember);
     } catch {
       notification.error(LOGIN_STRINGS.messages.googleLoginFailed);
       setLoading(false);

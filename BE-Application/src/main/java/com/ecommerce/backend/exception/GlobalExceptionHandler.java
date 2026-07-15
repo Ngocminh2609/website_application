@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.ecommerce.backend.constant.exception.GlobalExceptionHandlerConstants.*;
+
 /**
  * Xử lý ngoại lệ tập trung cho toàn ứng dụng.
  */
@@ -33,7 +35,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleBadCredentials() {
         Map<String, String> error = new HashMap<>();
-        error.put("message", "Tên đăng nhập hoặc mật khẩu không chính xác!");
+        error.put(RESPONSE_KEY_MESSAGE, ERROR_BAD_CREDENTIALS);
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
@@ -41,7 +43,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("message", ex.getMessage());
+        error.put(RESPONSE_KEY_MESSAGE, ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

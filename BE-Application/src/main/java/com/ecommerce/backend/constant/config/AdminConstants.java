@@ -1,4 +1,4 @@
-package com.ecommerce.backend.constant;
+package com.ecommerce.backend.constant.config;
 
 /**
  * Hằng số cấu hình tài khoản Admin mặc định.

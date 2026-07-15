@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.ecommerce.backend.constant.service.UserAddressServiceConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class UserAddressService {
@@ -21,7 +23,7 @@ public class UserAddressService {
 
     public List<UserAddressDTO> getUserAddresses(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
 
         return userAddressRepository.findByUserOrderByIsDefaultDescCreatedAtDesc(user)
                 .stream()
@@ -32,7 +34,7 @@ public class UserAddressService {
     @Transactional
     public UserAddressDTO addAddress(String username, UserAddressDTO addressDTO) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
 
         // Nếu là địa chỉ đầu tiên hoặc được đánh dấu là mặc định
         if (addressDTO.getIsDefault() || userAddressRepository.findByUserOrderByIsDefaultDescCreatedAtDesc(user).isEmpty()) {
@@ -56,10 +58,10 @@ public class UserAddressService {
     @Transactional
     public UserAddressDTO updateAddress(String username, Long addressId, UserAddressDTO addressDTO) {
         UserAddress address = userAddressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
+                .orElseThrow(() -> new RuntimeException(ERROR_ADDRESS_NOT_FOUND));
 
         if (!address.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("Bạn không có quyền chỉnh sửa địa chỉ này");
+            throw new RuntimeException(ERROR_NO_PERMISSION_EDIT);
         }
 
         if (addressDTO.getIsDefault() && !address.getIsDefault()) {
@@ -79,10 +81,10 @@ public class UserAddressService {
     @Transactional
     public void deleteAddress(String username, Long addressId) {
         UserAddress address = userAddressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
+                .orElseThrow(() -> new RuntimeException(ERROR_ADDRESS_NOT_FOUND));
 
         if (!address.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("Bạn không có quyền xóa địa chỉ này");
+            throw new RuntimeException(ERROR_NO_PERMISSION_DELETE);
         }
 
         userAddressRepository.delete(address);
@@ -91,13 +93,13 @@ public class UserAddressService {
     @Transactional
     public void setDefaultAddress(String username, Long addressId) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
 
         UserAddress address = userAddressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
+                .orElseThrow(() -> new RuntimeException(ERROR_ADDRESS_NOT_FOUND));
 
         if (!address.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("Bạn không có quyền chỉnh sửa địa chỉ này");
+            throw new RuntimeException(ERROR_NO_PERMISSION_EDIT);
         }
 
         resetDefaultAddress(user);

@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.ecommerce.backend.constant.service.ProductServiceConstants.*;
+
 @Service
 public class ProductService {
 
@@ -58,7 +60,7 @@ public class ProductService {
 
     public Product saveProduct(ProductRequest request) {
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found with id: " + request.getCategoryId()));
+                .orElseThrow(() -> new RuntimeException(ERROR_CATEGORY_NOT_FOUND_WITH_ID + request.getCategoryId()));
 
         Product product = new Product();
         mapRequestToEntity(request, product, category);
@@ -68,7 +70,7 @@ public class ProductService {
     public Product updateProduct(Long id, ProductRequest request) {
         return productRepository.findById(id).map(product -> {
             Category category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Category not found with id: " + request.getCategoryId()));
+                    .orElseThrow(() -> new RuntimeException(ERROR_CATEGORY_NOT_FOUND_WITH_ID + request.getCategoryId()));
 
             // Xoa anh chinh cu neu admin thay the bang anh moi de tranh de lai file rac
             String oldImageUrl = product.getImageUrl();
@@ -82,7 +84,7 @@ public class ProductService {
 
             mapRequestToEntity(request, product, category);
             return productRepository.save(product);
-        }).orElseThrow(() -> new RuntimeException("Product not found with id " + id));
+        }).orElseThrow(() -> new RuntimeException(ERROR_PRODUCT_NOT_FOUND_WITH_ID + id));
     }
 
     private void mapRequestToEntity(ProductRequest request, Product product, Category category) {
@@ -149,7 +151,7 @@ public class ProductService {
         if (moreImages == null || moreImages.isBlank()) {
             return Collections.emptyList();
         }
-        return Arrays.stream(moreImages.split(","))
+        return Arrays.stream(moreImages.split(MORE_IMAGES_DELIMITER))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());

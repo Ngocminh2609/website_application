@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.ecommerce.backend.constant.service.WishlistServiceConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class WishlistService {
@@ -30,7 +32,7 @@ public class WishlistService {
     @Transactional
     public void addToWishlist(User user, Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+                .orElseThrow(() -> new RuntimeException(ERROR_PRODUCT_NOT_FOUND));
 
         // Kiểm tra nếu đã tồn tại thì không thêm nữa
         if (wishlistRepository.findByUserAndProduct(user, product).isEmpty()) {
@@ -46,7 +48,7 @@ public class WishlistService {
     @Transactional
     public void removeFromWishlist(User user, Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+                .orElseThrow(() -> new RuntimeException(ERROR_PRODUCT_NOT_FOUND));
         wishlistRepository.deleteByUserAndProduct(user, product);
     }
 

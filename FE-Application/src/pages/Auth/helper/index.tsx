@@ -7,6 +7,9 @@ export const storeAuthSession = (response: AuthResponse): void => {
   if (response.token) {
     localStorage.setItem("token", response.token);
     localStorage.setItem("user", JSON.stringify(response.user));
+    if (response.refreshToken) {
+      localStorage.setItem("refresh_token", response.refreshToken);
+    }
   }
 };
 
@@ -34,5 +37,6 @@ export const getAuthUser = (): User | null => {
  */
 export const clearAuthSession = (): void => {
   localStorage.removeItem("token");
+  localStorage.removeItem("refresh_token");
   localStorage.removeItem("user");
 };

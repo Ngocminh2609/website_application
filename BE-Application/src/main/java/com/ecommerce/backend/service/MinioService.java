@@ -12,6 +12,8 @@ import software.amazon.awssdk.services.s3.model.*;
 import java.io.IOException;
 import java.util.UUID;
 
+import static com.ecommerce.backend.constant.service.MinioServiceConstants.*;
+
 @Service
 public class MinioService {
 
@@ -35,7 +37,7 @@ public class MinioService {
             // Tao bucket neu chua ton tai - chi can thiet voi MinIO local
             ensureBucketExists(bucketName);
 
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String fileName = UUID.randomUUID() + FILENAME_SEPARATOR + file.getOriginalFilename();
 
             s3Client.putObject(
                     PutObjectRequest.builder()
@@ -46,9 +48,9 @@ public class MinioService {
                     RequestBody.fromInputStream(file.getInputStream(), file.getSize())
             );
 
-            return baseUrl + "/api/files/" + bucketName + "/" + fileName;
+            return baseUrl + FILES_API_PATH_PREFIX + bucketName + PATH_SEPARATOR + fileName;
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi tải tệp lên storage: " + e.getMessage(), e);
+            throw new RuntimeException(ERROR_UPLOAD + e.getMessage(), e);
         }
     }
 
@@ -73,7 +75,7 @@ public class MinioService {
             return;
         }
         try {
-            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            String fileName = fileUrl.substring(fileUrl.lastIndexOf(PATH_SEPARATOR) + 1);
             s3Client.deleteObject(
                     DeleteObjectRequest.builder()
                             .bucket(bucketName)
@@ -81,7 +83,7 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            System.err.println("Lỗi khi xóa tệp từ storage: " + e.getMessage());
+            System.err.println(ERROR_DELETE + e.getMessage());
         }
     }
 

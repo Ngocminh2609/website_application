@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+import static com.ecommerce.backend.constant.service.CartServiceConstants.*;
+
 /**
  * Dịch vụ xử lý nghiệp vụ Giỏ hàng.
  */
@@ -42,7 +44,7 @@ public class CartService {
     public Cart addItemToCart(User user, Long productId, Integer quantity) {
         Cart cart = getCartByUser(user);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(ERROR_PRODUCT_NOT_FOUND));
 
         // Kiểm tra xem sản phẩm đã có trong giỏ chưa
         Optional<CartItem> existingItem = cart.getItems().stream()
@@ -75,7 +77,7 @@ public class CartService {
                 .findFirst();
 
         if (itemOptional.isEmpty()) {
-            throw new RuntimeException("Mục này không có trong giỏ hàng của bạn");
+            throw new RuntimeException(ERROR_ITEM_NOT_IN_CART_UPDATE);
         }
 
         CartItem cartItem = itemOptional.get();
@@ -99,7 +101,7 @@ public class CartService {
         boolean removed = cart.getItems().removeIf(item -> item.getId().equals(cartItemId));
 
         if (!removed) {
-            throw new RuntimeException("Mục này không tồn tại trong giỏ hàng của bạn");
+            throw new RuntimeException(ERROR_ITEM_NOT_IN_CART_REMOVE);
         }
 
         return cartRepository.save(cart);

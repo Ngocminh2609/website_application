@@ -21,6 +21,8 @@ import com.ecommerce.backend.entity.User;
 
 import java.util.Collection;
 
+import static com.ecommerce.backend.constant.security.SecurityConfigConstants.*;
+
 /**
  * Cấu hình bảo mật chính (FilterChain).
  * Kết hợp CORS, Keycloak Resource Server và phân quyền Endpoint chi tiết cho USER/ADMIN.
@@ -102,32 +104,32 @@ public class SecurityConfig {
     }
 
     private void syncUser(Jwt jwt) {
-        String username = jwt.getClaimAsString("preferred_username");
+        String username = jwt.getClaimAsString(CLAIM_PREFERRED_USERNAME);
         if (username == null) {
-            username = jwt.getClaimAsString("sub");
+            username = jwt.getClaimAsString(CLAIM_SUB);
         }
         if (username != null) {
             try {
                 if (!userRepository.existsByUsername(username)) {
                     User user = new User();
                     user.setUsername(username);
-                    user.setEmail(jwt.getClaimAsString("email"));
+                    user.setEmail(jwt.getClaimAsString(CLAIM_EMAIL));
 
-                    String fullName = jwt.getClaimAsString("name");
+                    String fullName = jwt.getClaimAsString(CLAIM_NAME);
                     if (fullName == null) {
                         fullName = username;
                     }
                     user.setFullName(fullName);
 
                     // Mật khẩu placeholder cho tài khoản OAuth2 (JPA yêu cầu @NotBlank)
-                    user.setPassword(passwordEncoder().encode("KEYCLOAK_OAUTH2_PLACEHOLDER_" + java.util.UUID.randomUUID()));
+                    user.setPassword(passwordEncoder().encode(PLACEHOLDER_PASSWORD_PREFIX + java.util.UUID.randomUUID()));
 
                     // Xác định vai trò từ Keycloak token
-                    java.util.Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-                    String role = "USER";
-                    if (realmAccess != null && realmAccess.get("roles") instanceof Collection<?> roles) {
-                        if (roles.contains("ADMIN")) {
-                            role = "ADMIN";
+                    java.util.Map<String, Object> realmAccess = jwt.getClaim(CLAIM_REALM_ACCESS);
+                    String role = ROLE_USER;
+                    if (realmAccess != null && realmAccess.get(CLAIM_ROLES) instanceof Collection<?> roles) {
+                        if (roles.contains(ROLE_ADMIN)) {
+                            role = ROLE_ADMIN;
                         }
                     }
                     user.setRole(role);
@@ -135,9 +137,9 @@ public class SecurityConfig {
                 }
             } catch (org.springframework.dao.DataIntegrityViolationException e) {
                 // Trùng lặp do request đồng thời - bỏ qua vì user đã được tạo ở thread khác
-                log.warn("User '{}' already exists (duplicate key during sync), skipping insert.", username);
+                log.warn(LOG_USER_DUPLICATE, username);
             } catch (Exception e) {
-                log.error("Lỗi khi sync user từ JWT token: ", e);
+                log.error(LOG_SYNC_ERROR, e);
             }
         }
     }

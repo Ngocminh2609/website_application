@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
+import static com.ecommerce.backend.constant.entity.ProductConstants.*;
+
 @Entity
 @Table(name = "products")
 @Getter
@@ -27,7 +29,7 @@ public class Product {
     private Long id;
 
     // Tên sản phẩm là bắt buộc để hiển thị trên website
-    @NotBlank(message = "Tên sản phẩm không được để trống")
+    @NotBlank(message = ERROR_NAME_REQUIRED)
     private String name;
 
     // Sử dụng TEXT để lưu trữ mô tả dài hơn mức giới hạn của VARCHAR thông thường
@@ -35,12 +37,12 @@ public class Product {
     private String description;
 
     // Dùng BigDecimal để đảm bảo độ chính xác của giá tiền, tránh sai số float/double trong thương mại
-    @NotNull(message = "Giá sản phẩm không được để trống")
-    @Min(value = 0, message = "Giá sản phẩm phải lớn hơn hoặc bằng 0")
+    @NotNull(message = ERROR_PRICE_REQUIRED)
+    @Min(value = PRICE_MIN, message = ERROR_PRICE_MIN)
     private BigDecimal price;
 
     // Số lượng hàng trong kho để kiểm soát việc bán hàng
-    @Min(value = 0, message = "Số lượng kho không được âm")
+    @Min(value = STOCK_QUANTITY_MIN, message = ERROR_STOCK_QUANTITY_MIN)
     private Integer stockQuantity;
 
     // URL hình ảnh chính

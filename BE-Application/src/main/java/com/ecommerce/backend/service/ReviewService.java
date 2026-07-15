@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static com.ecommerce.backend.constant.service.ReviewServiceConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
@@ -36,13 +38,13 @@ public class ReviewService {
     public ProductReview createReview(Long productId, Long userId, ReviewRequest request) {
         // Kiểm tra user đã review sản phẩm này chưa (unique constraint ở DB cũng bắt, nhưng check sớm để trả message rõ hơn)
         reviewRepository.findByProductIdAndUserId(productId, userId).ifPresent(r -> {
-            throw new RuntimeException("Bạn đã đánh giá sản phẩm này rồi");
+            throw new RuntimeException(ERROR_ALREADY_REVIEWED);
         });
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(ERROR_PRODUCT_NOT_FOUND));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
 
         // Tự động xác nhận mua hàng bằng cách truy vấn lịch sử đơn hàng thay vì để user tự khai
         boolean isVerified = reviewRepository.hasUserPurchasedProduct(productId, userId);
@@ -71,11 +73,11 @@ public class ReviewService {
     @Transactional
     public void deleteReview(Long reviewId, Long userId, String userRole) {
         ProductReview review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(ERROR_REVIEW_NOT_FOUND));
 
         // Chỉ chủ review hoặc Admin mới được xóa
-        if (!review.getUser().getId().equals(userId) && !"ADMIN".equals(userRole)) {
-            throw new RuntimeException("Bạn không có quyền xóa review này");
+        if (!review.getUser().getId().equals(userId) && !ROLE_ADMIN.equals(userRole)) {
+            throw new RuntimeException(ERROR_NO_PERMISSION_DELETE);
         }
 
         Long productId = review.getProduct().getId();
@@ -107,7 +109,7 @@ public class ReviewService {
     @Transactional
     public void approveReview(Long reviewId) {
         ProductReview review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(ERROR_REVIEW_NOT_FOUND));
 
         review.setIsApproved(true);
         reviewRepository.save(review);

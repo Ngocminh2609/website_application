@@ -7,24 +7,26 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+import static com.ecommerce.backend.constant.dto.ProductRequestConstants.*;
+
 @Data
 public class ProductRequest {
-    @NotBlank(message = "Tên sản phẩm không được để trống")
+    @NotBlank(message = ERROR_NAME_REQUIRED)
     private String name;
 
     private String description;
 
-    @Min(value = 0, message = "Giá sản phẩm phải lớn hơn hoặc bằng 0")
+    @Min(value = PRICE_MIN, message = ERROR_PRICE_MIN)
     private BigDecimal price;
 
-    @NotNull(message = "Giá gốc không được để trống")
-    @Min(value = 0, message = "Giá gốc không được âm")
+    @NotNull(message = ERROR_ORIGINAL_PRICE_REQUIRED)
+    @Min(value = ORIGINAL_PRICE_MIN, message = ERROR_ORIGINAL_PRICE_MIN)
     private BigDecimal originalPrice;
 
-    @Min(value = 0, message = "Phần trăm giảm không được âm")
+    @Min(value = DISCOUNT_PERCENT_MIN, message = ERROR_DISCOUNT_PERCENT_MIN)
     private Integer discountPercent;
 
-    @Min(value = 0, message = "Số lượng kho không được âm")
+    @Min(value = STOCK_QUANTITY_MIN, message = ERROR_STOCK_QUANTITY_MIN)
     private Integer stockQuantity;
 
     private String imageUrl;
@@ -39,6 +41,6 @@ public class ProductRequest {
 
     private boolean isActive = true;
 
-    @NotNull(message = "Danh mục không được để trống")
+    @NotNull(message = ERROR_CATEGORY_REQUIRED)
     private Long categoryId;
 }

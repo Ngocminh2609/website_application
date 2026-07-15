@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+import static com.ecommerce.backend.constant.service.BannerServiceConstants.*;
+
 @Service
 public class BannerService {
 
@@ -52,7 +54,7 @@ public class BannerService {
             banner.setSortOrder(bannerDetails.getSortOrder());
             banner.setIsActive(bannerDetails.getIsActive());
             return bannerRepository.save(banner);
-        }).orElseThrow(() -> new RuntimeException("Banner không tìm thấy với id " + id));
+        }).orElseThrow(() -> new RuntimeException(ERROR_BANNER_NOT_FOUND + id));
     }
 
     public void deleteBanner(Long id) {

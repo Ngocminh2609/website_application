@@ -7,7 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import static com.ecommerce.backend.constant.AdminConstants.*;
+import static com.ecommerce.backend.constant.config.AdminConstants.*;
 
 /**
  * Lớp khởi tạo dữ liệu mặc định.

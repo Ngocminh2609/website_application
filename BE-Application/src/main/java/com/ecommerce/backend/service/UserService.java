@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import static com.ecommerce.backend.constant.service.UserServiceConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -17,7 +19,7 @@ public class UserService {
 
     public User getProfile(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
     }
 
     public User updateProfile(String username, UpdateProfileRequest request) {
@@ -37,7 +39,7 @@ public class UserService {
 
         // Xác minh mật khẩu hiện tại trước khi cho phép đổi để ngăn chặn thay đổi trái phép
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new RuntimeException("Mật khẩu hiện tại không đúng");
+            throw new RuntimeException(ERROR_WRONG_CURRENT_PASSWORD);
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));

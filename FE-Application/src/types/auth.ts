@@ -22,6 +22,7 @@ export interface AuthResponse {
   message: string;
   user: User | null;
   token: string | null;
+  refreshToken?: string | null;
 }
 
 /**

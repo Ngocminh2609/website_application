@@ -9,6 +9,7 @@ export const LOGIN_STRINGS = {
   dividerText: "HOẶC TIẾP TỤC VỚI",
   noAccount: "Chưa có tài khoản? ",
   registerLink: "Tạo tài khoản mới",
+  rememberMe: "Ghi nhớ đăng nhập (30 ngày)",
   messages: {
     googleLoginFailed: "Đăng nhập Google thất bại. Vui lòng thử lại.",
     googleConnectionError: "Lỗi kết nối với Google",

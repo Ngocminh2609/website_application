@@ -4,12 +4,14 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
+import static com.ecommerce.backend.constant.dto.LoginRequestConstants.*;
+
 @Getter
 @Setter
 public class LoginRequest {
-    @NotBlank(message = "Tên đăng nhập không được để trống")
+    @NotBlank(message = ERROR_USERNAME_REQUIRED)
     private String username;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
+    @NotBlank(message = ERROR_PASSWORD_REQUIRED)
     private String password;
 }

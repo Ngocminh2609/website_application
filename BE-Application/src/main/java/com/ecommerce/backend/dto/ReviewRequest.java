@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import static com.ecommerce.backend.constant.dto.ReviewRequestConstants.*;
+
 /**
  * Request body khi người dùng gửi đánh giá sản phẩm.
  */
@@ -13,9 +15,9 @@ import lombok.Setter;
 @Setter
 public class ReviewRequest {
 
-    @NotNull(message = "Số sao không được để trống")
-    @Min(value = 1, message = "Số sao tối thiểu là 1")
-    @Max(value = 5, message = "Số sao tối đa là 5")
+    @NotNull(message = ERROR_RATING_REQUIRED)
+    @Min(value = RATING_MIN, message = ERROR_RATING_MIN)
+    @Max(value = RATING_MAX, message = ERROR_RATING_MAX)
     private Integer rating;
 
     private String comment;

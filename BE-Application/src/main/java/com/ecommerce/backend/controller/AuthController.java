@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+import static com.ecommerce.backend.constant.controller.AuthConstants.*;
+
 /**
  * Controller xử lý đăng ký tài khoản mới.
  * Quy trình:
@@ -38,11 +40,11 @@ public class AuthController {
         // Kiểm tra trùng lặp trong DB cục bộ trước
         if (userRepository.existsByUsername(request.getUsername())) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Tên đăng nhập đã tồn tại trong hệ thống."));
+                    .body(Map.of(RESPONSE_KEY_MESSAGE, ERROR_USERNAME_EXISTS));
         }
         if (userRepository.existsByEmail(request.getEmail())) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Email đã được sử dụng bởi tài khoản khác."));
+                    .body(Map.of(RESPONSE_KEY_MESSAGE, ERROR_EMAIL_EXISTS));
         }
 
         try {
@@ -61,15 +63,15 @@ public class AuthController {
             user.setFullName(request.getFullName() != null ? request.getFullName() : request.getUsername());
             // Lưu hash password để tránh lỗi @NotBlank, nhưng xác thực sẽ qua Keycloak
             user.setPassword(passwordEncoder.encode(request.getPassword()));
-            user.setRole("USER");
+            user.setRole(DEFAULT_USER_ROLE);
             userRepository.save(user);
 
             log.info("Đăng ký thành công cho user '{}'", request.getUsername());
-            return ResponseEntity.ok(Map.of("message", "Đăng ký thành công! Bạn có thể đăng nhập ngay."));
+            return ResponseEntity.ok(Map.of(RESPONSE_KEY_MESSAGE, SUCCESS_REGISTER));
 
         } catch (RuntimeException e) {
             log.error("Lỗi đăng ký user '{}': {}", request.getUsername(), e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(RESPONSE_KEY_MESSAGE, e.getMessage()));
         }
     }
 }

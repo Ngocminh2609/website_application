@@ -18,6 +18,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static com.ecommerce.backend.constant.controller.PaymentConstants.*;
+
 @RestController
 @RequestMapping("/api/v1/payment")
 @RequiredArgsConstructor
@@ -37,11 +39,11 @@ public class PaymentController {
             @RequestParam("shippingAddress") String shippingAddress,
             @RequestParam("phoneNumber") String phoneNumber,
             @RequestParam(value = "couponCode", required = false) String couponCode,
-            @RequestParam(value = "paymentMethod", defaultValue = "VNPAY") String paymentMethod
+            @RequestParam(value = "paymentMethod", defaultValue = METHOD_VNPAY) String paymentMethod
     ) {
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
 
         // 1. Tạo đơn hàng trong DB (Trạng thái PENDING)
         Order order = orderService.createOrderFromCart(user, shippingAddress, phoneNumber, couponCode, paymentMethod);
@@ -50,10 +52,10 @@ public class PaymentController {
         long amountWithVnd = order.getTotalAmount().multiply(BigDecimal.valueOf(100)).longValue();
 
         // Nếu là COD, trả về thông báo thành công kèm thông tin đơn hàng
-        if ("COD".equalsIgnoreCase(paymentMethod)) {
+        if (METHOD_COD.equalsIgnoreCase(paymentMethod)) {
             return ResponseEntity.ok(PaymentResponse.builder()
-                    .status("OK")
-                    .message("Đã nhận đơn hàng (COD). Chúng tôi sẽ liên hệ sớm nhất.")
+                    .status(STATUS_OK)
+                    .message(MSG_COD_SUCCESS)
                     .url("ORDER_ID=" + vnp_TxnRef + "&AMOUNT=" + amountWithVnd)
                     .build());
         }
@@ -112,8 +114,8 @@ public class PaymentController {
         String paymentUrl = vnPayConfig.getVnp_PayUrl() + "?" + queryUrl;
 
         return ResponseEntity.ok(PaymentResponse.builder()
-                .status("OK")
-                .message("Successfully created order and payment URL")
+                .status(STATUS_OK)
+                .message(MSG_VNPAY_INIT_SUCCESS)
                 .url(paymentUrl)
                 .build());
     }
@@ -129,9 +131,9 @@ public class PaymentController {
             }
         }
 
-        String vnp_SecureHash = request.getParameter("vnp_SecureHash");
-        fields.remove("vnp_SecureHashType");
-        fields.remove("vnp_SecureHash");
+        String vnp_SecureHash = request.getParameter(VNP_SECURE_HASH);
+        fields.remove(VNP_SECURE_HASH_TYPE);
+        fields.remove(VNP_SECURE_HASH);
 
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
@@ -150,8 +152,8 @@ public class PaymentController {
         }
 
         String checkSum = vnPayConfig.hmacSHA512(vnPayConfig.getVnp_HashSecret(), hashData.toString());
-        String responseCode = request.getParameter("vnp_ResponseCode");
-        String txnRef = request.getParameter("vnp_TxnRef");
+        String responseCode = request.getParameter(VNP_RESPONSE_CODE);
+        String txnRef = request.getParameter(VNP_TXN_REF);
 
         if (checkSum.equalsIgnoreCase(vnp_SecureHash)) {
             // Cập nhật trạng thái đơn hàng và lưu giao dịch vào DB
@@ -159,16 +161,16 @@ public class PaymentController {
 
             if ("00".equals(responseCode)) {
                 return ResponseEntity.status(HttpStatus.OK).body(
-                        PaymentResponse.builder().status("OK").message("Thanh toán thành công").build()
+                        PaymentResponse.builder().status(STATUS_OK).message(MSG_PAYMENT_SUCCESS).build()
                 );
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                        PaymentResponse.builder().status("FAILED").message("Thanh toán không thành công").build()
+                        PaymentResponse.builder().status(STATUS_FAILED).message(MSG_PAYMENT_FAILED).build()
                 );
             }
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    PaymentResponse.builder().status("FAILED").message("Sai chữ ký bảo mật").build()
+                    PaymentResponse.builder().status(STATUS_FAILED).message(MSG_INVALID_SIGNATURE).build()
             );
         }
     }
@@ -179,5 +181,4 @@ public class PaymentController {
         // Trả về OK hoặc chuyển hướng nếu cần
         return ResponseEntity.ok().build();
     }
-
 }

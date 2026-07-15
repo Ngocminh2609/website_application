@@ -9,6 +9,8 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import static com.ecommerce.backend.constant.entity.BannerConstants.*;
+
 @Entity
 @Table(name = "banners")
 @Getter
@@ -23,7 +25,7 @@ public class Banner {
 
     private String title;
 
-    @NotBlank(message = "Đường dẫn ảnh banner không được để trống")
+    @NotBlank(message = ERROR_IMAGE_URL_REQUIRED)
     @Column(nullable = false, length = 500)
     private String imageUrl;
 

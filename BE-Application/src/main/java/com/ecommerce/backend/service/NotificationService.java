@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.ecommerce.backend.constant.service.NotificationServiceConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -37,7 +39,7 @@ public class NotificationService {
 
         // 2. Đẩy qua WebSocket ngay lập tức (Real-time)
         // Lưu ý: User subscribe vào /topic/notifications/{userId}
-        messagingTemplate.convertAndSend("/topic/notifications/" + userId, notification);
+        messagingTemplate.convertAndSend(TOPIC_NOTIFICATION_PREFIX + userId, notification);
     }
 
     /**
@@ -50,7 +52,7 @@ public class NotificationService {
 
         // Tạo danh sách thông báo cho từng user
         List<Notification> notifications = allUsers.stream().map(user -> {
-            String recipientId = (user.getRole().equals("ADMIN")) ? "admin" : "user-" + user.getId();
+            String recipientId = (user.getRole().equals(ROLE_ADMIN)) ? RECIPIENT_ADMIN : RECIPIENT_USER_PREFIX + user.getId();
             return Notification.builder()
                     .recipientId(recipientId)
                     .message(message)
@@ -64,7 +66,7 @@ public class NotificationService {
 
         // Đẩy tin nhắn qua WebSocket cho từng người đang online
         for (Notification n : notifications) {
-            messagingTemplate.convertAndSend("/topic/notifications/" + n.getRecipientId(), n);
+            messagingTemplate.convertAndSend(TOPIC_NOTIFICATION_PREFIX + n.getRecipientId(), n);
         }
     }
 
