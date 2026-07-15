@@ -2,10 +2,12 @@ package com.ecommerce.backend.service;
 
 import com.ecommerce.backend.dto.OrderStatisticDTO;
 import com.ecommerce.backend.repository.OrderRepository;
+import com.ecommerce.backend.util.jdbc.JdbcValueUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class StatisticsService {
@@ -34,23 +36,10 @@ public class StatisticsService {
     }
 
     private List<OrderStatisticDTO> mapToDTO(List<Object[]> rows) {
-        return rows.stream().map(row -> {
-            String label = String.valueOf(row[0]);
-            java.math.BigDecimal revenue = java.math.BigDecimal.ZERO;
-            if (row[1] instanceof java.math.BigDecimal) {
-                revenue = (java.math.BigDecimal) row[1];
-            } else if (row[1] instanceof Number) {
-                revenue = new java.math.BigDecimal(row[1].toString());
-            }
-
-            long count = 0L;
-            if (row[2] instanceof Long) {
-                count = (Long) row[2];
-            } else if (row[2] instanceof Number) {
-                count = ((Number) row[2]).longValue();
-            }
-
-            return new OrderStatisticDTO(label, revenue, count);
-        }).collect(java.util.stream.Collectors.toList());
+        return rows.stream().map(row -> new OrderStatisticDTO(
+                String.valueOf(row[0]),
+                JdbcValueUtil.toBigDecimal(row[1]),
+                JdbcValueUtil.toLong(row[2])
+        )).collect(Collectors.toList());
     }
 }

@@ -6,11 +6,8 @@ package com.ecommerce.backend.constant.service;
 public final class UserAddressServiceConstants {
 
     private UserAddressServiceConstants() {
-        // Hạn chế khởi tạo đối tượng hằng số
     }
 
-    // Exception Messages
-    public static final String ERROR_USER_NOT_FOUND = "Không tìm thấy người dùng";
     public static final String ERROR_ADDRESS_NOT_FOUND = "Không tìm thấy địa chỉ";
     public static final String ERROR_NO_PERMISSION_EDIT = "Bạn không có quyền chỉnh sửa địa chỉ này";
     public static final String ERROR_NO_PERMISSION_DELETE = "Bạn không có quyền xóa địa chỉ này";

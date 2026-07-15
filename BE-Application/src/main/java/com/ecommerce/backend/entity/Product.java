@@ -1,5 +1,6 @@
 package com.ecommerce.backend.entity;
 
+import com.ecommerce.backend.util.money.MoneyUtil;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -11,7 +12,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 import static com.ecommerce.backend.constant.entity.ProductConstants.*;
@@ -117,14 +117,13 @@ public class Product {
     private void updateFinalPrice() {
         if (this.originalPrice != null) {
             if (this.discountPercent != null && this.discountPercent > 0) {
-                // Tính giá đã giảm
-                BigDecimal discount = this.originalPrice
-                        .multiply(BigDecimal.valueOf(100 - this.discountPercent))
-                        .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+                BigDecimal discount = MoneyUtil.priceAfterPercentOff(
+                        this.originalPrice,
+                        BigDecimal.valueOf(this.discountPercent)
+                );
                 this.discountPrice = discount;
                 this.price = discount;
             } else {
-                // Không giảm giá
                 this.discountPrice = null;
                 this.discountPercent = 0;
                 this.price = this.originalPrice;

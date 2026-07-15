@@ -1,5 +1,6 @@
 package com.ecommerce.backend.service;
 
+import com.ecommerce.backend.util.text.NameUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -77,12 +78,9 @@ public class KeycloakAdminService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(adminToken);
 
-        // Tách fullName thành firstName và lastName
-        String[] nameParts = (fullName != null && !fullName.isBlank())
-                ? fullName.split(FULL_NAME_DELIMITER, 2)
-                : new String[]{username, LAST_NAME_DEFAULT};
-        String firstName = nameParts[0];
-        String lastName = nameParts.length > 1 ? nameParts[1] : LAST_NAME_DEFAULT;
+        NameUtil.NameParts nameParts = NameUtil.splitFirstLast(fullName, username);
+        String firstName = nameParts.firstName();
+        String lastName = nameParts.lastName();
 
         Map<String, Object> userRepresentation = Map.of(
                 KEY_USERNAME, username,

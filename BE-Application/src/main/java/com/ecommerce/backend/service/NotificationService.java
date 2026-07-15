@@ -4,6 +4,7 @@ import com.ecommerce.backend.entity.Notification;
 import com.ecommerce.backend.entity.User;
 import com.ecommerce.backend.repository.NotificationRepository;
 import com.ecommerce.backend.repository.UserRepository;
+import com.ecommerce.backend.util.notification.RecipientIdUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.ecommerce.backend.constant.service.NotificationServiceConstants.*;
+import static com.ecommerce.backend.constant.domain.RoleConstants.ROLE_ADMIN;
+import static com.ecommerce.backend.constant.service.NotificationServiceConstants.TOPIC_NOTIFICATION_PREFIX;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +54,7 @@ public class NotificationService {
 
         // Tạo danh sách thông báo cho từng user
         List<Notification> notifications = allUsers.stream().map(user -> {
-            String recipientId = (user.getRole().equals(ROLE_ADMIN)) ? RECIPIENT_ADMIN : RECIPIENT_USER_PREFIX + user.getId();
+            String recipientId = RecipientIdUtil.forUserOrAdmin(user.getId(), user.getRole(), ROLE_ADMIN);
             return Notification.builder()
                     .recipientId(recipientId)
                     .message(message)

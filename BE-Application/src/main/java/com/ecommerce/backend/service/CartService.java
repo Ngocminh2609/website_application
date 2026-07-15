@@ -4,15 +4,19 @@ import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.Product;
 import com.ecommerce.backend.entity.User;
+import com.ecommerce.backend.exception.BadRequestException;
 import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.ProductRepository;
+import com.ecommerce.backend.util.persistence.EntityLookupUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-import static com.ecommerce.backend.constant.service.CartServiceConstants.*;
+import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_PRODUCT_NOT_FOUND;
+import static com.ecommerce.backend.constant.service.CartServiceConstants.ERROR_ITEM_NOT_IN_CART_REMOVE;
+import static com.ecommerce.backend.constant.service.CartServiceConstants.ERROR_ITEM_NOT_IN_CART_UPDATE;
 
 /**
  * Dịch vụ xử lý nghiệp vụ Giỏ hàng.
@@ -24,10 +28,6 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
 
-    /**
-     * Lấy giỏ hàng của người dùng hiện tại.
-     * Nếu chưa có thì tạo mới một giỏ trống.
-     */
     public Cart getCartByUser(User user) {
         return cartRepository.findByUser(user)
                 .orElseGet(() -> {
@@ -37,16 +37,11 @@ public class CartService {
                 });
     }
 
-    /**
-     * Thêm sản phẩm vào giỏ hàng.
-     */
     @Transactional
     public Cart addItemToCart(User user, Long productId, Integer quantity) {
         Cart cart = getCartByUser(user);
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException(ERROR_PRODUCT_NOT_FOUND));
+        Product product = EntityLookupUtil.require(productRepository.findById(productId), ERROR_PRODUCT_NOT_FOUND);
 
-        // Kiểm tra xem sản phẩm đã có trong giỏ chưa
         Optional<CartItem> existingItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst();
@@ -65,9 +60,6 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    /**
-     * Cập nhật số lượng của một mục trong giỏ.
-     */
     @Transactional
     public Cart updateItemQuantity(User user, Long cartItemId, Integer quantity) {
         Cart cart = getCartByUser(user);
@@ -77,7 +69,7 @@ public class CartService {
                 .findFirst();
 
         if (itemOptional.isEmpty()) {
-            throw new RuntimeException(ERROR_ITEM_NOT_IN_CART_UPDATE);
+            throw new BadRequestException(ERROR_ITEM_NOT_IN_CART_UPDATE);
         }
 
         CartItem cartItem = itemOptional.get();
@@ -90,20 +82,23 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    /**
-     * Xóa một mục hoàn toàn khỏi giỏ hàng.
-     */
     @Transactional
     public Cart removeItemFromCart(User user, Long cartItemId) {
         Cart cart = getCartByUser(user);
 
-        // Tìm và xóa mục cụ thể trong danh sách của giỏ hàng
         boolean removed = cart.getItems().removeIf(item -> item.getId().equals(cartItemId));
-
         if (!removed) {
-            throw new RuntimeException(ERROR_ITEM_NOT_IN_CART_REMOVE);
+            throw new BadRequestException(ERROR_ITEM_NOT_IN_CART_REMOVE);
         }
 
         return cartRepository.save(cart);
+    }
+
+    @Transactional
+    public void clearCart(Long userId) {
+        cartRepository.findByUserId(userId).ifPresent(cart -> {
+            cart.getItems().clear();
+            cartRepository.save(cart);
+        });
     }
 }

@@ -5,17 +5,18 @@ import com.ecommerce.backend.entity.Category;
 import com.ecommerce.backend.entity.Product;
 import com.ecommerce.backend.repository.CategoryRepository;
 import com.ecommerce.backend.repository.ProductRepository;
+import com.ecommerce.backend.util.persistence.EntityLookupUtil;
+import com.ecommerce.backend.util.storage.ImageReplaceUtil;
+import com.ecommerce.backend.util.text.StringListUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static com.ecommerce.backend.constant.service.ProductServiceConstants.*;
+import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_CATEGORY_NOT_FOUND;
+import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_PRODUCT_NOT_FOUND;
+import static com.ecommerce.backend.constant.service.ProductServiceConstants.MORE_IMAGES_DELIMITER;
 
 @Service
 public class ProductService {
@@ -34,10 +35,6 @@ public class ProductService {
         this.minioService = minioService;
     }
 
-    public List<Product> getAllProducts() {
-        return productRepository.findByIsActiveTrue();
-    }
-
     public List<Product> getAllProductsPublic() {
         return productRepository.findByIsActiveTrue();
     }
@@ -46,8 +43,8 @@ public class ProductService {
         return productRepository.findAllByOrderByCreatedAtDesc();
     }
 
-    public Optional<Product> getProductById(Long id) {
-        return productRepository.findById(id);
+    public Product requireProduct(Long id) {
+        return EntityLookupUtil.require(productRepository.findById(id), ERROR_PRODUCT_NOT_FOUND);
     }
 
     public List<Product> getProductsByCategory(Long categoryId) {
@@ -59,8 +56,10 @@ public class ProductService {
     }
 
     public Product saveProduct(ProductRequest request) {
-        Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new RuntimeException(ERROR_CATEGORY_NOT_FOUND_WITH_ID + request.getCategoryId()));
+        Category category = EntityLookupUtil.require(
+                categoryRepository.findById(request.getCategoryId()),
+                ERROR_CATEGORY_NOT_FOUND
+        );
 
         Product product = new Product();
         mapRequestToEntity(request, product, category);
@@ -68,23 +67,19 @@ public class ProductService {
     }
 
     public Product updateProduct(Long id, ProductRequest request) {
-        return productRepository.findById(id).map(product -> {
-            Category category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException(ERROR_CATEGORY_NOT_FOUND_WITH_ID + request.getCategoryId()));
+        Product product = requireProduct(id);
+        Category category = EntityLookupUtil.require(
+                categoryRepository.findById(request.getCategoryId()),
+                ERROR_CATEGORY_NOT_FOUND
+        );
 
-            // Xoa anh chinh cu neu admin thay the bang anh moi de tranh de lai file rac
-            String oldImageUrl = product.getImageUrl();
-            String newImageUrl = request.getImageUrl();
-            if (oldImageUrl != null && newImageUrl != null && !oldImageUrl.equals(newImageUrl)) {
-                minioService.deleteFile(oldImageUrl, productBucket);
-            }
+        ImageReplaceUtil.deleteIfReplaced(
+                product.getImageUrl(), request.getImageUrl(), productBucket, minioService::deleteFile
+        );
+        deleteRemovedMoreImages(product.getMoreImages(), request.getMoreImages());
 
-            // Xoa nhung anh phu bi loai khoi danh sach khi admin cap nhat
-            deleteRemovedMoreImages(product.getMoreImages(), request.getMoreImages());
-
-            mapRequestToEntity(request, product, category);
-            return productRepository.save(product);
-        }).orElseThrow(() -> new RuntimeException(ERROR_PRODUCT_NOT_FOUND_WITH_ID + id));
+        mapRequestToEntity(request, product, category);
+        return productRepository.save(product);
     }
 
     private void mapRequestToEntity(ProductRequest request, Product product, Category category) {
@@ -115,15 +110,10 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
-        // Xoa tat ca anh tren storage truoc de tranh de lai file rac khi san pham bi xoa
         productRepository.findById(id).ifPresent(this::deleteAllProductImages);
         productRepository.deleteById(id);
     }
 
-    /**
-     * Xoa toan bo anh cua san pham (ca imageUrl chinh lan toan bo moreImages)
-     * gop chung vao 1 ham de tai su dung, tranh lap lai logic o deleteProduct va updateProduct.
-     */
     private void deleteAllProductImages(Product product) {
         if (product.getImageUrl() != null) {
             minioService.deleteFile(product.getImageUrl(), productBucket);
@@ -131,10 +121,6 @@ public class ProductService {
         parseMoreImages(product.getMoreImages()).forEach(url -> minioService.deleteFile(url, productBucket));
     }
 
-    /**
-     * Xoa nhung anh phu bi loai khoi danh sach moi khi admin cap nhat.
-     * So sanh 2 danh sach de chi xoa anh thuc su khong con duoc dung.
-     */
     private void deleteRemovedMoreImages(String oldMoreImages, String newMoreImages) {
         List<String> oldList = parseMoreImages(oldMoreImages);
         List<String> newList = parseMoreImages(newMoreImages);
@@ -143,18 +129,8 @@ public class ProductService {
                 .forEach(url -> minioService.deleteFile(url, productBucket));
     }
 
-    /**
-     * Tach chuoi moreImages phan cach bang dau phay thanh danh sach URL.
-     * Tra ve danh sach rong neu moreImages null hoac trong de tranh NullPointerException o cac ham goi.
-     */
     private List<String> parseMoreImages(String moreImages) {
-        if (moreImages == null || moreImages.isBlank()) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(moreImages.split(MORE_IMAGES_DELIMITER))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
+        return StringListUtil.splitAndTrim(moreImages, MORE_IMAGES_DELIMITER);
     }
 
     public List<Product> getProductsByIds(List<Long> ids) {

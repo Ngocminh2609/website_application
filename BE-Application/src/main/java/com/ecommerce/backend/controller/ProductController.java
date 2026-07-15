@@ -70,9 +70,7 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        return productService.getProductById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(productService.requireProduct(id));
     }
 
     @PostMapping
@@ -82,11 +80,7 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest productRequest) {
-        try {
-            return ResponseEntity.ok(productService.updateProduct(id, productRequest));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(productService.updateProduct(id, productRequest));
     }
 
     @DeleteMapping("/{id}")

@@ -7,7 +7,6 @@ import { paymentApi } from "../../api/paymentApi";
 import { couponApi } from "../../api/couponApi";
 import { addressApi } from "../../api/addressApi";
 import type { UserAddress } from "../../api/addressApi";
-import type { User } from "../../types/auth";
 import type { CouponValidateResponse } from "../../types/coupon-review";
 import { CART_STRINGS } from "../../constants/Cart/cart-page";
 import { notification } from "../../utils/notification";
@@ -237,7 +236,6 @@ export const useCartPageState = () => {
       notification.error(CART_STRINGS.messages.loginRequired);
       return;
     }
-    const user = JSON.parse(userStr) as User;
 
     const fullAddressString = getFullAddressString(
       selectedAddr.detailAddress,
@@ -248,7 +246,6 @@ export const useCartPageState = () => {
     try {
       setCheckoutLoading(true);
       const response = await paymentApi.createOrderPayment({
-        username: user.username,
         address: fullAddressString,
         phone: selectedAddr.phoneNumber,
         couponCode: couponResult?.code,

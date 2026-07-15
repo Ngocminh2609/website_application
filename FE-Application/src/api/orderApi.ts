@@ -34,14 +34,11 @@ const ADMIN_PATH = `${BASE_PATH}/admin`;
 
 export const orderApi = {
   /**
-   * Lấy danh sách đơn hàng của người dùng.
-   * @param username - Tên người dùng cần lấy đơn hàng.
+   * Lấy danh sách đơn hàng của người dùng hiện tại (từ JWT).
    * @returns Danh sách `Order`.
    */
-  getUserOrders: (username: string): Promise<Order[]> =>
-    apiClient.fetch<Order[]>(
-      `${BASE_PATH}/user?username=${encodeURIComponent(username)}`,
-    ),
+  getUserOrders: (): Promise<Order[]> =>
+    apiClient.fetch<Order[]>(`${BASE_PATH}/user`),
 
   /**
    * Lấy tất cả đơn hàng. (Yêu cầu quyền ADMIN)

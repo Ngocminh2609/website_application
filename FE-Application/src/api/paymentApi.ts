@@ -9,7 +9,6 @@ export interface PaymentResponse {
 }
 
 export interface CreateOrderPaymentParams {
-  username: string;
   address: string;
   phone: string;
   couponCode?: string;
@@ -40,11 +39,11 @@ export const paymentApi = {
 
   /**
    * Tạo đơn hàng và khởi tạo thanh toán.
+   * User lấy từ JWT Authorization header (không gửi username).
    * @param params - Thông tin checkout.
    * @returns Thông tin thanh toán bao gồm URL redirect.
    */
   createOrderPayment: ({
-    username,
     address,
     phone,
     couponCode,
@@ -54,7 +53,6 @@ export const paymentApi = {
       `${BASE_PATH}/create-order-payment`,
       window.location.origin,
     );
-    url.searchParams.set("username", username);
     url.searchParams.set("shippingAddress", address);
     url.searchParams.set("phoneNumber", phone);
     url.searchParams.set("paymentMethod", paymentMethod);

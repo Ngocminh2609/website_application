@@ -1,40 +1,42 @@
 package com.ecommerce.backend.config;
 
+import com.ecommerce.backend.security.CurrentUserArgumentResolver;
+import com.ecommerce.backend.util.text.StringListUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * Cấu hình CORS tập trung cho toàn bộ ứng dụng.
- * Expose CorsConfigurationSource bean để cả Spring MVC lẫn Spring Security
- * dùng chung — tránh xung đột giữa 2 tầng CORS filter.
- * <p>
- * Tham chiếu Spring Security 6.x best practice:
- * <a href="https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html">Spring Security CORS Integration</a>
+ * Cấu hình CORS tập trung và MVC argument resolvers.
  */
 @Configuration
-public class WebConfig {
+@RequiredArgsConstructor
+public class WebConfig implements WebMvcConfigurer {
 
-    /**
-     * Danh sách origins được phép, phân cách bằng dấu phẩy.
-     * Local dev default: <a href="http://localhost:5173,http://localhost:3000">...</a>
-     * Production: set biến môi trường CORS_ALLOWED_ORIGINS=<a href="https://yourdomain.com">...</a>
-     */
+    private final CurrentUserArgumentResolver currentUserArgumentResolver;
+
     @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
     private String allowedOriginsConfig;
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(currentUserArgumentResolver);
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Parse danh sách origins từ config — không bao giờ dùng wildcard "*"
-        List<String> allowedOrigins = Arrays.asList(allowedOriginsConfig.split(","));
+        List<String> allowedOrigins = StringListUtil.splitAndTrim(allowedOriginsConfig, ",");
         config.setAllowedOrigins(allowedOrigins);
 
         config.setAllowedMethods(Arrays.asList(
@@ -46,15 +48,10 @@ public class WebConfig {
                 "X-Requested-With", "Cache-Control"
         ));
 
-        // Bật credentials để hỗ trợ Authorization header / cookie
-        // LƯU Ý: Khi allowCredentials=true, allowedOrigins KHÔNG được chứa "*"
         config.setAllowCredentials(true);
-
-        // Cache preflight request trong 1 giờ
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Áp dụng cho toàn bộ API và WebSocket
         source.registerCorsConfiguration("/api/**", config);
         source.registerCorsConfiguration("/ws-chat/**", config);
 

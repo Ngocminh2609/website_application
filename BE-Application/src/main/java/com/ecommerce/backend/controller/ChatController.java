@@ -1,6 +1,7 @@
 package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.dto.ChatMessage;
+import com.ecommerce.backend.util.text.StringUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -35,7 +36,7 @@ public class ChatController {
         String recipientTopic;
         String recipientId;
 
-        if (chatMessage.getRecipientId() != null && !chatMessage.getRecipientId().isEmpty()) {
+        if (StringUtil.hasText(chatMessage.getRecipientId())) {
             // Gửi tới khách hàng cụ thể
             recipientId = chatMessage.getRecipientId();
             recipientTopic = TOPIC_USER_PREFIX + recipientId;

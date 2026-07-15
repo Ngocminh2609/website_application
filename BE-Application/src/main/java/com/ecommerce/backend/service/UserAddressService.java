@@ -4,7 +4,8 @@ import com.ecommerce.backend.dto.UserAddressDTO;
 import com.ecommerce.backend.entity.User;
 import com.ecommerce.backend.entity.UserAddress;
 import com.ecommerce.backend.repository.UserAddressRepository;
-import com.ecommerce.backend.repository.UserRepository;
+import com.ecommerce.backend.util.persistence.EntityLookupUtil;
+import com.ecommerce.backend.util.security.OwnershipUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +20,8 @@ import static com.ecommerce.backend.constant.service.UserAddressServiceConstants
 public class UserAddressService {
 
     private final UserAddressRepository userAddressRepository;
-    private final UserRepository userRepository;
 
-    public List<UserAddressDTO> getUserAddresses(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
-
+    public List<UserAddressDTO> getUserAddresses(User user) {
         return userAddressRepository.findByUserOrderByIsDefaultDescCreatedAtDesc(user)
                 .stream()
                 .map(this::convertToDTO)
@@ -32,79 +29,60 @@ public class UserAddressService {
     }
 
     @Transactional
-    public UserAddressDTO addAddress(String username, UserAddressDTO addressDTO) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
-
-        // Nếu là địa chỉ đầu tiên hoặc được đánh dấu là mặc định
-        if (addressDTO.getIsDefault() || userAddressRepository.findByUserOrderByIsDefaultDescCreatedAtDesc(user).isEmpty()) {
+    public UserAddressDTO addAddress(User user, UserAddressDTO addressDTO) {
+        if (Boolean.TRUE.equals(addressDTO.getIsDefault())
+                || userAddressRepository.findByUserOrderByIsDefaultDescCreatedAtDesc(user).isEmpty()) {
             resetDefaultAddress(user);
             addressDTO.setIsDefault(true);
         }
 
-        UserAddress address = UserAddress.builder()
-                .user(user)
-                .fullName(addressDTO.getFullName())
-                .phoneNumber(addressDTO.getPhoneNumber())
-                .province(addressDTO.getProvince())
-                .ward(addressDTO.getWard())
-                .detailAddress(addressDTO.getDetailAddress())
-                .isDefault(addressDTO.getIsDefault())
-                .build();
-
+        UserAddress address = UserAddress.builder().user(user).build();
+        applyDto(address, addressDTO);
         return convertToDTO(userAddressRepository.save(address));
     }
 
     @Transactional
-    public UserAddressDTO updateAddress(String username, Long addressId, UserAddressDTO addressDTO) {
-        UserAddress address = userAddressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException(ERROR_ADDRESS_NOT_FOUND));
+    public UserAddressDTO updateAddress(User user, Long addressId, UserAddressDTO addressDTO) {
+        UserAddress address = requireOwnedAddress(user, addressId, ERROR_NO_PERMISSION_EDIT);
 
-        if (!address.getUser().getUsername().equals(username)) {
-            throw new RuntimeException(ERROR_NO_PERMISSION_EDIT);
-        }
-
-        if (addressDTO.getIsDefault() && !address.getIsDefault()) {
+        if (Boolean.TRUE.equals(addressDTO.getIsDefault()) && !Boolean.TRUE.equals(address.getIsDefault())) {
             resetDefaultAddress(address.getUser());
         }
 
-        address.setFullName(addressDTO.getFullName());
-        address.setPhoneNumber(addressDTO.getPhoneNumber());
-        address.setProvince(addressDTO.getProvince());
-        address.setWard(addressDTO.getWard());
-        address.setDetailAddress(addressDTO.getDetailAddress());
-        address.setIsDefault(addressDTO.getIsDefault());
-
+        applyDto(address, addressDTO);
         return convertToDTO(userAddressRepository.save(address));
     }
 
     @Transactional
-    public void deleteAddress(String username, Long addressId) {
-        UserAddress address = userAddressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException(ERROR_ADDRESS_NOT_FOUND));
-
-        if (!address.getUser().getUsername().equals(username)) {
-            throw new RuntimeException(ERROR_NO_PERMISSION_DELETE);
-        }
-
+    public void deleteAddress(User user, Long addressId) {
+        UserAddress address = requireOwnedAddress(user, addressId, ERROR_NO_PERMISSION_DELETE);
         userAddressRepository.delete(address);
     }
 
     @Transactional
-    public void setDefaultAddress(String username, Long addressId) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
-
-        UserAddress address = userAddressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException(ERROR_ADDRESS_NOT_FOUND));
-
-        if (!address.getUser().getUsername().equals(username)) {
-            throw new RuntimeException(ERROR_NO_PERMISSION_EDIT);
-        }
-
+    public void setDefaultAddress(User user, Long addressId) {
+        UserAddress address = requireOwnedAddress(user, addressId, ERROR_NO_PERMISSION_EDIT);
         resetDefaultAddress(user);
         address.setIsDefault(true);
         userAddressRepository.save(address);
+    }
+
+    private UserAddress requireOwnedAddress(User user, Long addressId, String permissionError) {
+        UserAddress address = EntityLookupUtil.require(
+                userAddressRepository.findById(addressId),
+                ERROR_ADDRESS_NOT_FOUND
+        );
+        OwnershipUtil.requireUsernameMatch(address.getUser().getUsername(), user.getUsername(), permissionError);
+        return address;
+    }
+
+    private void applyDto(UserAddress address, UserAddressDTO dto) {
+        address.setFullName(dto.getFullName());
+        address.setPhoneNumber(dto.getPhoneNumber());
+        address.setProvince(dto.getProvince());
+        address.setWard(dto.getWard());
+        address.setDetailAddress(dto.getDetailAddress());
+        address.setIsDefault(dto.getIsDefault());
     }
 
     private void resetDefaultAddress(User user) {

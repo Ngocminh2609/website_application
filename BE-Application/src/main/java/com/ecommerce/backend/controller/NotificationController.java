@@ -2,6 +2,7 @@ package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.entity.Notification;
 import com.ecommerce.backend.service.NotificationService;
+import com.ecommerce.backend.util.text.StringUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -49,7 +50,7 @@ public class NotificationController {
     @PostMapping("/broadcast")
     public ResponseEntity<Void> broadcastNotification(@RequestBody Map<String, String> payload) {
         String message = payload.get("message");
-        if (message != null && !message.isEmpty()) {
+        if (StringUtil.hasText(message)) {
             notificationService.broadcastToAll(message);
             return ResponseEntity.ok().build();
         }

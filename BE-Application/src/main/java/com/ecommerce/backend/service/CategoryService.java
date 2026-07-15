@@ -2,20 +2,19 @@ package com.ecommerce.backend.service;
 
 import com.ecommerce.backend.entity.Category;
 import com.ecommerce.backend.repository.CategoryRepository;
+import com.ecommerce.backend.util.persistence.EntityLookupUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
-import static com.ecommerce.backend.constant.service.CategoryServiceConstants.*;
+import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_CATEGORY_NOT_FOUND;
 
 @Service
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    // Sử dụng Constructor Injection để đảm bảo tính bất biến (Immutability) và dễ dàng viết Unit Test
     @Autowired
     public CategoryService(CategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
@@ -25,8 +24,8 @@ public class CategoryService {
         return categoryRepository.findAll();
     }
 
-    public Optional<Category> getCategoryById(Long id) {
-        return categoryRepository.findById(id);
+    public Category requireCategory(Long id) {
+        return EntityLookupUtil.require(categoryRepository.findById(id), ERROR_CATEGORY_NOT_FOUND);
     }
 
     public Category createCategory(Category category) {
@@ -34,12 +33,10 @@ public class CategoryService {
     }
 
     public Category updateCategory(Long id, Category categoryDetails) {
-        // Kiểm tra sự tồn tại trước khi cập nhật để tránh tạo mới dữ liệu không mong muốn
-        return categoryRepository.findById(id).map(category -> {
-            category.setName(categoryDetails.getName());
-            category.setDescription(categoryDetails.getDescription());
-            return categoryRepository.save(category);
-        }).orElseThrow(() -> new RuntimeException(ERROR_CATEGORY_NOT_FOUND + id));
+        Category category = requireCategory(id);
+        category.setName(categoryDetails.getName());
+        category.setDescription(categoryDetails.getDescription());
+        return categoryRepository.save(category);
     }
 
     public void deleteCategory(Long id) {

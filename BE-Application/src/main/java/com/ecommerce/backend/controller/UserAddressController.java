@@ -1,11 +1,11 @@
 package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.dto.UserAddressDTO;
-import com.ecommerce.backend.security.JwtUserResolver;
+import com.ecommerce.backend.entity.User;
+import com.ecommerce.backend.security.CurrentUser;
 import com.ecommerce.backend.service.UserAddressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,40 +17,34 @@ import java.util.List;
 public class UserAddressController {
 
     private final UserAddressService userAddressService;
-    private final JwtUserResolver jwtUserResolver;
 
     @GetMapping
-    public ResponseEntity<List<UserAddressDTO>> getUserAddresses(Authentication authentication) {
-        String username = jwtUserResolver.getCurrentUser().getUsername();
-        return ResponseEntity.ok(userAddressService.getUserAddresses(username));
+    public ResponseEntity<List<UserAddressDTO>> getUserAddresses(@CurrentUser User user) {
+        return ResponseEntity.ok(userAddressService.getUserAddresses(user));
     }
 
     @PostMapping
-    public ResponseEntity<UserAddressDTO> addAddress(Authentication authentication, @RequestBody UserAddressDTO addressDTO) {
-        String username = jwtUserResolver.getCurrentUser().getUsername();
-        return ResponseEntity.ok(userAddressService.addAddress(username, addressDTO));
+    public ResponseEntity<UserAddressDTO> addAddress(@CurrentUser User user, @RequestBody UserAddressDTO addressDTO) {
+        return ResponseEntity.ok(userAddressService.addAddress(user, addressDTO));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UserAddressDTO> updateAddress(
-            Authentication authentication,
+            @CurrentUser User user,
             @PathVariable Long id,
             @RequestBody UserAddressDTO addressDTO) {
-        String username = jwtUserResolver.getCurrentUser().getUsername();
-        return ResponseEntity.ok(userAddressService.updateAddress(username, id, addressDTO));
+        return ResponseEntity.ok(userAddressService.updateAddress(user, id, addressDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAddress(Authentication authentication, @PathVariable Long id) {
-        String username = jwtUserResolver.getCurrentUser().getUsername();
-        userAddressService.deleteAddress(username, id);
+    public ResponseEntity<Void> deleteAddress(@CurrentUser User user, @PathVariable Long id) {
+        userAddressService.deleteAddress(user, id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/default")
-    public ResponseEntity<Void> setDefaultAddress(Authentication authentication, @PathVariable Long id) {
-        String username = jwtUserResolver.getCurrentUser().getUsername();
-        userAddressService.setDefaultAddress(username, id);
+    public ResponseEntity<Void> setDefaultAddress(@CurrentUser User user, @PathVariable Long id) {
+        userAddressService.setDefaultAddress(user, id);
         return ResponseEntity.ok().build();
     }
 }

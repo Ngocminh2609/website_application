@@ -27,10 +27,7 @@ public class CategoryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
-        // ResponseEntity cung cấp khả năng điều khiển HTTP status code linh hoạt
-        return categoryService.getCategoryById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(categoryService.requireCategory(id));
     }
 
     @PostMapping
@@ -40,11 +37,7 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Category> updateCategory(@PathVariable Long id, @Valid @RequestBody Category categoryDetails) {
-        try {
-            return ResponseEntity.ok(categoryService.updateCategory(id, categoryDetails));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(categoryService.updateCategory(id, categoryDetails));
     }
 
     @DeleteMapping("/{id}")

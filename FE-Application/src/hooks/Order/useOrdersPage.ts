@@ -17,10 +17,9 @@ export const useOrdersPage = () => {
         setLoading(false);
         return;
       }
-      const user = JSON.parse(userStr);
 
       try {
-        const data = await orderApi.getUserOrders(user.username);
+        const data = await orderApi.getUserOrders();
         setOrders(data);
       } catch (error: unknown) {
         notification.error(

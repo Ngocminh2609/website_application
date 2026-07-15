@@ -41,9 +41,7 @@ public class BannerController {
      */
     @GetMapping("/admin/{id}")
     public ResponseEntity<Banner> getBannerById(@PathVariable Long id) {
-        return bannerService.getBannerById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(bannerService.requireBanner(id));
     }
 
     /**
@@ -59,11 +57,7 @@ public class BannerController {
      */
     @PutMapping("/admin/{id}")
     public ResponseEntity<Banner> updateBanner(@PathVariable Long id, @Valid @RequestBody Banner bannerDetails) {
-        try {
-            return ResponseEntity.ok(bannerService.updateBanner(id, bannerDetails));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(bannerService.updateBanner(id, bannerDetails));
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.ecommerce.backend.exception;
 
+import com.ecommerce.backend.util.http.ResponseMessageUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.ecommerce.backend.constant.exception.GlobalExceptionHandlerConstants.*;
+import static com.ecommerce.backend.constant.exception.GlobalExceptionHandlerConstants.ERROR_BAD_CREDENTIALS;
 
 /**
  * Xử lý ngoại lệ tập trung cho toàn ứng dụng.
@@ -19,7 +20,6 @@ import static com.ecommerce.backend.constant.exception.GlobalExceptionHandlerCon
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Xử lý lỗi validation từ @Valid
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -31,19 +31,28 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-    // Xử lý lỗi sai thông tin đăng nhập
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleBadCredentials() {
-        Map<String, String> error = new HashMap<>();
-        error.put(RESPONSE_KEY_MESSAGE, ERROR_BAD_CREDENTIALS);
-        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(ResponseMessageUtil.message(ERROR_BAD_CREDENTIALS), HttpStatus.UNAUTHORIZED);
     }
 
-    // Xử lý các lỗi Runtime chung
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(ResourceNotFoundException ex) {
+        return new ResponseEntity<>(ResponseMessageUtil.message(ex.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, String>> handleForbidden(ForbiddenException ex) {
+        return new ResponseEntity<>(ResponseMessageUtil.message(ex.getMessage()), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Map<String, String>> handleBadRequest(BadRequestException ex) {
+        return new ResponseEntity<>(ResponseMessageUtil.message(ex.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put(RESPONSE_KEY_MESSAGE, ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(ResponseMessageUtil.message(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

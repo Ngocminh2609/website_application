@@ -1,5 +1,7 @@
 package com.ecommerce.backend.service;
 
+import com.ecommerce.backend.util.storage.StoragePathUtil;
+import com.ecommerce.backend.util.text.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,7 +12,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
-import java.util.UUID;
 
 import static com.ecommerce.backend.constant.service.MinioServiceConstants.*;
 
@@ -37,7 +38,7 @@ public class MinioService {
             // Tao bucket neu chua ton tai - chi can thiet voi MinIO local
             ensureBucketExists(bucketName);
 
-            String fileName = UUID.randomUUID() + FILENAME_SEPARATOR + file.getOriginalFilename();
+            String fileName = StoragePathUtil.uniqueFileName(file.getOriginalFilename());
 
             s3Client.putObject(
                     PutObjectRequest.builder()
@@ -71,11 +72,11 @@ public class MinioService {
      * Tach ten tep tu URL (bo qua phan /api/files/bucket/ o dau) truoc khi xoa.
      */
     public void deleteFile(String fileUrl, String bucketName) {
-        if (fileUrl == null || fileUrl.isEmpty()) {
+        if (StringUtil.isBlank(fileUrl)) {
             return;
         }
         try {
-            String fileName = fileUrl.substring(fileUrl.lastIndexOf(PATH_SEPARATOR) + 1);
+            String fileName = StoragePathUtil.extractObjectKey(fileUrl);
             s3Client.deleteObject(
                     DeleteObjectRequest.builder()
                             .bucket(bucketName)
