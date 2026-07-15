@@ -22,6 +22,10 @@ public class ChatMessageEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** UUID phía client — dùng để đồng bộ / sửa tin */
+    @Column(name = "message_key", unique = true, length = 64)
+    private String messageKey;
+
     @Column(nullable = false)
     private String sender;
 
@@ -44,6 +48,9 @@ public class ChatMessageEntity {
 
     @Column(name = "is_bot_response")
     private Boolean isBotResponse;
+
+    @Column(name = "recalled")
+    private Boolean recalled;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

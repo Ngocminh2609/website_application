@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Form } from "antd";
 import type { UploadFile } from "antd";
 import { useLocation } from "react-router-dom";
-import { useAdminChat } from "../../context/useAdminChat";
 import { productApi } from "../../api/productApi";
 import { categoryApi } from "../../api/categoryApi";
 import { fileApi } from "../../api/fileApi";
@@ -16,7 +15,6 @@ import { getErrorMessage } from "../../utils/error";
 import { confirmDelete } from "../common/useConfirmDelete";
 
 export const useAdminDashboardState = () => {
-  const { totalUnread } = useAdminChat();
   const location = useLocation();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -60,7 +58,8 @@ export const useAdminDashboardState = () => {
   useEffect(() => {
     loadCoreData();
     const hash = window.location.hash.replace("#", "");
-    if (hash) {
+    // Bỏ qua hash "chat" — chat đã chuyển sang Drawer trên Header
+    if (hash && hash !== "chat") {
       setActiveTab(hash);
     }
   }, [location.pathname, location.search, activeTab]);
@@ -181,7 +180,6 @@ export const useAdminDashboardState = () => {
   };
 
   return {
-    totalUnread,
     products,
     categories,
     orders,

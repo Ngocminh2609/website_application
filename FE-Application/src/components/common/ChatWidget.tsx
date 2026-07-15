@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Input, Button, Badge } from "antd";
+import { Input, Button, Badge, Space, message as antdMessage } from "antd";
 import {
   SendOutlined,
   CloseOutlined,
   MessageOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -12,14 +13,24 @@ import type { User } from "../../types/auth";
 import { styles } from "./styles/ChatWidget.styles";
 import { COMMON_STRINGS } from "../../constants/Common/common";
 import { getAuthUser } from "../../utils/auth";
+import { chatApi } from "../../api/chatApi";
+import {
+  canEditChatMessage,
+  createChatMessageKey,
+} from "../../utils/chatMessage";
+import ChatMessageMenu from "./ChatMessageMenu";
 
 const { chatWidget: cwStrings } = COMMON_STRINGS;
 
 interface Message {
-  id: string | number;
+  id: string;
   text: string;
   sender: "bot" | "user" | "admin";
   timestamp: number;
+  edited?: boolean;
+  recalled?: boolean;
+  /** Đã gửi lên server (có thể sửa trong 24h) */
+  persisted?: boolean;
 }
 
 const DEFAULT_QUESTIONS = cwStrings.defaultQuestions;
@@ -51,25 +62,18 @@ const INITIAL_MESSAGE: Message = {
 const createMessageObject = (
   text: string,
   sender: "user" | "bot" | "admin",
+  extras?: Partial<Message>,
 ): Message => {
   const timestamp = Date.now();
-  const randomStr = Math.random().toString(36).slice(2, 7);
   return {
-    id: `${sender}-${timestamp}-${randomStr}`,
+    id: extras?.id || createChatMessageKey(),
     text,
     sender,
     timestamp,
+    edited: extras?.edited,
+    recalled: extras?.recalled,
+    persisted: extras?.persisted,
   };
-};
-
-/** Tìm câu trả lời bot dựa trên text người dùng nhập. */
-const findBotAnswer = (text: string) => {
-  const lowerText = text.toLowerCase();
-  return cwStrings.defaultQuestions.find(
-    (item) =>
-      lowerText.includes(item.q.toLowerCase()) ||
-      item.q.toLowerCase().includes(lowerText),
-  );
 };
 
 interface ChatWidgetProps {
@@ -81,6 +85,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isAdminTyping, setIsAdminTyping] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const stompClientRef = useRef<Client | null>(null);
@@ -88,6 +95,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
   const adminTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const isOpenRef = useRef(false);
 
   // 1. Init Session (Support Props & LocalStorage Fallback)
   const [chatSession] = useState(() => {
@@ -137,6 +145,22 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     }
   });
 
+  /** Đã xin gặp tư vấn viên — gửi tin qua WS, không gọi bot nữa cho đến khi admin trả lời */
+  const [handoffPending, setHandoffPending] = useState(() => {
+    try {
+      return localStorage.getItem(`chat_handoff_${chatSession.id}`) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      `chat_handoff_${chatSession.id}`,
+      handoffPending ? "1" : "0",
+    );
+  }, [handoffPending, chatSession.id]);
+
   // 2. Init Messages (Load History)
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
@@ -181,42 +205,104 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     if (isOpen) scrollToBottom();
   }, [messages, isOpen]);
 
-  const simulateBotResponse = useCallback(
-    (userText: string) => {
-      if (isAdminActive) return;
-
-      const found = findBotAnswer(userText);
-
-      setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-        const response = found ? found.a : cwStrings.botFallbackResponse;
-        const botMsg = createMessageObject(response, "bot");
-        setMessages((prev) => [...prev, botMsg]);
-      }, 800);
-
-      return found !== undefined;
-    },
-    [isAdminActive],
-  );
+  // Giữ sync ref để handler WS biết chat đang mở hay đóng
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+    if (isOpen) {
+      setUnreadCount(0);
+    }
+  }, [isOpen]);
 
   const publishChatMessage = useCallback(
-    (text: string, type: "CHAT" | "TYPING" = "CHAT") => {
-      if (!stompClientRef.current?.connected) return;
-      stompClientRef.current.publish({
-        destination: "/app/chat.sendMessage",
-        body: JSON.stringify({
-          sender: chatSession.name,
-          senderId: chatSession.id,
-          email: chatSession.email,
-          fullName: chatSession.fullName,
-          content: text,
-          type,
-          isBotResponse: false,
-        }),
-      });
+    (
+      text: string,
+      type: "CHAT" | "TYPING" | "EDIT" | "RECALL" = "CHAT",
+      messageKey?: string,
+    ) => {
+      const key = messageKey || createChatMessageKey();
+      const tryPublish = (attempt = 0) => {
+        if (stompClientRef.current?.connected) {
+          stompClientRef.current.publish({
+            destination: "/app/chat.sendMessage",
+            body: JSON.stringify({
+              messageKey: type === "TYPING" ? undefined : key,
+              sender: chatSession.name,
+              senderId: chatSession.id,
+              email: chatSession.email,
+              fullName: chatSession.fullName,
+              content: text,
+              type,
+              isBotResponse: false,
+              createdAt: Date.now(),
+            }),
+          });
+          return;
+        }
+        if (attempt < 8) {
+          setTimeout(() => tryPublish(attempt + 1), 250);
+        } else {
+          console.warn("Không gửi được tin tới admin: WebSocket chưa kết nối");
+        }
+      };
+      tryPublish();
+      return key;
     },
     [chatSession],
+  );
+
+  const markPersisted = useCallback((messageKey: string) => {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === messageKey ? { ...m, persisted: true } : m,
+      ),
+    );
+  }, []);
+
+  const activateHandoff = useCallback(
+    (userText: string, messageKey: string) => {
+      setHandoffPending(true);
+      publishChatMessage(userText, "CHAT", messageKey);
+      markPersisted(messageKey);
+    },
+    [publishChatMessage, markPersisted],
+  );
+
+  const requestBotReply = useCallback(
+    async (userText: string, messageKey: string) => {
+      if (isAdminActive) return;
+
+      setIsTyping(true);
+      try {
+        const { reply, escalate, handoff, error } =
+          await chatApi.askBot(userText);
+        const shouldHandoff = Boolean(handoff || escalate);
+
+        if (shouldHandoff) {
+          if (escalate) console.warn("NovaBot escalate:", error);
+          activateHandoff(userText, messageKey);
+        }
+
+        const botMsg = createMessageObject(
+          reply ||
+            (shouldHandoff
+              ? cwStrings.handoffWaitingResponse
+              : cwStrings.botFallbackResponse),
+          "bot",
+        );
+        setMessages((prev) => [...prev, botMsg]);
+      } catch (err) {
+        console.error("NovaBot AI error:", err);
+        activateHandoff(userText, messageKey);
+        const botMsg = createMessageObject(
+          cwStrings.botFallbackResponse,
+          "bot",
+        );
+        setMessages((prev) => [...prev, botMsg]);
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [isAdminActive, activateHandoff],
   );
 
   const handleSend = (text: string, sender: "user" | "bot" = "user") => {
@@ -228,29 +314,61 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
     if (sender === "user") {
       setInputValue("");
 
-      if (!isAdminActive) {
-        const found = findBotAnswer(text);
-        if (!found) {
-          publishChatMessage(text);
-        }
-        setTimeout(() => {
-          simulateBotResponse(text);
-        }, 1000);
+      if (isAdminActive || handoffPending) {
+        publishChatMessage(text, "CHAT", newMessage.id);
+        markPersisted(newMessage.id);
       } else {
-        publishChatMessage(text);
+        void requestBotReply(text, newMessage.id);
       }
     }
   };
 
-  useEffect(() => {
-    if (!isOpen) {
-      if (stompClientRef.current) {
-        stompClientRef.current.deactivate();
-        stompClientRef.current = null;
-      }
+  const startEdit = (msg: Message) => {
+    if (msg.sender !== "user" || !msg.persisted || msg.recalled) return;
+    if (!canEditChatMessage(msg.timestamp)) {
+      antdMessage.warning(cwStrings.editExpired);
       return;
     }
+    setEditingId(msg.id);
+    setEditingValue(msg.text);
+  };
 
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingValue("");
+  };
+
+  const saveEdit = () => {
+    if (!editingId || !editingValue.trim()) return;
+    const trimmed = editingValue.trim();
+    publishChatMessage(trimmed, "EDIT", editingId);
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === editingId ? { ...m, text: trimmed, edited: true } : m,
+      ),
+    );
+    cancelEdit();
+  };
+
+  const recallMessage = (messageKey: string) => {
+    publishChatMessage("", "RECALL", messageKey);
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === messageKey
+          ? {
+              ...m,
+              text: cwStrings.recalledLabel,
+              recalled: true,
+              edited: false,
+            }
+          : m,
+      ),
+    );
+    if (editingId === messageKey) cancelEdit();
+  };
+
+  // Giữ WebSocket luôn kết nối (kể cả khi đóng cửa sổ chat)
+  useEffect(() => {
     let client: Client | null = null;
     try {
       const url = getWsUrl();
@@ -278,8 +396,71 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
               return;
             }
 
+            if (
+              (receivedMsg.type === "EDIT" || receivedMsg.type === "RECALL") &&
+              receivedMsg.senderId === "system"
+            ) {
+              antdMessage.error(receivedMsg.content || cwStrings.editFailed);
+              return;
+            }
+
+            if (
+              (receivedMsg.type === "EDIT" || receivedMsg.type === "RECALL") &&
+              receivedMsg.messageKey
+            ) {
+              const isRecall = receivedMsg.type === "RECALL";
+              setMessages((prev) => {
+                const key = String(receivedMsg.messageKey);
+                const exists = prev.some((m) => String(m.id) === key);
+                if (exists) {
+                  return prev.map((m) =>
+                    String(m.id) === key
+                      ? {
+                          ...m,
+                          text: isRecall
+                            ? cwStrings.recalledLabel
+                            : receivedMsg.content,
+                          edited: isRecall ? false : true,
+                          recalled: isRecall ? true : m.recalled,
+                          sender:
+                            receivedMsg.senderId === "admin"
+                              ? ("admin" as const)
+                              : m.sender,
+                        }
+                      : m,
+                  );
+                }
+                if (receivedMsg.senderId === "admin") {
+                  return [
+                    ...prev,
+                    createMessageObject(
+                      isRecall
+                        ? cwStrings.recalledLabel
+                        : receivedMsg.content,
+                      "admin",
+                      {
+                        id: key,
+                        edited: !isRecall,
+                        recalled: isRecall,
+                        persisted: true,
+                      },
+                    ),
+                  ];
+                }
+                return prev;
+              });
+              if (
+                receivedMsg.senderId === "admin" &&
+                !isOpenRef.current
+              ) {
+                setUnreadCount((c) => c + 1);
+              }
+              return;
+            }
+
             if (receivedMsg.type === "CHAT") {
               setIsAdminActive(true);
+              setHandoffPending(false);
               setIsAdminTyping(false);
               localStorage.setItem(
                 `last_admin_time_${chatSession.id}`,
@@ -287,8 +468,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
               );
               if (adminTypingTimeoutRef.current)
                 clearTimeout(adminTypingTimeoutRef.current);
-              const newMsg = createMessageObject(receivedMsg.content, "admin");
+              const newMsg = createMessageObject(
+                receivedMsg.content,
+                "admin",
+                {
+                  id: receivedMsg.messageKey || createChatMessageKey(),
+                  persisted: true,
+                },
+              );
               setMessages((prev) => [...prev, newMsg]);
+              if (!isOpenRef.current) {
+                setUnreadCount((c) => c + 1);
+              }
             }
           });
 
@@ -320,7 +511,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
         stompClientRef.current = null;
       }
     };
-  }, [isOpen, chatSession]);
+  }, [chatSession]);
 
   return (
     <div className="chat-widget-container">
@@ -330,10 +521,12 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             <AnimatedRobot />
             <div style={styles.headerTextContainer}>
               <div style={styles.title}>{cwStrings.title}</div>
-              <div style={styles.statusText(isAdminActive)}>
+              <div style={styles.statusText(isAdminActive || handoffPending)}>
                 {isAdminActive
                   ? cwStrings.adminStatusActive
-                  : "ID: " + chatSession.name}
+                  : handoffPending
+                    ? cwStrings.adminStatusWaiting
+                    : "ID: " + chatSession.name}
               </div>
             </div>
             <Button
@@ -344,14 +537,87 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
           </div>
 
           <div className="chat-messages">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`message message-${msg.sender}`}>
-                {msg.sender === "admin" && (
-                  <div style={styles.adminBadge}>{cwStrings.adminLabel}</div>
-                )}
-                {msg.text}
-              </div>
-            ))}
+            {messages.map((msg) => {
+              const isEditing = editingId === msg.id;
+              const showMenu =
+                msg.sender === "user" &&
+                !!msg.persisted &&
+                !msg.recalled &&
+                canEditChatMessage(msg.timestamp) &&
+                !isEditing;
+
+              return (
+                <div
+                  key={msg.id}
+                  className="chat-msg-row"
+                  style={{
+                    ...styles.messageOuter(msg.sender === "user"),
+                    alignSelf:
+                      msg.sender === "user" ? "flex-end" : "flex-start",
+                    maxWidth: "90%",
+                  }}
+                >
+                  <div className={`message message-${msg.sender}`}>
+                    {msg.sender === "admin" && (
+                      <div style={styles.adminBadge}>{cwStrings.adminLabel}</div>
+                    )}
+                    {isEditing ? (
+                      <div>
+                        <Input.TextArea
+                          autoSize={{ minRows: 1, maxRows: 4 }}
+                          value={editingValue}
+                          onChange={(e) => setEditingValue(e.target.value)}
+                          onPressEnter={(e) => {
+                            if (!e.shiftKey) {
+                              e.preventDefault();
+                              saveEdit();
+                            }
+                          }}
+                        />
+                        <Space size={4} style={{ marginTop: 6 }}>
+                          <Button
+                            size="small"
+                            type="primary"
+                            icon={<CheckOutlined />}
+                            onClick={saveEdit}
+                          >
+                            {cwStrings.saveEditBtn}
+                          </Button>
+                          <Button size="small" onClick={cancelEdit}>
+                            {cwStrings.cancelEditBtn}
+                          </Button>
+                        </Space>
+                      </div>
+                    ) : (
+                      <>
+                        <span
+                          style={
+                            msg.recalled
+                              ? { fontStyle: "italic", opacity: 0.75 }
+                              : undefined
+                          }
+                        >
+                          {msg.recalled ? cwStrings.recalledLabel : msg.text}
+                        </span>
+                        {msg.edited && !msg.recalled && (
+                          <div style={styles.messageMetaRow}>
+                            <span style={styles.editedLabel}>
+                              ({cwStrings.editedLabel})
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  {showMenu && (
+                    <ChatMessageMenu
+                      onEdit={() => startEdit(msg)}
+                      onRecall={() => recallMessage(msg.id)}
+                    />
+                  )}
+                </div>
+              );
+            })}
             {isTyping && (
               <div
                 className="message message-bot"
@@ -372,16 +638,17 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
             )}
 
             {!isAdminActive &&
+              !handoffPending &&
               !isTyping &&
               messages[messages.length - 1]?.sender === "bot" && (
                 <div className="auto-options">
-                  {DEFAULT_QUESTIONS.map((item, index) => (
+                  {DEFAULT_QUESTIONS.map((question, index) => (
                     <div
                       key={index}
                       className="option-tag"
-                      onClick={() => handleSend(item.q)}
+                      onClick={() => handleSend(question)}
                     >
-                      {item.q}
+                      {question}
                     </div>
                   ))}
                 </div>
@@ -416,7 +683,12 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
 
       {!isOpen && (
         <div className="chat-bubble" onClick={() => setIsOpen(true)}>
-          <Badge dot status="processing" offset={[-5, 5]}>
+          <Badge
+            count={unreadCount}
+            overflowCount={99}
+            offset={[-2, 4]}
+            size="small"
+          >
             <MessageOutlined style={{ fontSize: "28px", color: "#fff" }} />
           </Badge>
         </div>

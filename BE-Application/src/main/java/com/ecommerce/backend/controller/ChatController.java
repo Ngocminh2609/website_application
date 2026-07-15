@@ -3,6 +3,7 @@ package com.ecommerce.backend.controller;
 import com.ecommerce.backend.dto.ChatMessage;
 import com.ecommerce.backend.util.text.StringUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -13,8 +14,8 @@ import static com.ecommerce.backend.constant.controller.ChatConstants.*;
 
 /**
  * Controller xử lý các tin nhắn từ người dùng qua WebSocket.
- * Thông báo về tin nhắn chỉ hiển thị ở FE, không lưu vào DB.
  */
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
@@ -22,44 +23,102 @@ public class ChatController {
     private final SimpMessagingTemplate messagingTemplate;
     private final com.ecommerce.backend.service.ChatService chatService;
 
-    /**
-     * Nhận tin nhắn và định hướng tới đích tương ứng.
-     * Chỉ gửi đến admin khi tin nhắn KHÔNG phải từ bot (isBotResponse = false hoặc null).
-     */
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload ChatMessage chatMessage) {
-        // Lưu tin nhắn vào DB (luôn lưu mọi tin nhắn CHAT)
-        if (chatMessage.getType() == ChatMessage.MessageType.CHAT) {
-            chatService.saveMessage(chatMessage);
+        if (chatMessage.getType() == ChatMessage.MessageType.EDIT) {
+            handleMutation(chatMessage, true);
+            return;
+        }
+        if (chatMessage.getType() == ChatMessage.MessageType.RECALL) {
+            handleMutation(chatMessage, false);
+            return;
         }
 
-        String recipientTopic;
-        String recipientId;
-
-        if (StringUtil.hasText(chatMessage.getRecipientId())) {
-            // Gửi tới khách hàng cụ thể
-            recipientId = chatMessage.getRecipientId();
-            recipientTopic = TOPIC_USER_PREFIX + recipientId;
-
-            // Gửi tin nhắn chat từ admin đến client
-            messagingTemplate.convertAndSend(recipientTopic, chatMessage);
-        } else {
-            // Chỉ gửi tới Admin khi KHÔNG phải tin nhắn bot
-            // isBotResponse = null hoặc false nghĩa là tin nhắn thật từ user cần admin xử lý
-            if (chatMessage.getIsBotResponse() == null || !chatMessage.getIsBotResponse()) {
-//                recipientId = "admin";
-                recipientTopic = TOPIC_ADMIN;
-
-                // Gửi tin nhắn chat từ client đến admin
-                messagingTemplate.convertAndSend(recipientTopic, chatMessage);
+        if (chatMessage.getType() == ChatMessage.MessageType.CHAT) {
+            ChatMessage saved = chatService.saveMessage(chatMessage);
+            chatMessage.setId(saved.getId());
+            chatMessage.setCreatedAt(saved.getCreatedAt());
+            chatMessage.setEdited(false);
+            chatMessage.setRecalled(false);
+            if (chatMessage.getMessageKey() == null) {
+                chatMessage.setMessageKey(saved.getMessageKey());
             }
-            // Nếu isBotResponse = true, không gửi đến admin vì bot đã xử lý
+        }
+
+        routeChatOrTyping(chatMessage);
+    }
+
+    private void handleMutation(ChatMessage chatMessage, boolean isEdit) {
+        try {
+            ChatMessage updated = isEdit
+                    ? chatService.editMessage(chatMessage)
+                    : chatService.recallMessage(chatMessage);
+            // Luôn đẩy về CẢ admin topic lẫn client topic
+            routeMutationToBothSides(updated);
+        } catch (IllegalArgumentException e) {
+            log.warn("{} tin nhắn thất bại: {}", isEdit ? "Sửa" : "Thu hồi", e.getMessage());
+            sendMutationError(chatMessage, isEdit, e.getMessage());
+        } catch (Exception e) {
+            log.error("{} tin nhắn lỗi hệ thống: {}", isEdit ? "Sửa" : "Thu hồi", e.getMessage(), e);
+            sendMutationError(chatMessage, isEdit, "Lỗi hệ thống khi thao tác tin nhắn");
+        }
+    }
+
+    private void sendMutationError(ChatMessage chatMessage, boolean isEdit, String message) {
+        ChatMessage errorMsg = ChatMessage.builder()
+                .type(isEdit ? ChatMessage.MessageType.EDIT : ChatMessage.MessageType.RECALL)
+                .messageKey(chatMessage.getMessageKey())
+                .senderId("system")
+                .content(message)
+                .edited(false)
+                .recalled(false)
+                .isBotResponse(true)
+                .build();
+        if (StringUtil.hasText(chatMessage.getSenderId())
+                && !"admin".equals(chatMessage.getSenderId())) {
+            messagingTemplate.convertAndSend(
+                    TOPIC_USER_PREFIX + chatMessage.getSenderId(),
+                    errorMsg
+            );
+        } else {
+            messagingTemplate.convertAndSend(TOPIC_ADMIN, errorMsg);
         }
     }
 
     /**
-     * Xử lý khi người dùng tham gia phòng chat.
+     * EDIT/RECALL: luôn gửi cho admin panel + client để hai bên đồng bộ.
      */
+    private void routeMutationToBothSides(ChatMessage msg) {
+        messagingTemplate.convertAndSend(TOPIC_ADMIN, msg);
+
+        String clientId;
+        if ("admin".equals(msg.getSenderId())) {
+            clientId = msg.getRecipientId();
+        } else {
+            clientId = msg.getSenderId();
+        }
+
+        if (StringUtil.hasText(clientId) && !"admin".equals(clientId)) {
+            messagingTemplate.convertAndSend(TOPIC_USER_PREFIX + clientId, msg);
+            log.info("Đã gửi {} messageKey={} tới client topic={}",
+                    msg.getType(), msg.getMessageKey(), clientId);
+        } else {
+            log.warn("Không xác định được clientId để gửi {} messageKey={}",
+                    msg.getType(), msg.getMessageKey());
+        }
+    }
+
+    private void routeChatOrTyping(ChatMessage chatMessage) {
+        if (StringUtil.hasText(chatMessage.getRecipientId())) {
+            messagingTemplate.convertAndSend(
+                    TOPIC_USER_PREFIX + chatMessage.getRecipientId(),
+                    chatMessage
+            );
+        } else if (chatMessage.getIsBotResponse() == null || !chatMessage.getIsBotResponse()) {
+            messagingTemplate.convertAndSend(TOPIC_ADMIN, chatMessage);
+        }
+    }
+
     @MessageMapping("/chat.addUser")
     public void addUser(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
         if (headerAccessor.getSessionAttributes() != null) {
@@ -69,7 +128,6 @@ public class ChatController {
                 headerAccessor.getSessionAttributes().put(SESSION_KEY_EMAIL, chatMessage.getEmail());
             }
         }
-        // Thông báo cho admin khi có user mới tham gia
         messagingTemplate.convertAndSend(TOPIC_ADMIN, chatMessage);
     }
 }

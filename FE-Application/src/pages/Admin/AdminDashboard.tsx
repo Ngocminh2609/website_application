@@ -16,7 +16,6 @@ import {
   Upload,
   Tabs,
   Tooltip,
-  Badge,
 } from "antd";
 import {
   TeamOutlined,
@@ -30,7 +29,6 @@ import {
   StopOutlined,
   HistoryOutlined,
   CheckCircleOutlined,
-  MessageOutlined,
   BarChartOutlined,
   BellOutlined,
   InfoCircleOutlined,
@@ -40,7 +38,6 @@ import {
   PictureOutlined,
   FireFilled,
 } from "@ant-design/icons";
-import AdminChat from "./AdminChat";
 import type { Product } from "../../types/product";
 import type { Order } from "../../types/order";
 import BaseButton from "../../components/common/BaseButton";
@@ -64,7 +61,6 @@ const { Title, Text } = Typography;
  */
 const AdminDashboard: React.FC = () => {
   const {
-    totalUnread,
     products,
     categories,
     orders,
@@ -402,17 +398,6 @@ const AdminDashboard: React.FC = () => {
                 </span>
               ),
               children: <StatisticsTab />,
-            },
-            {
-              key: "chat",
-              label: (
-                <Badge count={totalUnread} offset={[10, 0]}>
-                  <span style={styles.tabLabelText}>
-                    <MessageOutlined /> {ADMIN_STRINGS.tabs.chat}
-                  </span>
-                </Badge>
-              ),
-              children: <AdminChat />,
             },
             {
               key: "notifications",

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import { message as antdMessage } from "antd";
 import { getBaseApiUrl, getWsUrl } from "../utils/url";
+import { createChatMessageKey } from "../utils/chatMessage";
 import {
   AdminChatContext,
   type ChatMessage,
@@ -27,7 +29,6 @@ export const AdminChatProvider: React.FC<{
     const saved = localStorage.getItem("admin_chat_sessions");
     let parsedSessions: ChatSession[] = saved ? JSON.parse(saved) : [];
 
-    // Lọc bỏ session rác ngay khi load
     parsedSessions = parsedSessions.filter(
       (s) =>
         s.id &&
@@ -49,7 +50,6 @@ export const AdminChatProvider: React.FC<{
   const [connected, setConnected] = useState(false);
   const stompClientRef = useRef<Client | null>(null);
 
-  // Lưu vào localStorage khi có thay đổi
   useEffect(() => {
     if (Object.keys(conversations).length > 0) {
       localStorage.setItem(
@@ -65,7 +65,40 @@ export const AdminChatProvider: React.FC<{
     }
   }, [sessions]);
 
-  // Kết nối WebSocket nếu là admin
+  const applyEditedMessage = (
+    clientKey: string,
+    messageKey: string,
+    content: string,
+    lastMessagePrefix = "",
+    recalled = false,
+  ) => {
+    setConversations((prev) => {
+      const list = prev[clientKey] || [];
+      const next = list.map((m) =>
+        m.messageKey === messageKey
+          ? {
+              ...m,
+              content,
+              edited: !recalled,
+              recalled,
+            }
+          : m,
+      );
+      return { ...prev, [clientKey]: next };
+    });
+    setSessions((prev) => {
+      const idx = prev.findIndex((s) => s.id === clientKey);
+      if (idx < 0) return prev;
+      const updated = [...prev];
+      updated[idx] = {
+        ...updated[idx],
+        lastMessage: lastMessagePrefix + content,
+        timestamp: Date.now(),
+      };
+      return [updated[idx], ...updated.filter((_, i) => i !== idx)];
+    });
+  };
+
   useEffect(() => {
     if (!isAdmin) return;
 
@@ -84,22 +117,105 @@ export const AdminChatProvider: React.FC<{
         },
         onConnect: () => {
           setConnected(true);
-          // ... subscribe logic ...
           client?.subscribe("/topic/admin", (msg) => {
             const receivedMsg: ChatMessage = JSON.parse(msg.body);
+
+            if (
+              (receivedMsg.type === "EDIT" || receivedMsg.type === "RECALL") &&
+              receivedMsg.senderId === "system"
+            ) {
+              antdMessage.error(
+                receivedMsg.content || "Không thể thao tác tin nhắn",
+              );
+              return;
+            }
+
+            if (
+              (receivedMsg.type === "EDIT" || receivedMsg.type === "RECALL") &&
+              receivedMsg.messageKey
+            ) {
+              const isRecall = receivedMsg.type === "RECALL";
+              const recalledText =
+                receivedMsg.content || "Tin nhắn đã được thu hồi";
+
+              setConversations((prev) => {
+                // Ưu tiên tìm hội thoại chứa đúng messageKey (tránh lệch email vs user-id)
+                let targetKey =
+                  Object.keys(prev).find((k) =>
+                    prev[k]?.some(
+                      (m) =>
+                        String(m.messageKey) ===
+                        String(receivedMsg.messageKey),
+                    ),
+                  ) || "";
+
+                if (!targetKey) {
+                  targetKey =
+                    receivedMsg.email ||
+                    (receivedMsg.senderId === "admin"
+                      ? receivedMsg.recipientId
+                      : receivedMsg.senderId) ||
+                    "";
+                }
+
+                if (!targetKey || targetKey === "admin") {
+                  return prev;
+                }
+
+                const list = prev[targetKey] || [];
+                let found = false;
+                const next = list.map((m) => {
+                  if (String(m.messageKey) !== String(receivedMsg.messageKey)) {
+                    return m;
+                  }
+                  found = true;
+                  return {
+                    ...m,
+                    content: isRecall ? recalledText : receivedMsg.content,
+                    edited: isRecall ? false : true,
+                    recalled: isRecall ? true : Boolean(m.recalled),
+                  };
+                });
+
+                // Không tìm thấy tin → không tạo conversation rỗng
+                if (!found && list.length === 0) {
+                  return prev;
+                }
+                if (!found) {
+                  return prev;
+                }
+
+                setSessions((sessPrev) => {
+                  const idx = sessPrev.findIndex((s) => s.id === targetKey);
+                  if (idx < 0) return sessPrev;
+                  const copy = [...sessPrev];
+                  const prefix =
+                    receivedMsg.senderId === "admin" ? "Bạn: " : "";
+                  copy[idx] = {
+                    ...copy[idx],
+                    lastMessage:
+                      prefix + (isRecall ? recalledText : receivedMsg.content),
+                    timestamp: Date.now(),
+                  };
+                  return [copy[idx], ...copy.filter((_, i) => i !== idx)];
+                });
+
+                return { ...prev, [targetKey]: next };
+              });
+              return;
+            }
+
             const clientKey = receivedMsg.email || receivedMsg.senderId;
             const clientName = receivedMsg.fullName || receivedMsg.sender;
 
             if (!clientKey || clientKey === "undefined" || clientKey === "null")
               return;
 
-            // Xử lý trạng thái TYPING từ client
             if (receivedMsg.type === "TYPING") {
               if (receivedMsg.senderId === "admin") return;
 
               setTypingSessions((prev) => ({ ...prev, [clientKey]: true }));
 
-              // Tự động tắt trạng thái sau 3 giây nếu không nhận được tin nhắn typing tiếp theo
               if (typingTimeoutRefs.current[clientKey]) {
                 clearTimeout(typingTimeoutRefs.current[clientKey]);
               }
@@ -112,11 +228,16 @@ export const AdminChatProvider: React.FC<{
             if (receivedMsg.type !== "CHAT") return;
             if (receivedMsg.senderId === "admin") return;
 
-            // Khi nhận được tin nhắn CHAT, tắt trạng thái typing ngay lập tức
             if (typingTimeoutRefs.current[clientKey]) {
               clearTimeout(typingTimeoutRefs.current[clientKey]);
             }
             setTypingSessions((prev) => ({ ...prev, [clientKey]: false }));
+
+            const incoming: ChatMessage = {
+              ...receivedMsg,
+              createdAt: receivedMsg.createdAt || Date.now(),
+              messageKey: receivedMsg.messageKey || createChatMessageKey(),
+            };
 
             setSessions((prev) => {
               const existingIdx = prev.findIndex((s) => s.id === clientKey);
@@ -124,7 +245,7 @@ export const AdminChatProvider: React.FC<{
                 const oldSession = prev[existingIdx];
                 const updatedSession: ChatSession = {
                   ...oldSession,
-                  lastMessage: receivedMsg.content,
+                  lastMessage: incoming.content,
                   timestamp: Date.now(),
                   unreadCount: (oldSession.unreadCount || 0) + 1,
                 };
@@ -134,22 +255,21 @@ export const AdminChatProvider: React.FC<{
                   updatedSession,
                   ...updated.filter((_, i) => i !== existingIdx),
                 ];
-              } else {
-                const newSession: ChatSession = {
-                  id: clientKey,
-                  name: clientName,
-                  senderId: receivedMsg.senderId,
-                  lastMessage: receivedMsg.content,
-                  timestamp: Date.now(),
-                  unreadCount: 1,
-                };
-                return [newSession, ...prev];
               }
+              const newSession: ChatSession = {
+                id: clientKey,
+                name: clientName,
+                senderId: receivedMsg.senderId,
+                lastMessage: incoming.content,
+                timestamp: Date.now(),
+                unreadCount: 1,
+              };
+              return [newSession, ...prev];
             });
 
             setConversations((prev) => ({
               ...prev,
-              [clientKey]: [...(prev[clientKey] || []), receivedMsg],
+              [clientKey]: [...(prev[clientKey] || []), incoming],
             }));
           });
 
@@ -203,23 +323,30 @@ export const AdminChatProvider: React.FC<{
     });
   };
 
+  const resolveClientWsId = (
+    recipientId: string,
+    conversationKey?: string,
+  ): string => {
+    const session = sessions.find(
+      (s) => s.senderId === recipientId || s.id === recipientId,
+    );
+    if (session?.senderId && session.senderId !== "admin") {
+      return session.senderId;
+    }
+    const key = conversationKey || session?.id || recipientId;
+    const msgs = conversations[key] || [];
+    const fromClient = msgs.find(
+      (m) => m.senderId && m.senderId !== "admin" && m.senderId !== "system",
+    );
+    if (fromClient?.senderId) return fromClient.senderId;
+    return recipientId;
+  };
+
   const sendMessage = (recipientId: string, content: string) => {
     if (stompClientRef.current && connected) {
-      const chatMessage: ChatMessage = {
-        sender: "Admin/Tư vấn viên",
-        senderId: "admin",
-        recipientId: recipientId,
-        content: content,
-        type: "CHAT",
-      };
+      const messageKey = createChatMessageKey();
+      const createdAt = Date.now();
 
-      stompClientRef.current.publish({
-        destination: "/app/chat.sendMessage",
-        body: JSON.stringify(chatMessage),
-      });
-
-      // Cập nhật UI ngay lập tức (Vì listener đang chặn tin nhắn senderId='admin')
-      // 1. Tìm key hội thoại (ưu tiên ID của session, thường là email)
       let conversationKey = recipientId;
       const targetSession = sessions.find(
         (s) => s.senderId === recipientId || s.id === recipientId,
@@ -228,28 +355,117 @@ export const AdminChatProvider: React.FC<{
         conversationKey = targetSession.id;
       }
 
-      // 2. Thêm tin nhắn vào cuộc hội thoại
+      const wsRecipientId = resolveClientWsId(recipientId, conversationKey);
+      const chatMessage: ChatMessage = {
+        messageKey,
+        sender: "Admin/Tư vấn viên",
+        senderId: "admin",
+        recipientId: wsRecipientId,
+        content: content,
+        type: "CHAT",
+        createdAt,
+        edited: false,
+        // Lưu email = session id nếu là email, giúp tra cứu sau này
+        email:
+          conversationKey.includes("@") ? conversationKey : undefined,
+        fullName: targetSession?.name,
+      };
+
+      stompClientRef.current.publish({
+        destination: "/app/chat.sendMessage",
+        body: JSON.stringify(chatMessage),
+      });
+
       setConversations((prev) => ({
         ...prev,
         [conversationKey]: [...(prev[conversationKey] || []), chatMessage],
       }));
 
-      // 3. Cập nhật last message trong danh sách session
       setSessions((prev) => {
         const idx = prev.findIndex((s) => s.id === conversationKey);
         if (idx > -1) {
           const updated = [...prev];
           updated[idx] = {
             ...updated[idx],
+            senderId: updated[idx].senderId || wsRecipientId,
             lastMessage: `Bạn: ${content}`,
             timestamp: Date.now(),
           };
-          // Đưa lên đầu danh sách
           return [updated[idx], ...updated.filter((_, i) => i !== idx)];
         }
         return prev;
       });
     }
+  };
+
+  const editMessage = (
+    recipientId: string,
+    messageKey: string,
+    content: string,
+  ) => {
+    if (!stompClientRef.current?.connected) {
+      antdMessage.error("Chưa kết nối máy chủ chat");
+      return;
+    }
+    const trimmed = content.trim();
+    if (!trimmed) return;
+
+    let conversationKey = recipientId;
+    const targetSession = sessions.find(
+      (s) => s.senderId === recipientId || s.id === recipientId,
+    );
+    if (targetSession) conversationKey = targetSession.id;
+    const wsRecipientId = resolveClientWsId(recipientId, conversationKey);
+
+    stompClientRef.current.publish({
+      destination: "/app/chat.sendMessage",
+      body: JSON.stringify({
+        type: "EDIT",
+        messageKey,
+        content: trimmed,
+        sender: "Admin/Tư vấn viên",
+        senderId: "admin",
+        recipientId: wsRecipientId,
+        email: conversationKey.includes("@") ? conversationKey : undefined,
+      }),
+    });
+
+    applyEditedMessage(conversationKey, messageKey, trimmed, "Bạn: ");
+  };
+
+  const recallMessage = (recipientId: string, messageKey: string) => {
+    if (!stompClientRef.current?.connected) {
+      antdMessage.error("Chưa kết nối máy chủ chat");
+      return;
+    }
+
+    let conversationKey = recipientId;
+    const targetSession = sessions.find(
+      (s) => s.senderId === recipientId || s.id === recipientId,
+    );
+    if (targetSession) conversationKey = targetSession.id;
+    const wsRecipientId = resolveClientWsId(recipientId, conversationKey);
+
+    stompClientRef.current.publish({
+      destination: "/app/chat.sendMessage",
+      body: JSON.stringify({
+        type: "RECALL",
+        messageKey,
+        content: "Tin nhắn đã được thu hồi",
+        sender: "Admin/Tư vấn viên",
+        senderId: "admin",
+        recipientId: wsRecipientId,
+        email: conversationKey.includes("@") ? conversationKey : undefined,
+      }),
+    });
+
+    applyEditedMessage(
+      conversationKey,
+      messageKey,
+      "Tin nhắn đã được thu hồi",
+      "Bạn: ",
+      true,
+    );
   };
 
   const markSessionRead = (sessionId: string) => {
@@ -281,7 +497,11 @@ export const AdminChatProvider: React.FC<{
         const history: ChatMessage[] = await response.json();
         setConversations((prev) => ({
           ...prev,
-          [clientKey]: history,
+          [clientKey]: history.map((m) => ({
+            ...m,
+            createdAt: m.createdAt || Date.now(),
+            messageKey: m.messageKey || createChatMessageKey(),
+          })),
         }));
       }
     } catch (error) {
@@ -304,6 +524,8 @@ export const AdminChatProvider: React.FC<{
         addMessage,
         updateSession,
         sendMessage,
+        editMessage,
+        recallMessage,
         sendTypingStatus,
         markSessionRead,
         loadChatHistory,

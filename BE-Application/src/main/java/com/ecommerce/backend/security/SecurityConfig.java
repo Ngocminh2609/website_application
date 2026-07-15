@@ -59,6 +59,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/notifications/broadcast").hasRole(ROLE_ADMIN)
                         .requestMatchers("/api/admin/**").hasRole(ROLE_ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/chat/ai").permitAll()
                         .requestMatchers("/api/chat/**").authenticated()
 
                         .requestMatchers("/ws-chat/**").permitAll()

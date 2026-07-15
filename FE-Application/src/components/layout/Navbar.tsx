@@ -38,6 +38,7 @@ import type { Product } from "../../types/product";
 import { useNotifications } from "../../context/NotificationContext";
 import { useAdminChat } from "../../context/useAdminChat";
 import { useWishlist } from "../../hooks/Wishlist/useWishlist";
+import AdminChatDrawer from "../common/AdminChatDrawer";
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -108,6 +109,7 @@ const Navbar: React.FC<NavbarProps> = ({
     useNotifications();
   const { totalUnread: chatUnread } = useAdminChat();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAdminChatOpen, setIsAdminChatOpen] = useState(false);
 
   // State cho tìm kiếm và gợi ý
   const [searchValue, setSearchValue] = useState("");
@@ -345,6 +347,7 @@ const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
+    <>
     <Header className="glass-effect" style={styles.header}>
       <Space size="middle">
         <div className="mobile-only" onClick={() => setIsMobileMenuOpen(true)}>
@@ -414,7 +417,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 count={chatUnread}
                 color="#6366f1"
                 icon={<MessageOutlined style={styles.badgeIcon} />}
-                onClick={() => navigate("/admin#chat")}
+                onClick={() => setIsAdminChatOpen(true)}
                 title={nvStrings.supportMessages}
               />
             )}
@@ -511,7 +514,16 @@ const Navbar: React.FC<NavbarProps> = ({
           style={styles.drawerMenu}
         />
       </Drawer>
+
     </Header>
+
+    {user?.role === ROLES.ADMIN && (
+      <AdminChatDrawer
+        open={isAdminChatOpen}
+        onClose={() => setIsAdminChatOpen(false)}
+      />
+    )}
+    </>
   );
 };
 

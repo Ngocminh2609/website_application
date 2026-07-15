@@ -8,6 +8,7 @@ export const styles = {
     borderRadius: "12px",
     border: "1px solid var(--glass-border)",
     overflow: "hidden",
+    minHeight: 0,
   } as CSSProperties,
 
   sidebar: {
@@ -96,6 +97,16 @@ export const styles = {
     borderBottomLeftRadius: isAdmin ? "12px" : "2px",
     border: isAdmin ? "none" : "1px solid var(--glass-border)",
     boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+    position: "relative",
+  }),
+
+  messageRow: (isAdmin: boolean): CSSProperties => ({
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 4,
+    alignSelf: isAdmin ? "flex-end" : "flex-start",
+    maxWidth: "85%",
+    flexDirection: isAdmin ? "row-reverse" : "row",
   }),
 
   senderName: (isAdmin: boolean): CSSProperties => ({
@@ -110,6 +121,31 @@ export const styles = {
     fontSize: "14px",
     lineHeight: "1.5",
   }),
+
+  messageMetaRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 6,
+  } as CSSProperties,
+
+  editedLabel: (isAdmin: boolean): CSSProperties => ({
+    fontSize: 11,
+    opacity: 0.75,
+    color: isAdmin ? "#fff" : "var(--text-muted)",
+    fontStyle: "italic",
+  }),
+
+  editLinkBtn: (isAdmin: boolean): CSSProperties => ({
+    padding: 0,
+    height: "auto",
+    fontSize: 11,
+    color: isAdmin ? "rgba(255,255,255,0.9)" : "var(--primary-color)",
+  }),
+
+  editInput: {
+    marginTop: 6,
+  } as CSSProperties,
 
   typingBubble: {
     alignSelf: "flex-start",

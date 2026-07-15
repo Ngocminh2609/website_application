@@ -1,13 +1,26 @@
 import React from "react";
+import type { CSSProperties } from "react";
 import { Input, Button, List, Avatar, Typography, Badge, Space } from "antd";
-import { SendOutlined, MessageOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  SendOutlined,
+  MessageOutlined,
+  UserOutlined,
+  CheckOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { useAdminChatState } from "../../hooks/Admin/useAdminChatState";
 import { styles } from "./styles/admin-chat.styles";
 import { CHAT_STRINGS } from "../../constants/Admin/admin-chat";
+import { canEditChatMessage } from "../../utils/chatMessage";
+import ChatMessageMenu from "../../components/common/ChatMessageMenu";
 
 const { Text, Title } = Typography;
 
-const AdminChat: React.FC = () => {
+interface AdminChatProps {
+  height?: CSSProperties["height"];
+}
+
+const AdminChat: React.FC<AdminChatProps> = ({ height = 600 }) => {
   const {
     activeSessionId,
     setActiveSessionId,
@@ -19,11 +32,17 @@ const AdminChat: React.FC = () => {
     markSessionRead,
     handleSend,
     handleInputChange,
+    editingKey,
+    editingValue,
+    setEditingValue,
+    startEdit,
+    cancelEdit,
+    saveEdit,
+    handleRecall,
   } = useAdminChatState();
 
   return (
-    <div style={styles.chatContainer}>
-      {/* Sidebar: Danh sách khách hàng đang chat */}
+    <div style={{ ...styles.chatContainer, height }}>
       <div style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
           <Title level={5} style={styles.sidebarHeaderTitle}>
@@ -58,10 +77,7 @@ const AdminChat: React.FC = () => {
                     <Text strong style={styles.sessionName}>
                       {item.name}
                     </Text>
-                    <Text
-                      style={styles.sessionLastMsg}
-                      ellipsis
-                    >
+                    <Text style={styles.sessionLastMsg} ellipsis>
                       {item.lastMessage}
                     </Text>
                   </div>
@@ -72,7 +88,6 @@ const AdminChat: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Chat Area */}
       <div style={styles.mainChatArea}>
         {activeSessionId ? (
           <>
@@ -87,7 +102,11 @@ const AdminChat: React.FC = () => {
               </div>
               <Badge
                 status={connected ? "success" : "error"}
-                text={connected ? CHAT_STRINGS.serverReady : CHAT_STRINGS.serverDisconnected}
+                text={
+                  connected
+                    ? CHAT_STRINGS.serverReady
+                    : CHAT_STRINGS.serverDisconnected
+                }
                 style={styles.chatHeaderStatus}
               />
             </div>
@@ -95,17 +114,91 @@ const AdminChat: React.FC = () => {
             <div style={styles.messagesContainer}>
               {currentMessages.map((msg, index) => {
                 const isAdmin = msg.senderId === "admin";
+                const isEditing =
+                  isAdmin && editingKey && msg.messageKey === editingKey;
+                const showMenu =
+                  isAdmin &&
+                  !!msg.messageKey &&
+                  !msg.recalled &&
+                  canEditChatMessage(msg.createdAt) &&
+                  !isEditing;
+
                 return (
                   <div
-                    key={index}
-                    style={styles.messageBubble(isAdmin)}
+                    key={msg.messageKey || index}
+                    className="chat-msg-row"
+                    style={styles.messageRow(isAdmin)}
                   >
-                    <div style={styles.senderName(isAdmin)}>
-                      {msg.sender}
+                    <div style={styles.messageBubble(isAdmin)}>
+                      <div style={styles.senderName(isAdmin)}>{msg.sender}</div>
+                      {isEditing ? (
+                        <div>
+                          <Input.TextArea
+                            autoSize={{ minRows: 1, maxRows: 4 }}
+                            value={editingValue}
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onPressEnter={(e) => {
+                              if (!e.shiftKey) {
+                                e.preventDefault();
+                                saveEdit();
+                              }
+                            }}
+                            style={styles.editInput}
+                          />
+                          <Space size={4} style={{ marginTop: 6 }}>
+                            <Button
+                              size="small"
+                              type="primary"
+                              icon={<CheckOutlined />}
+                              onClick={saveEdit}
+                            >
+                              {CHAT_STRINGS.saveEditBtn}
+                            </Button>
+                            <Button
+                              size="small"
+                              icon={<CloseOutlined />}
+                              onClick={cancelEdit}
+                            >
+                              {CHAT_STRINGS.cancelEditBtn}
+                            </Button>
+                          </Space>
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            style={{
+                              ...styles.messageContent(isAdmin),
+                              ...(msg.recalled
+                                ? { fontStyle: "italic", opacity: 0.75 }
+                                : {}),
+                            }}
+                          >
+                            {msg.recalled
+                              ? CHAT_STRINGS.recalledLabel
+                              : msg.content}
+                          </div>
+                          {msg.edited && !msg.recalled && (
+                            <div style={styles.messageMetaRow}>
+                              <span style={styles.editedLabel(isAdmin)}>
+                                ({CHAT_STRINGS.editedLabel})
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
-                    <div style={styles.messageContent(isAdmin)}>
-                      {msg.content}
-                    </div>
+                    {showMenu && (
+                      <ChatMessageMenu
+                        onEdit={() =>
+                          startEdit(
+                            msg.messageKey!,
+                            msg.content,
+                            msg.createdAt,
+                          )
+                        }
+                        onRecall={() => handleRecall(msg.messageKey!)}
+                      />
+                    )}
                   </div>
                 );
               })}

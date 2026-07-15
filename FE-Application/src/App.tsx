@@ -336,10 +336,12 @@ const App: React.FC = () => {
                           </Routes>
 
                           <Footer />
-                          <ChatWidget
-                            key={user ? String(user.id) : "guest"}
-                            user={user}
-                          />
+                          {user?.role !== ROLES.ADMIN && (
+                            <ChatWidget
+                              key={user ? String(user.id) : "guest"}
+                              user={user}
+                            />
+                          )}
                           <CompareBar />
                           <ReloadPrompt />
                         </Layout>

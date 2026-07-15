@@ -1,0 +1,13 @@
+package com.ecommerce.backend.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class ChatAiRequest {
+
+    @NotBlank(message = "Tin nhắn không được để trống")
+    private String message;
+}

@@ -414,6 +414,37 @@ body {
   border-bottom-left-radius: 4px;
 }
 
+/* Menu "..." cạnh tin nhắn — hiện khi hover */
+.chat-msg-row {
+  position: relative;
+}
+
+.chat-msg-menu-trigger {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  color: var(--text-main) !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.chat-msg-row:hover .chat-msg-menu-trigger,
+.chat-msg-row:focus-within .chat-msg-menu-trigger,
+.chat-msg-menu-trigger.ant-dropdown-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Touch / không có hover: luôn hiện nhẹ */
+@media (hover: none) {
+  .chat-msg-menu-trigger {
+    opacity: 0.85;
+    pointer-events: auto;
+  }
+}
+
 .auto-options {
   display: flex;
   flex-wrap: wrap;

@@ -38,4 +38,21 @@ export const styles = {
   typingDot: {
     background: "#10b981",
   },
+  messageMetaRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
+  } as React.CSSProperties,
+  editedLabel: {
+    fontSize: 10,
+    opacity: 0.7,
+    fontStyle: "italic" as const,
+  },
+  messageOuter: (isUser: boolean): React.CSSProperties => ({
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 4,
+    flexDirection: isUser ? "row-reverse" : "row",
+  }),
 };

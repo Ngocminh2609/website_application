@@ -18,7 +18,6 @@ export const ADMIN_STRINGS = {
     addProduct: "Thêm sản phẩm mới",
     ordersManagement: "Quản lý đơn hàng",
     statistics: "Báo cáo & Thống kê",
-    chat: "Chat Tư Vấn",
     notifications: "Quản lý thông báo",
     vouchers: "Mã giảm giá",
     reviews: "Kiểm duyệt đánh giá",

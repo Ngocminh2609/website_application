@@ -13,20 +13,32 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class ChatMessage {
-    private String sender; // Tên hiển thị
-    private String senderId; // ID người gửi
-    private String recipientId; // ID người nhận
-    private String content; // Nội dung tin nhắn
-    private MessageType type; // Loại tin nhắn
+    /** ID trong DB (nếu đã lưu) */
+    private Long id;
 
-    // Thông tin bổ sung để phân biệt client theo email
-    private String email; // Email của client (dùng làm key phân biệt)
-    private String fullName; // Tên đầy đủ của client
+    /** Key ổn định do FE tạo (UUID) — dùng để sửa tin */
+    private String messageKey;
 
-    // Đánh dấu tin nhắn có phải từ bot hay không
-    private Boolean isBotResponse; // true nếu là câu trả lời từ bot, false/null nếu là tin nhắn thật cần admin xử lý
+    private String sender;
+    private String senderId;
+    private String recipientId;
+    private String content;
+    private MessageType type;
+
+    private String email;
+    private String fullName;
+    private Boolean isBotResponse;
+
+    /** Epoch millis lúc tạo */
+    private Long createdAt;
+
+    /** true nếu tin đã được chỉnh sửa */
+    private Boolean edited;
+
+    /** true nếu tin đã thu hồi */
+    private Boolean recalled;
 
     public enum MessageType {
-        CHAT, JOIN, LEAVE, TYPING
+        CHAT, JOIN, LEAVE, TYPING, EDIT, RECALL
     }
 }

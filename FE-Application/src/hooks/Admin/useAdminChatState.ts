@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAdminChat } from "../../context/useAdminChat";
+import { canEditChatMessage } from "../../utils/chatMessage";
 
 export const useAdminChatState = () => {
   const {
@@ -8,15 +9,18 @@ export const useAdminChatState = () => {
     typingSessions,
     connected,
     sendMessage,
+    editMessage,
+    recallMessage,
     sendTypingStatus,
     markSessionRead,
   } = useAdminChat();
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState("");
   const lastTypingTime = useRef<number>(0);
 
-  // Tự động đánh dấu đã đọc khi đang xem session đó
   useEffect(() => {
     if (activeSessionId) {
       const currentSession = sessions.find((s) => s.id === activeSessionId);
@@ -26,14 +30,21 @@ export const useAdminChatState = () => {
     }
   }, [sessions, activeSessionId, markSessionRead]);
 
+  useEffect(() => {
+    setEditingKey(null);
+    setEditingValue("");
+  }, [activeSessionId]);
+
+  const resolveRecipientId = () => {
+    if (!activeSessionId) return null;
+    const activeSession = sessions.find((s) => s.id === activeSessionId);
+    return activeSession?.senderId || activeSessionId;
+  };
+
   const handleSend = () => {
     if (inputValue.trim() && activeSessionId) {
-      // Lấy senderId từ session để gửi tin nhắn
-      const activeSession = sessions.find((s) => s.id === activeSessionId);
-      const recipientSenderId = activeSession?.senderId || activeSessionId;
-
-      // Gửi tin nhắn qua context
-      sendMessage(recipientSenderId, inputValue);
+      const recipientSenderId = resolveRecipientId();
+      if (recipientSenderId) sendMessage(recipientSenderId, inputValue);
       setInputValue("");
     }
   };
@@ -44,14 +55,36 @@ export const useAdminChatState = () => {
 
     if (activeSessionId) {
       const now = Date.now();
-      // Gửi tín hiệu typing tối đa 1 lần mỗi 2 giây để tránh làm quá tải server
       if (now - lastTypingTime.current > 2000) {
-        const activeSession = sessions.find((s) => s.id === activeSessionId);
-        const recipientSenderId = activeSession?.senderId || activeSessionId;
-        sendTypingStatus(recipientSenderId);
+        const recipientSenderId = resolveRecipientId();
+        if (recipientSenderId) sendTypingStatus(recipientSenderId);
         lastTypingTime.current = now;
       }
     }
+  };
+
+  const startEdit = (messageKey: string, content: string, createdAt?: number) => {
+    if (!canEditChatMessage(createdAt)) return;
+    setEditingKey(messageKey);
+    setEditingValue(content);
+  };
+
+  const cancelEdit = () => {
+    setEditingKey(null);
+    setEditingValue("");
+  };
+
+  const saveEdit = () => {
+    if (!activeSessionId || !editingKey || !editingValue.trim()) return;
+    const recipientSenderId = resolveRecipientId();
+    if (recipientSenderId) editMessage(recipientSenderId, editingKey, editingValue);
+    cancelEdit();
+  };
+
+  const handleRecall = (messageKey: string) => {
+    const recipientSenderId = resolveRecipientId();
+    if (recipientSenderId) recallMessage(recipientSenderId, messageKey);
+    if (editingKey === messageKey) cancelEdit();
   };
 
   const currentMessages = activeSessionId
@@ -70,5 +103,12 @@ export const useAdminChatState = () => {
     markSessionRead,
     handleSend,
     handleInputChange,
+    editingKey,
+    editingValue,
+    setEditingValue,
+    startEdit,
+    cancelEdit,
+    saveEdit,
+    handleRecall,
   };
 };
