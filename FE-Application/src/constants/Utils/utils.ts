@@ -17,6 +17,14 @@ export const UTILS_STRINGS = {
       addCartSuccess: "Đã thêm sản phẩm vào giỏ hàng thành công!",
       loadError: "Không thể tải danh sách sản phẩm lúc này.",
     },
+    wishlist: {
+      addSuccess: "Đã thêm vào danh sách yêu thích",
+      removeSuccess: "Đã xóa khỏi danh sách yêu thích",
+    },
+    review: {
+      submitSuccess: "Gửi đánh giá thành công!",
+      deleteSuccess: "Xóa đánh giá thành công",
+    },
   },
   url: {
     warnApiUrlUndefined: "CẢNH BÁO: VITE_API_URL không được định nghĩa, sử dụng fallback localhost",

@@ -36,6 +36,10 @@ export const PRODUCT_STRINGS = {
     warrantyItem1: "Bảo hành chính hãng 12-36 tháng",
     warrantyItem2: "1 đổi 1 trong 30 ngày nếu lỗi NSX",
     warrantyItem3: "Miễn phí giao hàng toàn quốc",
+    reviewSubmitSuccess: "Gửi đánh giá thành công!",
+    reviewSubmitError: "Gửi đánh giá thất bại",
+    reviewDeleteSuccess: "Xóa đánh giá thành công",
+    reviewDeleteError: "Xóa thất bại",
   },
   productsPage: {
     title: "Tất cả sản phẩm",

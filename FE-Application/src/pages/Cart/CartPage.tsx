@@ -38,6 +38,7 @@ import { Radio, Divider, Select } from "antd";
 import { styles } from "./styles/cart-page.styles";
 import { CART_STRINGS } from "../../constants/Cart/cart-page";
 import { formatCartCurrency } from "./helper";
+import { phoneRules } from "../../utils/validationRules";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -397,13 +398,10 @@ const CartPage: React.FC = () => {
                   getValueFromEvent={(e) =>
                     e.target.value.replace(/[^0-9]/g, "")
                   }
-                  rules={[
-                    { required: true, message: CART_STRINGS.modal.phoneRequired },
-                    {
-                      pattern: /^[0-9]{10,11}$/,
-                      message: CART_STRINGS.modal.phoneInvalid,
-                    },
-                  ]}
+                  rules={phoneRules(CART_STRINGS.modal.phoneInvalid, {
+                    required: true,
+                    requiredMessage: CART_STRINGS.modal.phoneRequired,
+                  })}
                 >
                   <Input placeholder={CART_STRINGS.modal.phonePlaceholder} maxLength={11} />
                 </Form.Item>

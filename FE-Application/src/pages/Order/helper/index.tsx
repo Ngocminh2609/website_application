@@ -1,59 +1,11 @@
-import { Tag, Space, Typography } from "antd";
-import {
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  CarOutlined,
-  CloseCircleFilled,
-  CloseCircleOutlined,
-} from "@ant-design/icons";
-import type { Order } from "../../../api/orderApi";
+import { Space, Typography } from "antd";
+import type { Order } from "../../../types/order";
 import { ORDER_STRINGS } from "../../../constants/Order/orders";
 import { styles } from "../styles/orders-page.styles";
+import { OrderStatusTag } from "../../../components/common/OrderStatusTag";
+import { formatDateTimeVi, formatVnd } from "../../../utils/format";
 
 const { Text } = Typography;
-
-export const getStatusTag = (status: string) => {
-  switch (status) {
-    case "PENDING":
-      return (
-        <Tag icon={<ClockCircleOutlined />} color="warning">
-          {ORDER_STRINGS.status.pending}
-        </Tag>
-      );
-    case "PAID":
-      return (
-        <Tag icon={<CheckCircleOutlined />} color="processing">
-          {ORDER_STRINGS.status.paid}
-        </Tag>
-      );
-    case "SHIPPING":
-      return (
-        <Tag icon={<CarOutlined />} color="blue">
-          {ORDER_STRINGS.status.shipping}
-        </Tag>
-      );
-    case "DELIVERED":
-      return (
-        <Tag icon={<CheckCircleOutlined />} color="success">
-          {ORDER_STRINGS.status.delivered}
-        </Tag>
-      );
-    case "FAILED":
-      return (
-        <Tag icon={<CloseCircleFilled />} color="error">
-          {ORDER_STRINGS.status.failed}
-        </Tag>
-      );
-    case "CANCELLED":
-      return (
-        <Tag icon={<CloseCircleOutlined />} color="default">
-          {ORDER_STRINGS.status.cancelled}
-        </Tag>
-      );
-    default:
-      return <Tag>{status}</Tag>;
-  }
-};
 
 export const getOrderTableColumns = () => [
   {
@@ -66,7 +18,7 @@ export const getOrderTableColumns = () => [
     title: ORDER_STRINGS.table.orderDate,
     dataIndex: "orderDate",
     key: "orderDate",
-    render: (date: string) => new Date(date).toLocaleString("vi-VN"),
+    render: (date: string) => formatDateTimeVi(date),
   },
   {
     title: ORDER_STRINGS.table.products,
@@ -89,7 +41,7 @@ export const getOrderTableColumns = () => [
     key: "totalAmount",
     render: (amount: number) => (
       <Text strong style={styles.totalAmountText}>
-        {amount.toLocaleString("vi-VN")}đ
+        {formatVnd(amount, false)}
       </Text>
     ),
   },
@@ -97,6 +49,6 @@ export const getOrderTableColumns = () => [
     title: ORDER_STRINGS.table.status,
     dataIndex: "status",
     key: "status",
-    render: (status: string) => getStatusTag(status),
+    render: (status: string) => <OrderStatusTag status={status} />,
   },
 ];

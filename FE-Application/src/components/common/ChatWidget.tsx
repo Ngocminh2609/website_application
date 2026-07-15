@@ -11,6 +11,7 @@ import { getWsUrl } from "../../utils/url";
 import type { User } from "../../types/auth";
 import { styles } from "./styles/ChatWidget.styles";
 import { COMMON_STRINGS } from "../../constants/Common/common";
+import { getAuthUser } from "../../utils/auth";
 
 const { chatWidget: cwStrings } = COMMON_STRINGS;
 
@@ -91,8 +92,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ user }) => {
   // 1. Init Session (Support Props & LocalStorage Fallback)
   const [chatSession] = useState(() => {
     try {
-      const storageUser = localStorage.getItem("user");
-      const userData = user || (storageUser ? JSON.parse(storageUser) : null);
+      const userData = user || getAuthUser();
 
       if (userData) {
         return {

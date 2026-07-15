@@ -1,5 +1,5 @@
 import { apiClient } from "./apiClient";
-import type { ProductReview } from "../types/coupon-review";
+import type { ProductReview } from "../types/review";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -36,6 +36,14 @@ import ComparePage from "./pages/Product/ComparePage";
 import ReloadPrompt from "./components/pwa/ReloadPrompt";
 import ScrollToTop from "./components/common/ScrollToTop";
 import { ROLES, THEMES } from "./components/common/Commons";
+import {
+  clearAuthSession,
+  getAuthUser,
+  setStoredUser,
+  storeAuthSession,
+  updateStoredUser,
+} from "./utils/auth";
+import { KEYCLOAK_CONFIG } from "./constants/Auth/keycloak";
 
 // Thay thế bằng Client ID của bạn từ Google Cloud Console
 const GOOGLE_CLIENT_ID =
@@ -45,15 +53,7 @@ const GOOGLE_CLIENT_ID =
  * App Component - Quản lý Routing, Auth State và Theme.
  */
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const savedUser = localStorage.getItem("user");
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch (e) {
-      console.error("Lỗi phân giải thông tin người dùng từ storage:", e);
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(() => getAuthUser());
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     // Ưu tiên tùy chọn của người dùng nếu đã đăng nhập, nếu không dùng localStorage hoặc default light
@@ -71,24 +71,18 @@ const App: React.FC = () => {
         try {
           const params = new URLSearchParams();
           params.append("grant_type", "authorization_code");
-          params.append("client_id", "ecommerce-backend");
-          params.append(
-            "client_secret",
-            "ecommerce-backend-secret-placeholder",
-          );
+          params.append("client_id", KEYCLOAK_CONFIG.clientId);
+          params.append("client_secret", KEYCLOAK_CONFIG.clientSecret);
           params.append("code", code);
-          params.append("redirect_uri", "http://localhost:5173");
+          params.append("redirect_uri", KEYCLOAK_CONFIG.redirectUri);
 
-          const response = await fetch(
-            "http://localhost:8180/realms/ecommerce/protocol/openid-connect/token",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: params.toString(),
+          const response = await fetch(KEYCLOAK_CONFIG.tokenUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
             },
-          );
+            body: params.toString(),
+          });
 
           if (response.ok) {
             const tokenData = await response.json();
@@ -119,18 +113,19 @@ const App: React.FC = () => {
               role: isAdmin ? "ADMIN" : "USER",
             };
 
-            localStorage.setItem("token", accessToken);
-            if (refreshToken) {
-              localStorage.setItem("refresh_token", refreshToken);
-            }
-            localStorage.setItem("user", JSON.stringify(newUser));
+            storeAuthSession({
+              message: "Đăng nhập thành công",
+              token: accessToken,
+              refreshToken: refreshToken,
+              user: newUser,
+            });
             localStorage.removeItem("remember_me_oauth");
 
             // Gọi API lấy thông tin profile đầy đủ (bao gồm avatarUrl) từ database của backend
             userApi.getProfile()
               .then((profile) => {
                 const mergedUser = { ...newUser, ...profile };
-                localStorage.setItem("user", JSON.stringify(mergedUser));
+                setStoredUser(mergedUser);
                 setUser(mergedUser);
               })
               .catch((err) => {
@@ -192,7 +187,7 @@ const App: React.FC = () => {
           themePreference: themeStr as "light" | "dark",
         };
         setUser(updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setStoredUser(updatedUser);
       } catch (error) {
         console.error("Không thể đồng bộ giao diện lên server:", error);
       }
@@ -207,29 +202,27 @@ const App: React.FC = () => {
   const handleLoginSuccess = async () => {
     try {
       const profile = await userApi.getProfile();
-      const savedUser = localStorage.getItem("user");
-      const baseUser = savedUser ? JSON.parse(savedUser) : {};
+      const baseUser = getAuthUser() ?? ({} as User);
       const mergedUser = { ...baseUser, ...profile };
-      localStorage.setItem("user", JSON.stringify(mergedUser));
+      setStoredUser(mergedUser);
       setUser(mergedUser);
     } catch (err) {
       console.error("Lỗi khi tải thông tin chi tiết user sau login:", err);
-      const savedUser = localStorage.getItem("user");
+      const savedUser = getAuthUser();
       if (savedUser) {
-        setUser(JSON.parse(savedUser));
+        setUser(savedUser);
       }
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
+    clearAuthSession();
     setUser(null);
     notification.auth.logoutSuccess();
   };
 
   const handleUserUpdate = (updated: Partial<User>) => {
+    updateStoredUser(updated);
     setUser((prev) => (prev ? { ...prev, ...updated } : prev));
   };
 

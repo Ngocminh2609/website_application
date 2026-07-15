@@ -31,10 +31,12 @@ import { StarRating } from "../../components/common/ProductCard";
 import { useProductDetailPage } from "../../hooks/Product/useProductDetailPage";
 import BaseButton from "../../components/common/BaseButton";
 import BaseInput from "../../components/common/BaseInput";
+import { PageLoading } from "../../components/common/PageLoading";
 import { ROLES } from "../../components/common/Commons";
 import PersonalizedRecommendations from "../../components/common/PersonalizedRecommendations";
 import RealTimeViewerCount from "../../components/product/RealTimeViewerCount";
 import { useCompare } from "../../hooks/Product/useCompare";
+import { formatVnd } from "../../utils/format";
 import {
   getProductAllImages,
   getSpecsList,
@@ -73,11 +75,7 @@ const ProductDetailPage: React.FC = () => {
   const strings = PRODUCT_STRINGS.detailPage;
 
   if (loading) {
-    return (
-      <div style={styles.loadingContainer}>
-        <Spin size="large" />
-      </div>
-    );
+    return <PageLoading style={styles.loadingContainer} />;
   }
 
   if (!product) {
@@ -229,11 +227,11 @@ const ProductDetailPage: React.FC = () => {
                 <div style={styles.priceContainer}>
                   <Space align="baseline" size="middle">
                     <Typography.Title level={2} style={styles.priceTitle}>
-                      {product.price?.toLocaleString("vi-VN")} ₫
+                      {formatVnd(product.price ?? 0)}
                     </Typography.Title>
                     {product.originalPrice && (
                       <Typography.Text delete style={styles.originalPriceText}>
-                        {product.originalPrice?.toLocaleString("vi-VN")} ₫
+                        {formatVnd(product.originalPrice)}
                       </Typography.Text>
                     )}
                     {discountPercent > 0 && (

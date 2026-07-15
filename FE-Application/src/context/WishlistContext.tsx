@@ -3,6 +3,8 @@ import type { Product } from "../types/product";
 import wishlistApi from "../api/wishlistApi";
 import { notification } from "../utils/notification";
 import { WishlistContext } from "./WishlistContextDefinition";
+import { WISHLIST_STRINGS } from "../constants/Wishlist/wishlist";
+import { requireAuth } from "../utils/auth";
 
 /**
  * WishlistProvider - Quản lý trạng thái danh sách yêu thích toàn cục.
@@ -46,7 +48,7 @@ export const WishlistProvider: React.FC<{
 
   const addToWishlist = async (product: Product) => {
     if (!isLoggedIn) {
-      notification.error("Vui lòng đăng nhập để sử dụng tính năng này");
+      requireAuth();
       return;
     }
     try {
@@ -55,9 +57,9 @@ export const WishlistProvider: React.FC<{
         if (prev.some((item) => item.id === product.id)) return prev;
         return [...prev, product];
       });
-      notification.success("Đã thêm vào danh sách yêu thích");
+      notification.wishlist.addSuccess();
     } catch {
-      notification.error("Không thể thêm vào danh sách yêu thích");
+      notification.error(WISHLIST_STRINGS.messages.addError);
     }
   };
 
@@ -65,10 +67,10 @@ export const WishlistProvider: React.FC<{
     try {
       await wishlistApi.removeFromWishlist(productId);
       setWishlistItems((prev) => prev.filter((item) => item.id !== productId));
-      notification.success("Đã xóa khỏi danh sách yêu thích");
+      notification.wishlist.removeSuccess();
     } catch (error) {
       console.error("Lỗi khi xóa khỏi danh sách yêu thích:", error);
-      notification.error("Không thể xóa khỏi danh sách yêu thích");
+      notification.error(WISHLIST_STRINGS.messages.removeError);
     }
   };
 

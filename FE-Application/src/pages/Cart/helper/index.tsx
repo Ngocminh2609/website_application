@@ -1,4 +1,5 @@
 import type { CartItem } from "../../../types/cart";
+import { formatVnd } from "../../../utils/format";
 
 /**
  * Tính tổng tiền của giỏ hàng
@@ -8,10 +9,10 @@ export const calculateCartSubtotal = (items: CartItem[]): number => {
 };
 
 /**
- * Định dạng tiền tệ VND cho giỏ hàng
+ * Định dạng tiền tệ VND cho giỏ hàng (không khoảng trắng trước "đ")
  */
 export const formatCartCurrency = (amount: number): string => {
-  return `${amount.toLocaleString("vi-VN")}đ`;
+  return formatVnd(amount, false);
 };
 
 /**

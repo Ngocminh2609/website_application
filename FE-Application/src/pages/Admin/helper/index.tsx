@@ -1,13 +1,13 @@
-import { Tag } from "antd";
-import {
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  CarOutlined,
-  StopOutlined,
-} from "@ant-design/icons";
-import type { Order } from "../../../api/orderApi";
+import type { Order } from "../../../types/order";
 import dayjs from "dayjs";
-import { ADMIN_STRINGS } from "../../../constants/Admin/admin-dashboard";
+import { OrderStatusTag } from "../../../components/common/OrderStatusTag";
+
+export { formatVnd as formatCurrency, formatDateTimeVi as formatDateTime } from "../../../utils/format";
+
+/** Wrapper tương thích gọi dạng getStatusTag(status) */
+export const getStatusTag = (status: string) => (
+  <OrderStatusTag status={status} />
+);
 
 /**
  * Tính tổng doanh thu thực từ danh sách đơn hàng
@@ -21,67 +21,6 @@ export const calculateTotalRevenue = (orders: Order[]): number => {
         o.status === "SHIPPING",
     )
     .reduce((sum, o) => sum + o.totalAmount, 0);
-};
-
-/**
- * Trả về Tag trạng thái tương ứng của đơn hàng
- */
-export const getStatusTag = (status: string) => {
-  switch (status) {
-    case "PENDING":
-      return (
-        <Tag icon={<ClockCircleOutlined />} color="warning">
-          {ADMIN_STRINGS.orderStatus.pending}
-        </Tag>
-      );
-    case "PAID":
-      return (
-        <Tag icon={<CheckCircleOutlined />} color="processing">
-          {ADMIN_STRINGS.orderStatus.paid}
-        </Tag>
-      );
-    case "SHIPPING":
-      return (
-        <Tag icon={<CarOutlined />} color="blue">
-          {ADMIN_STRINGS.orderStatus.shipping}
-        </Tag>
-      );
-    case "DELIVERED":
-      return (
-        <Tag icon={<CheckCircleOutlined />} color="success">
-          {ADMIN_STRINGS.orderStatus.delivered}
-        </Tag>
-      );
-    case "FAILED":
-      return (
-        <Tag icon={<StopOutlined />} color="error">
-          {ADMIN_STRINGS.orderStatus.failed}
-        </Tag>
-      );
-    case "CANCELLED":
-      return (
-        <Tag icon={<StopOutlined />} color="default">
-          {ADMIN_STRINGS.orderStatus.cancelled}
-        </Tag>
-      );
-    default:
-      return <Tag>{status}</Tag>;
-  }
-};
-
-/**
- * Định dạng tiền tệ VND
- */
-export const formatCurrency = (amount: number, hasSpace: boolean = true): string => {
-  const formatted = amount.toLocaleString("vi-VN");
-  return hasSpace ? `${formatted} đ` : `${formatted}đ`;
-};
-
-/**
- * Định dạng ngày giờ sử dụng toLocaleString
- */
-export const formatDateTime = (date: string | Date | number): string => {
-  return new Date(date).toLocaleString("vi-VN");
 };
 
 /**

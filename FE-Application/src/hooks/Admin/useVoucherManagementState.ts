@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { Form, Modal } from "antd";
-import { couponApi, type Coupon } from "../../api/couponApi";
+import { Form } from "antd";
+import { couponApi } from "../../api/couponApi";
+import type { Coupon } from "../../types/coupon";
 import { notification } from "../../utils/notification";
 import type { Dayjs } from "dayjs";
 import { VOUCHER_STRINGS } from "../../constants/Admin/voucher-management";
+import { getErrorMessage } from "../../utils/error";
+import { confirmDelete } from "../common/useConfirmDelete";
 
 export interface VoucherFormValues extends Omit<Partial<Coupon>, "expiresAt"> {
   expiresAt?: Dayjs | null;
@@ -42,19 +45,13 @@ export const useVoucherManagementState = () => {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
+    confirmDelete({
       title: VOUCHER_STRINGS.messages.deleteTitle,
       content: VOUCHER_STRINGS.messages.deleteContent,
-      okType: "danger",
-      onOk: async () => {
-        try {
-          await couponApi.delete(id);
-          notification.success(VOUCHER_STRINGS.messages.deleteSuccess);
-          fetchCoupons();
-        } catch {
-          notification.error(VOUCHER_STRINGS.messages.deleteError);
-        }
-      },
+      onDelete: () => couponApi.delete(id),
+      successMessage: VOUCHER_STRINGS.messages.deleteSuccess,
+      errorMessage: VOUCHER_STRINGS.messages.deleteError,
+      onSuccess: fetchCoupons,
     });
   };
 
@@ -74,11 +71,9 @@ export const useVoucherManagementState = () => {
       form.resetFields();
       fetchCoupons();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : VOUCHER_STRINGS.messages.createError;
-      notification.error(message);
+      notification.error(
+        getErrorMessage(error, VOUCHER_STRINGS.messages.createError),
+      );
     } finally {
       setLoading(false);
     }

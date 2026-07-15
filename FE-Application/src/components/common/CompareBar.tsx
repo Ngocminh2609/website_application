@@ -10,9 +10,9 @@ import {
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
-import { FALLBACK_IMAGE } from "../../styles/commonStyles";
 import { styles } from "./styles/CompareBar.styles";
 import { COMMON_STRINGS } from "../../constants/Common/common";
+import { handleImgError } from "../../utils/image";
 
 /**
  * CompareBar - UX độc đáo: Thanh so sánh nổi phía dưới màn hình với hiệu ứng mượt mà.
@@ -21,13 +21,6 @@ const CompareBar: React.FC = () => {
   const { compareItems, removeFromCompare, clearCompare } = useCompare();
   const [isExpanded, setIsExpanded] = useState(true);
   const navigate = useNavigate();
-
-  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const target = e.target as HTMLImageElement;
-    if (target.dataset.errored === "true") return;
-    target.dataset.errored = "true";
-    target.src = FALLBACK_IMAGE;
-  };
 
   if (compareItems.length === 0) return null;
 

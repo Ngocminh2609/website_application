@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { cartApi as cartApiService } from "../api/cartApi";
 import { CartContext } from "../hooks/Cart/useCart";
 import type { Cart } from "../types/cart";
+import { getAuthToken } from "../utils/auth";
 
 /**
  * Provider quản lý trạng thái giỏ hàng toàn cục.
@@ -15,12 +16,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Sử dụng refs để quản lý trạng thái truy vấn mà không kích hoạt render lại
   const fetchingPromise = useRef<Promise<Cart> | null>(null);
-  const lastTokenRef = useRef<string | null>(localStorage.getItem("token"));
+  const lastTokenRef = useRef<string | null>(getAuthToken());
   // Lưu vết trạng thái force load
   const isFirstLoad = useRef<boolean>(true);
 
   const refreshCart = useCallback(async (force: boolean = false) => {
-    const token = localStorage.getItem("token");
+    const token = getAuthToken();
 
     if (!token) {
       setCart(null);
@@ -58,7 +59,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     // Hàm định kỳ kiểm tra thay đổi Token (vì Token không nằm trong React State chính)
     const checkTokenChange = setInterval(() => {
-      const currentToken = localStorage.getItem("token");
+      const currentToken = getAuthToken();
       if (currentToken !== lastTokenRef.current) {
         lastTokenRef.current = currentToken;
         isFirstLoad.current = true; // Cho phép tải lại khi đổi account

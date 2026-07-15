@@ -1,15 +1,8 @@
-import React from "react";
 import type { Product } from "../../../types/product";
+import { FALLBACK_IMAGE } from "../../../styles/commonStyles";
 
-export const fallbackImage =
-  "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800";
-
-export const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-  const target = e.target as HTMLImageElement;
-  if (target.dataset.errored === "true") return;
-  target.dataset.errored = "true";
-  target.src = fallbackImage;
-};
+export { handleImgError } from "../../../utils/image";
+export const fallbackImage = FALLBACK_IMAGE;
 
 // Hàm giải mã thông số kỹ thuật (hỗ trợ cả JSON và chuỗi định dạng Key: Value; Key2: Value)
 export const parseSpecs = (

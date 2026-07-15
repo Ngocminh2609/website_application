@@ -19,7 +19,6 @@ import { useWishlist } from "../../hooks/Wishlist/useWishlist";
 import { useCompare } from "../../hooks/Product/useCompare";
 
 import {
-  FALLBACK_IMAGE,
   PRODUCT_CARD_STYLE,
   PRODUCT_CARD_BODY_STYLE,
   PRODUCT_CARD_BRAND_STYLE,
@@ -28,6 +27,9 @@ import {
 } from "../../styles/commonStyles";
 import { styles } from "./styles/ProductCard.styles";
 import { COMMON_STRINGS } from "../../constants/Common/common";
+import { requireAuth } from "../../utils/auth";
+import { handleImgError } from "../../utils/image";
+import { formatVnd } from "../../utils/format";
 
 const { productCard: pcStrings } = COMMON_STRINGS;
 
@@ -89,11 +91,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const imgRef = React.useRef<HTMLImageElement>(null);
 
   const handleAddToCart = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      notification.error(pcStrings.loginRequired);
-      return;
-    }
+    if (!requireAuth()) return;
 
     try {
       // Thực hiện hiệu ứng bay ngay lập tức để tạo cảm giác phản hồi nhanh
@@ -120,14 +118,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     } else {
       addToWishlist(product);
     }
-  };
-
-  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const target = e.target as HTMLImageElement;
-    // Tránh vòng lặp vô chậm nếu chính ảnh fallback cũng không load được
-    if (target.dataset.errored === "true") return;
-    target.dataset.errored = "true";
-    target.src = FALLBACK_IMAGE;
   };
 
   return (
@@ -250,11 +240,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div style={styles.footerContainer}>
         <div style={styles.priceContainer}>
           <Title level={3} style={styles.priceText}>
-            {(product.price ?? 0).toLocaleString("vi-VN")} ₫
+            {formatVnd(product.price ?? 0)}
           </Title>
           {product.originalPrice && (
             <Text delete style={styles.originalPriceText}>
-              {(product.originalPrice ?? 0).toLocaleString("vi-VN")} ₫
+              {formatVnd(product.originalPrice ?? 0)}
             </Text>
           )}
         </div>

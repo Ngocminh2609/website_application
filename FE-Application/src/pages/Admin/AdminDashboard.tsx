@@ -42,7 +42,7 @@ import {
 } from "@ant-design/icons";
 import AdminChat from "./AdminChat";
 import type { Product } from "../../types/product";
-import { type Order } from "../../api/orderApi";
+import type { Order } from "../../types/order";
 import BaseButton from "../../components/common/BaseButton";
 import type { ColumnsType } from "antd/es/table";
 import StatisticsTab from "./StatisticsTab";

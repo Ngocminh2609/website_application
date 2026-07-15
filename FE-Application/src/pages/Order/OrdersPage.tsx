@@ -4,7 +4,6 @@ import {
   Typography,
   Table,
   Card,
-  Spin,
   Empty,
   Button,
 } from "antd";
@@ -13,6 +12,7 @@ import { useOrdersPage } from "../../hooks/Order/useOrdersPage";
 import { getOrderTableColumns } from "./helper";
 import { styles } from "./styles/orders-page.styles";
 import { ORDER_STRINGS } from "../../constants/Order/orders";
+import { PageLoading } from "../../components/common/PageLoading";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -36,9 +36,7 @@ const OrdersPage: React.FC = () => {
       </div>
 
       {loading ? (
-        <div style={styles.loadingContainer}>
-          <Spin size="large" />
-        </div>
+        <PageLoading style={styles.loadingContainer} />
       ) : orders.length === 0 ? (
         <Card
           className="glass-effect"

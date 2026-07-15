@@ -1,33 +1,17 @@
 import { apiClient } from "./apiClient";
+import type {
+  PaymentResponse,
+  CreateOrderPaymentParams,
+} from "../types/payment";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface PaymentResponse {
-  status: string;
-  message: string;
-  url: string;
-}
-
-export interface CreateOrderPaymentParams {
-  address: string;
-  phone: string;
-  couponCode?: string;
-  paymentMethod?: string;
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
+export type { PaymentResponse, CreateOrderPaymentParams } from "../types/payment";
 
 const BASE_PATH = "/v1/payment";
 const DEFAULT_PAYMENT_METHOD = "VNPAY";
 
-// ─── API ─────────────────────────────────────────────────────────────────────
-
 export const paymentApi = {
   /**
    * @deprecated Sử dụng `createOrderPayment` để tạo đơn hàng thực tế.
-   * @param amount - Số tiền thanh toán.
-   * @param orderInfo - Thông tin đơn hàng.
-   * @returns Thông tin thanh toán.
    */
   createPayment: (
     amount: number,
@@ -37,12 +21,6 @@ export const paymentApi = {
       `${BASE_PATH}/create-payment?amount=${amount}&orderInfo=${encodeURIComponent(orderInfo)}`,
     ),
 
-  /**
-   * Tạo đơn hàng và khởi tạo thanh toán.
-   * User lấy từ JWT Authorization header (không gửi username).
-   * @param params - Thông tin checkout.
-   * @returns Thông tin thanh toán bao gồm URL redirect.
-   */
   createOrderPayment: ({
     address,
     phone,
@@ -63,11 +41,6 @@ export const paymentApi = {
     });
   },
 
-  /**
-   * Xác minh kết quả thanh toán từ VNPay callback.
-   * @param params - Chuỗi query params từ VNPay callback URL.
-   * @returns Kết quả xác minh.
-   */
   verifyPayment: (params: string): Promise<PaymentResponse> =>
     apiClient.fetch<PaymentResponse>(`${BASE_PATH}/vnpay-callback${params}`),
 };

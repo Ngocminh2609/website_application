@@ -3,6 +3,7 @@ import { useSearchParams, useLocation } from "react-router-dom";
 import { productApi } from "../../api/productApi";
 import { useProducts } from "./useProducts";
 import type { Product } from "../../types/product";
+import { useProductFilters } from "./useProductFilters";
 
 export const useSearchPage = () => {
   const [searchParams] = useSearchParams();
@@ -13,12 +14,14 @@ export const useSearchPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Trạng thái bộ lọc
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([
-    0, 100000000,
-  ]);
+  const {
+    selectedBrands,
+    setSelectedBrands,
+    selectedCategories,
+    setSelectedCategories,
+    priceRange,
+    setPriceRange,
+  } = useProductFilters();
 
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -30,7 +33,6 @@ export const useSearchPage = () => {
 
       try {
         setLoading(true);
-        // Nếu query là số, thử tìm theo ID trước để hỗ trợ khách hàng tìm kiếm chính xác
         const isNumeric = /^\d+$/.test(query);
         let searchData: Product[] = [];
 
@@ -45,10 +47,8 @@ export const useSearchPage = () => {
           }
         }
 
-        // Luôn tìm kiếm theo tên để mở rộng kết quả
         const resultsByName = await productApi.searchProducts(query);
 
-        // Kết hợp kết quả (loại bỏ trùng lặp nếu có)
         const combined = [...searchData];
         resultsByName.forEach((p) => {
           if (!combined.some((cp) => cp.id === p.id)) {
@@ -57,8 +57,6 @@ export const useSearchPage = () => {
         });
 
         setProducts(combined);
-
-        // Đảm bảo categories được load cho sidebar
         await initializeHomeData();
       } catch (error) {
         console.error("Lỗi khi tìm kiếm sản phẩm:", error);

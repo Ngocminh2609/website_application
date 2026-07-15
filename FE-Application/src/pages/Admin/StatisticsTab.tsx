@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Row, Col, Typography, Select, Spin, Empty } from "antd";
+import { Card, Row, Col, Typography, Select, Empty } from "antd";
 import {
   XAxis,
   YAxis,
@@ -14,6 +14,7 @@ import {
 import { useStatisticsTabState } from "../../hooks/Admin/useStatisticsTabState";
 import { styles } from "./styles/statistics-tab.styles";
 import { STATS_STRINGS } from "../../constants/Admin/statistics-tab";
+import { PageLoading } from "../../components/common/PageLoading";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -42,9 +43,7 @@ const StatisticsTab: React.FC = () => {
       </div>
 
       {loading ? (
-        <div style={styles.spinnerContainer}>
-          <Spin size="large" />
-        </div>
+        <PageLoading style={styles.spinnerContainer} />
       ) : data.length === 0 ? (
         <Empty
           description={

@@ -1,57 +1,26 @@
 import { apiClient } from "./apiClient";
+import type { Order } from "../types/order";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface OrderItem {
-  id: number;
-  product: {
-    id: number;
-    name: string;
-    price: number;
-    imageUrl: string;
-  };
-  quantity: number;
-  price: number;
-}
-
-export interface Order {
-  id: number;
-  totalAmount: number;
-  status: string;
-  paymentMethod: string;
-  shippingAddress: string;
-  phoneNumber: string;
-  orderDate: string;
-  items: OrderItem[];
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
+export type { Order, OrderItem } from "../types/order";
 
 const BASE_PATH = "/v1/orders";
 const ADMIN_PATH = `${BASE_PATH}/admin`;
 
-// ─── API ─────────────────────────────────────────────────────────────────────
-
 export const orderApi = {
   /**
    * Lấy danh sách đơn hàng của người dùng hiện tại (từ JWT).
-   * @returns Danh sách `Order`.
    */
   getUserOrders: (): Promise<Order[]> =>
     apiClient.fetch<Order[]>(`${BASE_PATH}/user`),
 
   /**
    * Lấy tất cả đơn hàng. (Yêu cầu quyền ADMIN)
-   * @returns Danh sách `Order`.
    */
   getAllOrders: (): Promise<Order[]> =>
     apiClient.fetch<Order[]>(`${ADMIN_PATH}/all`),
 
   /**
    * Cập nhật trạng thái đơn hàng. (Yêu cầu quyền ADMIN)
-   * @param orderId - ID của đơn hàng.
-   * @param status - Trạng thái mới.
-   * @returns Thông báo kết quả.
    */
   updateOrderStatus: (orderId: number, status: string): Promise<string> =>
     apiClient.fetch<string>(
@@ -61,8 +30,6 @@ export const orderApi = {
 
   /**
    * Xóa đơn hàng. (Yêu cầu quyền ADMIN)
-   * @param orderId - ID của đơn hàng cần xóa.
-   * @returns Thông báo kết quả.
    */
   deleteOrder: (orderId: number): Promise<string> =>
     apiClient.fetch<string>(`${ADMIN_PATH}/${orderId}`, { method: "DELETE" }),

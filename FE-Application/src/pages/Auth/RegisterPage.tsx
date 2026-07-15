@@ -13,6 +13,7 @@ import type { RegisterRequest } from "../../types/auth";
 import { styles } from "./styles/register.styles";
 import { REGISTER_STRINGS } from "../../constants/Auth/auth";
 import { useRegisterState } from "../../hooks/Auth/useRegisterState";
+import { emailRules, passwordMinRules } from "../../utils/validationRules";
 
 const { Title, Text } = Typography;
 
@@ -61,10 +62,10 @@ const RegisterPage: React.FC = () => {
 
         <Form.Item
           name="email"
-          rules={[
-            { required: true, message: REGISTER_STRINGS.emailRequired },
-            { type: "email", message: REGISTER_STRINGS.emailInvalid },
-          ]}
+          rules={emailRules(
+            REGISTER_STRINGS.emailRequired,
+            REGISTER_STRINGS.emailInvalid,
+          )}
         >
           <BaseInput
             prefix={<MailOutlined style={styles.inputPrefix} />}
@@ -74,10 +75,10 @@ const RegisterPage: React.FC = () => {
 
         <Form.Item
           name="password"
-          rules={[
-            { required: true, message: REGISTER_STRINGS.passwordRequired },
-            { min: 6, message: REGISTER_STRINGS.passwordMin },
-          ]}
+          rules={passwordMinRules(
+            REGISTER_STRINGS.passwordRequired,
+            REGISTER_STRINGS.passwordMin,
+          )}
         >
           <BaseInput.Password
             prefix={<LockOutlined style={styles.inputPrefix} />}

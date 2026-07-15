@@ -14,7 +14,7 @@ import {
   Col,
 } from "antd";
 import { PlusOutlined, DeleteOutlined, GiftOutlined } from "@ant-design/icons";
-import type { Coupon } from "../../api/couponApi";
+import type { Coupon } from "../../types/coupon";
 import BaseButton from "../../components/common/BaseButton";
 import type { ColumnsType } from "antd/es/table";
 import { useVoucherManagementState, type VoucherFormValues } from "../../hooks/Admin/useVoucherManagementState";

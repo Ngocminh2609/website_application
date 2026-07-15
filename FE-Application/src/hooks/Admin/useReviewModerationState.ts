@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Modal } from "antd";
 import { reviewApi } from "../../api/reviewApi";
-import type { ProductReview } from "../../types/coupon-review";
+import type { ProductReview } from "../../types/review";
 import { notification } from "../../utils/notification";
 import { REVIEW_STRINGS } from "../../constants/Admin/review-moderation";
+import { confirmDelete } from "../common/useConfirmDelete";
 
 export const useReviewModerationState = () => {
   const [reviews, setReviews] = useState<ProductReview[]>([]);
@@ -36,19 +36,13 @@ export const useReviewModerationState = () => {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
+    confirmDelete({
       title: REVIEW_STRINGS.messages.deleteTitle,
       content: REVIEW_STRINGS.messages.deleteContent,
-      okType: "danger",
-      onOk: async () => {
-        try {
-          await reviewApi.delete(id);
-          notification.success(REVIEW_STRINGS.messages.deleteSuccess);
-          fetchAllReviews();
-        } catch {
-          notification.error(REVIEW_STRINGS.messages.deleteError);
-        }
-      },
+      onDelete: () => reviewApi.delete(id),
+      successMessage: REVIEW_STRINGS.messages.deleteSuccess,
+      errorMessage: REVIEW_STRINGS.messages.deleteError,
+      onSuccess: fetchAllReviews,
     });
   };
 

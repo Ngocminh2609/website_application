@@ -1,4 +1,5 @@
 import { TRACKING_KEYS } from "../constants/Utils/utils";
+import { getAuthToken } from "./auth";
 
 export interface CategoryInterest {
   categoryName: string;
@@ -25,7 +26,7 @@ export const trackingUtils = {
       localStorage.setItem(TRACKING_KEYS.RECENTLY_VIEWED_KEY, JSON.stringify(viewedIds));
 
       // Đồng bộ lên Server nếu đã đăng nhập (Silent call)
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       if (token) {
         import("../api/recommendationApi").then(({ recommendationApi }) => {
           recommendationApi.trackView(productId).catch(() => {});

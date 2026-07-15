@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { statisticsApi, type OrderStatistic } from "../../api/statisticsApi";
+import { statisticsApi } from "../../api/statisticsApi";
+import type { OrderStatistic } from "../../types/statistics";
 import { notification } from "../../utils/notification";
 import { STATS_STRINGS } from "../../constants/Admin/statistics-tab";
 

@@ -7,6 +7,8 @@ import { userApi } from "../../api/userApi";
 import { fileApi } from "../../api/fileApi";
 import { notification } from "../../utils/notification";
 import { PROFILE_STRINGS } from "../../constants/Profile/profile";
+import { updateStoredUser } from "../../utils/auth";
+import { getErrorMessage } from "../../utils/error";
 
 export const useProfilePage = (onUserUpdate: (updated: Partial<User>) => void) => {
   const [profileForm] = Form.useForm();
@@ -48,18 +50,12 @@ export const useProfilePage = (onUserUpdate: (updated: Partial<User>) => void) =
     setSavingProfile(true);
     try {
       const updated = await userApi.updateProfile({ ...values, avatarUrl });
-      const savedUser = localStorage.getItem("user");
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        localStorage.setItem("user", JSON.stringify({ ...parsed, ...updated }));
-      }
+      updateStoredUser(updated);
       setUser(updated);
       onUserUpdate(updated);
       notification.success(PROFILE_STRINGS.successUpdateProfile);
     } catch (err: unknown) {
-      notification.error(
-        err instanceof Error ? err.message : "Cập nhật thất bại",
-      );
+      notification.error(getErrorMessage(err, "Cập nhật thất bại"));
     } finally {
       setSavingProfile(false);
     }
@@ -83,9 +79,7 @@ export const useProfilePage = (onUserUpdate: (updated: Partial<User>) => void) =
       notification.success(PROFILE_STRINGS.successChangePassword);
       passwordForm.resetFields();
     } catch (err: unknown) {
-      notification.error(
-        err instanceof Error ? err.message : "Đổi mật khẩu thất bại",
-      );
+      notification.error(getErrorMessage(err, "Đổi mật khẩu thất bại"));
     } finally {
       setSavingPassword(false);
     }
@@ -101,14 +95,7 @@ export const useProfilePage = (onUserUpdate: (updated: Partial<User>) => void) =
         await userApi.updateProfile({ avatarUrl: res.url });
         setAvatarUrl(res.url);
         onUserUpdate({ avatarUrl: res.url });
-        const savedUser = localStorage.getItem("user");
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser);
-          localStorage.setItem(
-            "user",
-            JSON.stringify({ ...parsed, avatarUrl: res.url }),
-          );
-        }
+        updateStoredUser({ avatarUrl: res.url });
         notification.success(PROFILE_STRINGS.successAvatar);
       } catch {
         notification.error(PROFILE_STRINGS.errAvatar);

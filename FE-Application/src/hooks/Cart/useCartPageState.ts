@@ -6,11 +6,12 @@ import { cartApi } from "../../api/cartApi";
 import { paymentApi } from "../../api/paymentApi";
 import { couponApi } from "../../api/couponApi";
 import { addressApi } from "../../api/addressApi";
-import type { UserAddress } from "../../api/addressApi";
-import type { CouponValidateResponse } from "../../types/coupon-review";
+import type { UserAddress } from "../../types/address";
+import type { CouponValidateResponse } from "../../types/coupon";
 import { CART_STRINGS } from "../../constants/Cart/cart-page";
 import { notification } from "../../utils/notification";
 import { calculateCartSubtotal, getFullAddressString } from "../../pages/Cart/helper";
+import { getAuthUser } from "../../utils/auth";
 
 interface ApiProvince {
   code: number;
@@ -231,8 +232,7 @@ export const useCartPageState = () => {
     const selectedAddr = addresses.find((a) => a.id === selectedAddressId);
     if (!selectedAddr) return;
 
-    const userStr = localStorage.getItem("user");
-    if (!userStr) {
+    if (!getAuthUser()) {
       notification.error(CART_STRINGS.messages.loginRequired);
       return;
     }

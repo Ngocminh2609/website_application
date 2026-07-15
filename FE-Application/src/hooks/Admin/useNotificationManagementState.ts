@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Form } from "antd";
-import { getBaseApiUrl } from "../../utils/url";
+import { notificationApi } from "../../api/notificationApi";
 import { notification } from "../../utils/notification";
 import { NOTIF_STRINGS } from "../../constants/Admin/notification-management";
 
@@ -20,34 +20,20 @@ export const useNotificationManagementState = () => {
   const handleBroadcast = async (values: { message: string }) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const baseUrl = getBaseApiUrl();
-      const response = await fetch(`${baseUrl}/notifications/broadcast`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (response.ok) {
-        notification.success(NOTIF_STRINGS.messages.sendSuccess);
-        form.resetFields();
-        const newLog: NotificationHistoryItem = {
-          id: Date.now(),
-          message: values.message,
-          type: "SYSTEM",
-          createdAt: new Date().toISOString(),
-          recipientCount: NOTIF_STRINGS.recipientCountText,
-        };
-        setHistory((prev) => [newLog, ...prev]);
-      } else {
-        notification.error(NOTIF_STRINGS.messages.sendError);
-      }
+      await notificationApi.broadcast(values.message);
+      notification.success(NOTIF_STRINGS.messages.sendSuccess);
+      form.resetFields();
+      const newLog: NotificationHistoryItem = {
+        id: Date.now(),
+        message: values.message,
+        type: "SYSTEM",
+        createdAt: new Date().toISOString(),
+        recipientCount: NOTIF_STRINGS.recipientCountText,
+      };
+      setHistory((prev) => [newLog, ...prev]);
     } catch (error) {
       console.error("Lỗi gửi thông báo:", error);
-      notification.error(NOTIF_STRINGS.messages.connectionError);
+      notification.error(NOTIF_STRINGS.messages.sendError);
     } finally {
       setLoading(false);
     }

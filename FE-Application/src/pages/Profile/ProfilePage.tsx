@@ -21,10 +21,16 @@ import {
 import type { User } from "../../types/auth";
 import { ROLES } from "../../components/common/Commons";
 import BaseButton from "../../components/common/BaseButton";
+import { PageLoading } from "../../components/common/PageLoading";
 import { PROFILE_INPUT_STYLE } from "../../styles/commonStyles";
 import { useProfilePage } from "../../hooks/Profile/useProfilePage";
 import { styles } from "./styles/profile-page.styles";
 import { PROFILE_STRINGS } from "../../constants/Profile/profile";
+import {
+  emailRules,
+  passwordMinRules,
+  phoneRules,
+} from "../../utils/validationRules";
 
 const { Title, Text } = Typography;
 
@@ -53,11 +59,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
   } = useProfilePage(onUserUpdate);
 
   if (loading) {
-    return (
-      <div style={styles.loadingContainer}>
-        <Spin size="large" />
-      </div>
-    );
+    return <PageLoading style={styles.loadingContainer} />;
   }
 
   return (
@@ -214,16 +216,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                               </Text>
                             }
                             name="email"
-                            rules={[
-                              {
-                                required: true,
-                                message: PROFILE_STRINGS.validation.emailRequired,
-                              },
-                              {
-                                type: "email",
-                                message: PROFILE_STRINGS.validation.emailInvalid,
-                              },
-                            ]}
+                            rules={emailRules(
+                              PROFILE_STRINGS.validation.emailRequired,
+                              PROFILE_STRINGS.validation.emailInvalid,
+                            )}
                           >
                             <Input
                               style={PROFILE_INPUT_STYLE}
@@ -239,12 +235,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                               </Text>
                             }
                             name="phone"
-                            rules={[
-                              {
-                                pattern: /^[0-9]{9,11}$/,
-                                message: PROFILE_STRINGS.validation.phoneInvalid,
-                              },
-                            ]}
+                            rules={phoneRules(
+                              PROFILE_STRINGS.validation.phoneInvalid,
+                            )}
                           >
                             <Input
                               style={PROFILE_INPUT_STYLE}
@@ -309,16 +302,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onUserUpdate }) => {
                           </Text>
                         }
                         name="newPassword"
-                        rules={[
-                          {
-                            required: true,
-                            message: PROFILE_STRINGS.validation.newPasswordRequired,
-                          },
-                          {
-                            min: 6,
-                            message: PROFILE_STRINGS.validation.newPasswordMinLen,
-                          },
-                        ]}
+                        rules={passwordMinRules(
+                          PROFILE_STRINGS.validation.newPasswordRequired,
+                          PROFILE_STRINGS.validation.newPasswordMinLen,
+                        )}
                       >
                         <Input.Password
                           style={PROFILE_INPUT_STYLE}

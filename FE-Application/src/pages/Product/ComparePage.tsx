@@ -22,6 +22,7 @@ import { useCart } from "../../hooks/Cart/useCart";
 import { handleImgError, parseSpecs } from "./helper";
 import { styles } from "./styles/compare-page.styles";
 import { PRODUCT_STRINGS } from "../../constants/Product/product";
+import { formatVnd } from "../../utils/format";
 
 const { Title, Text } = Typography;
 
@@ -182,7 +183,7 @@ const ComparePage: React.FC = () => {
                     {/* Dữ liệu so sánh */}
                     <div style={styles.dataContainer}>
                       <div style={styles.priceText}>
-                        {item.price.toLocaleString("vi-VN")} ₫
+                        {formatVnd(item.price)}
                       </div>
                       <div style={styles.brandWrapper}>
                         <Tag color="blue">{item.brand || "TECH"}</Tag>

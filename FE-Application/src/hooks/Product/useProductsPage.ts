@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { useProducts } from "./useProducts";
+import { useProductFilters } from "./useProductFilters";
 
 export const useProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -10,26 +11,27 @@ export const useProductsPage = () => {
 
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Trạng thái bộ lọc - Khởi tạo từ URL nếu có
-  const [selectedBrands, setSelectedBrands] = useState<string[]>(
+  const filters = useProductFilters(
     searchParams.getAll("brand"),
-  );
-  const [selectedCategories, setSelectedCategories] = useState<number[]>(
     searchParams.getAll("category").map((id) => parseInt(id)),
   );
-  const [priceRange, setPriceRange] = useState<[number, number]>([
-    0, 100000000,
-  ]);
+
+  const {
+    selectedBrands,
+    setSelectedBrands,
+    selectedCategories,
+    setSelectedCategories,
+    priceRange,
+    setPriceRange,
+  } = filters;
 
   useEffect(() => {
-    // Cập nhật URL khi bộ lọc thay đổi
     const params = new URLSearchParams();
     selectedBrands.forEach((brand) => params.append("brand", brand));
     selectedCategories.forEach((catId) =>
       params.append("category", catId.toString()),
     );
 
-    // Chỉ cập nhật nếu searchParams hiện tại khác với params mới để tránh loop
     if (params.toString() !== searchParams.toString()) {
       setSearchParams(params, { replace: true });
     }
@@ -39,11 +41,7 @@ export const useProductsPage = () => {
     const loadInitialData = async () => {
       try {
         setLoading(true);
-        // Sử dụng Context để fetch dữ liệu, đảm bảo không gọi trùng lặp (Single Flight)
-        await Promise.all([
-          fetchProducts(),
-          initializeHomeData(), // Lấy categories
-        ]);
+        await Promise.all([fetchProducts(), initializeHomeData()]);
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu sản phẩm:", error);
       } finally {

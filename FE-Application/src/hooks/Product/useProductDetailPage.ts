@@ -5,8 +5,12 @@ import { cartApi } from "../../api/cartApi";
 import { reviewApi } from "../../api/reviewApi";
 import { useCart } from "../Cart/useCart";
 import type { Product } from "../../types/product";
-import type { ProductReview } from "../../types/coupon-review";
+import type { ProductReview } from "../../types/review";
 import { notification } from "../../utils/notification";
+import { getAuthUser, requireAuth } from "../../utils/auth";
+import { getErrorMessage } from "../../utils/error";
+import { COMMON_STRINGS } from "../../constants/Common/common";
+import { PRODUCT_STRINGS } from "../../constants/Product/product";
 
 export const useProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,14 +26,7 @@ export const useProductDetailPage = () => {
   const [userComment, setUserComment] = useState("");
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  const currentUser = (() => {
-    try {
-      const s = localStorage.getItem("user");
-      return s ? JSON.parse(s) : null;
-    } catch {
-      return null;
-    }
-  })();
+  const currentUser = getAuthUser();
 
   const fetchReviews = async (productId: number) => {
     try {
@@ -72,11 +69,7 @@ export const useProductDetailPage = () => {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    const token = localStorage.getItem("token");
-    if (!token) {
-      notification.error("Vui lòng đăng nhập để thực hiện");
-      return;
-    }
+    if (!requireAuth()) return;
 
     try {
       if (imageContainerRef.current) {
@@ -91,15 +84,12 @@ export const useProductDetailPage = () => {
       await refreshCart(true);
       notification.product.addCartSuccess();
     } catch {
-      notification.error("Không thể thêm sản phẩm vào giỏ hàng");
+      notification.error(COMMON_STRINGS.productCard.addCartError);
     }
   };
 
   const handleSubmitReview = async () => {
-    if (!currentUser) {
-      notification.error("Vui lòng đăng nhập để gửi đánh giá");
-      return;
-    }
+    if (!requireAuth()) return;
     if (!id) return;
     try {
       setSubmitLoading(true);
@@ -107,13 +97,13 @@ export const useProductDetailPage = () => {
         rating: userRating,
         comment: userComment,
       });
-      notification.success("Gửi đánh giá thành công!");
+      notification.review.submitSuccess();
       setUserComment("");
       setUserRating(5);
       await fetchReviews(parseInt(id));
     } catch (err: unknown) {
       notification.error(
-        err instanceof Error ? err.message : "Gửi đánh giá thất bại",
+        getErrorMessage(err, PRODUCT_STRINGS.detailPage.reviewSubmitError),
       );
     } finally {
       setSubmitLoading(false);
@@ -123,10 +113,12 @@ export const useProductDetailPage = () => {
   const handleDeleteReview = async (reviewId: number) => {
     try {
       await reviewApi.delete(reviewId);
-      notification.success("Xóa đánh giá thành công");
+      notification.review.deleteSuccess();
       if (id) await fetchReviews(parseInt(id));
     } catch (err: unknown) {
-      notification.error(err instanceof Error ? err.message : "Xóa thất bại");
+      notification.error(
+        getErrorMessage(err, PRODUCT_STRINGS.detailPage.reviewDeleteError),
+      );
     }
   };
 

@@ -43,22 +43,16 @@ const { Header } = Layout;
 const { Text } = Typography;
 
 import {
-  FALLBACK_IMAGE,
   ICON_WRAPPER_STYLE,
   themeBorder,
 } from "../../styles/commonStyles";
 import { styles } from "./styles/Navbar.styles";
 import { LAYOUT_STRINGS } from "../../constants/Layout/layout";
 import { ROLES } from "../common/Commons";
+import { handleImgError } from "../../utils/image";
+import { formatDateTimeVi } from "../../utils/format";
 
 const { navbar: nvStrings } = LAYOUT_STRINGS;
-
-const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-  const target = e.target as HTMLImageElement;
-  if (target.dataset.errored === "true") return;
-  target.dataset.errored = "true";
-  target.src = FALLBACK_IMAGE;
-};
 
 // ─── NavIconBadge Sub-component ──────────────────────────────────────────────
 interface NavIconBadgeProps {
@@ -273,7 +267,7 @@ const Navbar: React.FC<NavbarProps> = ({
                       {item.message}
                     </Text>
                     <Text style={styles.notificationTimeText(isDarkMode)}>
-                      {new Date(item.createdAt).toLocaleString("vi-VN")}
+                      {formatDateTimeVi(item.createdAt)}
                     </Text>
                   </div>
                 </div>

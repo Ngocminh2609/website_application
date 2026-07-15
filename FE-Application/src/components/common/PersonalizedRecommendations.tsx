@@ -1,7 +1,8 @@
 import React from "react";
-import { Typography, Row, Col, Spin } from "antd";
+import { Typography, Row, Col } from "antd";
 import { usePersonalizedProducts } from "../../hooks/Product/usePersonalizedProducts";
 import ProductCard from "./ProductCard";
+import { PageLoading } from "./PageLoading";
 import { StarOutlined } from "@ant-design/icons";
 import { styles } from "./styles/PersonalizedRecommendations.styles";
 import { COMMON_STRINGS } from "../../constants/Common/common";
@@ -31,9 +32,7 @@ const PersonalizedRecommendations: React.FC<
 
   if (loading) {
     return (
-      <div style={styles.loadingContainer}>
-        <Spin size="large" tip={prStrings.loadingTip} />
-      </div>
+      <PageLoading tip={prStrings.loadingTip} style={styles.loadingContainer} />
     );
   }
 

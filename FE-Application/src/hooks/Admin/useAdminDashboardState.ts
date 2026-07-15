@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
-import { Form, Modal } from "antd";
+import { Form } from "antd";
 import type { UploadFile } from "antd";
 import { useLocation } from "react-router-dom";
 import { useAdminChat } from "../../context/useAdminChat";
 import { productApi } from "../../api/productApi";
 import { categoryApi } from "../../api/categoryApi";
 import { fileApi } from "../../api/fileApi";
-import { orderApi, type Order } from "../../api/orderApi";
+import { orderApi } from "../../api/orderApi";
+import type { Order } from "../../types/order";
 import type { Product, ProductRequest } from "../../types/product";
 import type { Category } from "../../types/category";
 import { notification } from "../../utils/notification";
 import { ADMIN_STRINGS } from "../../constants/Admin/admin-dashboard";
+import { getErrorMessage } from "../../utils/error";
+import { confirmDelete } from "../common/useConfirmDelete";
 
 export const useAdminDashboardState = () => {
   const { totalUnread } = useAdminChat();
@@ -114,29 +117,24 @@ export const useAdminDashboardState = () => {
       const productData = await productApi.getAllAdmin();
       setProducts(productData);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : ADMIN_STRINGS.error.genericError;
-      notification.error(message);
+      notification.error(
+        getErrorMessage(error, ADMIN_STRINGS.error.genericError),
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    Modal.confirm({
+    confirmDelete({
       title: ADMIN_STRINGS.messages.confirmDeleteProductTitle,
       content: ADMIN_STRINGS.messages.confirmDeleteProductContent,
-      onOk: async () => {
-        try {
-          await productApi.deleteProduct(id);
-          notification.success(ADMIN_STRINGS.messages.deleteProductSuccess);
-          const productData = await productApi.getAllAdmin();
-          setProducts(productData);
-        } catch {
-          notification.error(ADMIN_STRINGS.error.deleteProductError);
-        }
+      onDelete: () => productApi.deleteProduct(id),
+      successMessage: ADMIN_STRINGS.messages.deleteProductSuccess,
+      errorMessage: ADMIN_STRINGS.error.deleteProductError,
+      onSuccess: async () => {
+        const productData = await productApi.getAllAdmin();
+        setProducts(productData);
       },
     });
   };
@@ -154,7 +152,7 @@ export const useAdminDashboardState = () => {
       setOrders(orderData);
     } catch (error: unknown) {
       notification.error(
-        error instanceof Error ? error.message : ADMIN_STRINGS.error.updateOrderError,
+        getErrorMessage(error, ADMIN_STRINGS.error.updateOrderError),
       );
     } finally {
       setLoading(false);
@@ -162,24 +160,22 @@ export const useAdminDashboardState = () => {
   };
 
   const handleDeleteOrder = async (orderId: number) => {
-    Modal.confirm({
+    confirmDelete({
       title: ADMIN_STRINGS.messages.confirmDeleteOrderTitle,
       content: ADMIN_STRINGS.messages.confirmDeleteOrderContent,
-      okType: "danger",
-      onOk: async () => {
+      onDelete: async () => {
+        setLoading(true);
         try {
-          setLoading(true);
           await orderApi.deleteOrder(orderId);
-          notification.success(ADMIN_STRINGS.messages.deleteOrderSuccess);
-          const orderData = await orderApi.getAllOrders();
-          setOrders(orderData);
-        } catch (error: unknown) {
-          notification.error(
-            error instanceof Error ? error.message : ADMIN_STRINGS.error.deleteOrderError,
-          );
         } finally {
           setLoading(false);
         }
+      },
+      successMessage: ADMIN_STRINGS.messages.deleteOrderSuccess,
+      errorMessage: ADMIN_STRINGS.error.deleteOrderError,
+      onSuccess: async () => {
+        const orderData = await orderApi.getAllOrders();
+        setOrders(orderData);
       },
     });
   };

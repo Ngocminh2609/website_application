@@ -1,3 +1,5 @@
+import { ORDER_STATUS_LABELS } from "../Order/status";
+
 export const ADMIN_STRINGS = {
   header: {
     title: "Quản Trị Hệ Thống",
@@ -71,12 +73,5 @@ export const ADMIN_STRINGS = {
     updateOrderError: "Lỗi cập nhật đơn hàng",
     deleteOrderError: "Lỗi khi xóa đơn hàng",
   },
-  orderStatus: {
-    pending: "Chờ thanh toán",
-    paid: "Đã thanh toán",
-    shipping: "Đang giao hàng",
-    delivered: "Đã giao hàng",
-    failed: "Lỗi giao dịch",
-    cancelled: "Đã hủy",
-  },
+  orderStatus: ORDER_STATUS_LABELS,
 };

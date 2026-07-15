@@ -66,4 +66,18 @@ export const notification = {
     loadError: () =>
       notification.error(UTILS_STRINGS.notification.product.loadError),
   },
+
+  wishlist: {
+    addSuccess: () =>
+      notification.success(UTILS_STRINGS.notification.wishlist.addSuccess),
+    removeSuccess: () =>
+      notification.success(UTILS_STRINGS.notification.wishlist.removeSuccess),
+  },
+
+  review: {
+    submitSuccess: () =>
+      notification.success(UTILS_STRINGS.notification.review.submitSuccess),
+    deleteSuccess: () =>
+      notification.success(UTILS_STRINGS.notification.review.deleteSuccess),
+  },
 };

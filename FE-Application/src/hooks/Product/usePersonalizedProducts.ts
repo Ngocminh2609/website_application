@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useProducts } from "./useProducts";
 import { trackingUtils } from "../../utils/tracking";
 import type { Product } from "../../types/product";
+import { getAuthToken } from "../../utils/auth";
 
 let activeFetchPromise: Promise<Product[]> | null = null;
 
@@ -28,7 +29,7 @@ export const usePersonalizedProducts = (limit: number = 6) => {
 
   useEffect(() => {
     const fetchPersonalized = async () => {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       if (token) {
         if (hasFetchedServer.current) return;
         try {

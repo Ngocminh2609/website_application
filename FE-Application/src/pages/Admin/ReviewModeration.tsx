@@ -14,7 +14,7 @@ import {
   UserOutlined,
   ShopOutlined,
 } from "@ant-design/icons";
-import type { ProductReview } from "../../types/coupon-review";
+import type { ProductReview } from "../../types/review";
 import BaseButton from "../../components/common/BaseButton";
 import type { ColumnsType } from "antd/es/table";
 import { useReviewModerationState } from "../../hooks/Admin/useReviewModerationState";

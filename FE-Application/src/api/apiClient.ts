@@ -3,18 +3,21 @@
  * Tích hợp tự động gắn Token JWT vào Header 'Authorization' để xác thực với Backend.
  */
 import { getBaseApiUrl } from "../utils/url";
+import {
+  clearAuthSession,
+  getAuthToken,
+  getRefreshToken,
+  updateAuthTokens,
+} from "../utils/auth";
+import { KEYCLOAK_CONFIG } from "../constants/Auth/keycloak";
 
 const BASE_URL = getBaseApiUrl();
-const KEYCLOAK_TOKEN_URL =
-  "http://localhost:8180/realms/ecommerce/protocol/openid-connect/token";
 
 /** Single-flight: nhiều request 401 cùng lúc chỉ refresh token một lần. */
 let refreshPromise: Promise<string | null> | null = null;
 
 function clearAuthAndRedirectToLogin(): void {
-  localStorage.removeItem("token");
-  localStorage.removeItem("refresh_token");
-  localStorage.removeItem("user");
+  clearAuthSession();
   if (!window.location.pathname.includes("/login")) {
     window.location.href = "/login";
   }
@@ -26,7 +29,7 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 
   refreshPromise = (async () => {
-    const refreshToken = localStorage.getItem("refresh_token");
+    const refreshToken = getRefreshToken();
     if (!refreshToken) {
       return null;
     }
@@ -34,11 +37,11 @@ async function refreshAccessToken(): Promise<string | null> {
     try {
       const params = new URLSearchParams();
       params.append("grant_type", "refresh_token");
-      params.append("client_id", "ecommerce-backend");
-      params.append("client_secret", "ecommerce-backend-secret-placeholder");
+      params.append("client_id", KEYCLOAK_CONFIG.clientId);
+      params.append("client_secret", KEYCLOAK_CONFIG.clientSecret);
       params.append("refresh_token", refreshToken);
 
-      const refreshResponse = await fetch(KEYCLOAK_TOKEN_URL, {
+      const refreshResponse = await fetch(KEYCLOAK_CONFIG.tokenUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -51,10 +54,7 @@ async function refreshAccessToken(): Promise<string | null> {
       }
 
       const tokenData = await refreshResponse.json();
-      localStorage.setItem("token", tokenData.access_token);
-      if (tokenData.refresh_token) {
-        localStorage.setItem("refresh_token", tokenData.refresh_token);
-      }
+      updateAuthTokens(tokenData.access_token, tokenData.refresh_token);
       return tokenData.access_token as string;
     } catch (err) {
       console.error("Lỗi khi tự động làm mới token:", err);
@@ -100,7 +100,7 @@ export const apiClient = {
    * Hàm fetch bọc (Wrapper) để xử lý các logic chung như xác thực và parse JSON.
    */
   async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const token = localStorage.getItem("token");
+    const token = getAuthToken();
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       ...options,
       headers: buildHeaders(options, token),

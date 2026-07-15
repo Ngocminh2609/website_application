@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Form, Modal } from "antd";
+import { Form } from "antd";
 import type { UploadFile } from "antd";
 import { bannerApi } from "../../api/bannerApi";
 import { fileApi } from "../../api/fileApi";
 import type { Banner } from "../../types/banner";
 import { notification } from "../../utils/notification";
 import { BANNER_STRINGS } from "../../constants/Admin/banner-management";
+import { getErrorMessage } from "../../utils/error";
+import { confirmDelete } from "../common/useConfirmDelete";
 
 export const useBannerManagementState = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -69,9 +71,9 @@ export const useBannerManagementState = () => {
       setFileList([]);
       fetchBanners();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : BANNER_STRINGS.messages.opError;
-      notification.error(message);
+      notification.error(
+        getErrorMessage(error, BANNER_STRINGS.messages.opError),
+      );
     } finally {
       setLoading(false);
     }
@@ -105,19 +107,13 @@ export const useBannerManagementState = () => {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
+    confirmDelete({
       title: BANNER_STRINGS.messages.deleteTitle,
       content: BANNER_STRINGS.messages.deleteContent,
-      okType: "danger",
-      onOk: async () => {
-        try {
-          await bannerApi.delete(id);
-          notification.success(BANNER_STRINGS.messages.deleteSuccess);
-          fetchBanners();
-        } catch {
-          notification.error(BANNER_STRINGS.messages.deleteError);
-        }
-      },
+      onDelete: () => bannerApi.delete(id),
+      successMessage: BANNER_STRINGS.messages.deleteSuccess,
+      errorMessage: BANNER_STRINGS.messages.deleteError,
+      onSuccess: fetchBanners,
     });
   };
 

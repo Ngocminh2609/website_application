@@ -3,6 +3,7 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { getBaseApiUrl, getWsUrl } from "../utils/url";
 import type { Notification } from "../types/notification";
+import { getAuthToken } from "../utils/auth";
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -17,7 +18,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
 
 // Helper function to get auth headers
 const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
