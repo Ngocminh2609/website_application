@@ -1,3 +1,0 @@
-com\ecommerce\gateway\ApiGatewayApplication.class
-com\ecommerce\gateway\config\RateLimiterConfig.class
-com\ecommerce\gateway\config\SecurityConfig.class
