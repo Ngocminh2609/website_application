@@ -12,6 +12,7 @@ public final class JwtClaimConstants {
     public static final String CLAIM_SUB = "sub";
     public static final String CLAIM_EMAIL = "email";
     public static final String CLAIM_NAME = "name";
+    public static final String CLAIM_PICTURE = "picture";
     public static final String CLAIM_REALM_ACCESS = "realm_access";
     public static final String CLAIM_ROLES = "roles";
 }

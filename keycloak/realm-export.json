@@ -97,6 +97,18 @@
       }
     }
   ],
+  "identityProviderMappers": [
+    {
+      "name": "picture-importer",
+      "identityProviderAlias": "google",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "picture",
+        "user.attribute": "picture",
+        "syncMode": "FORCE"
+      }
+    }
+  ],
   "users": [
     {
       "username": "admin",

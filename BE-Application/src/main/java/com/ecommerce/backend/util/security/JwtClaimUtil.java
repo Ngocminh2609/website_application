@@ -36,6 +36,14 @@ public final class JwtClaimUtil {
     }
 
     /**
+     * Đọc claim "picture" (do IdentityProviderMapper của Keycloak import từ Google).
+     * Trả về null nếu không có (đăng nhập bằng username/password thường không có claim này).
+     */
+    public static String resolvePicture(Jwt jwt) {
+        return jwt.getClaimAsString(CLAIM_PICTURE);
+    }
+
+    /**
      * Đọc realm_access.roles; trả về collection rỗng nếu thiếu.
      */
     @SuppressWarnings("unchecked")

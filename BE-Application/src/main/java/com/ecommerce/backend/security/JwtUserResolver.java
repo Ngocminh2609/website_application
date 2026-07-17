@@ -54,6 +54,7 @@ public class JwtUserResolver {
         }
 
         return userRepository.findByUsername(username)
+                .map(user -> syncAvatarIfMissing(user, jwt))
                 .orElseGet(() -> createFromJwt(jwt, username));
     }
 
@@ -84,6 +85,7 @@ public class JwtUserResolver {
         newUser.setUsername(username);
         newUser.setEmail(JwtClaimUtil.resolveEmail(jwt));
         newUser.setFullName(JwtClaimUtil.resolveFullName(jwt, username));
+        newUser.setAvatarUrl(JwtClaimUtil.resolvePicture(jwt));
         newUser.setPassword(passwordEncoder.encode(PLACEHOLDER_PASSWORD_PREFIX + UUID.randomUUID()));
         newUser.setRole(JwtClaimUtil.resolveAppRole(jwt));
 
@@ -94,5 +96,19 @@ public class JwtUserResolver {
             return userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException(ERROR_USER_SYNC_FAILED, e));
         }
+    }
+
+    /**
+     * User đã tồn tại nhưng chưa có avatar (VD: tài khoản được tạo trước khi
+     * bật mapper "picture", hoặc user đăng nhập username/password lần đầu rồi
+     * mới link Google) — cập nhật avatar ngay khi JWT có claim "picture".
+     */
+    private User syncAvatarIfMissing(User user, Jwt jwt) {
+        String picture = JwtClaimUtil.resolvePicture(jwt);
+        if (picture != null && !picture.equals(user.getAvatarUrl())) {
+            user.setAvatarUrl(picture);
+            return userRepository.save(user);
+        }
+        return user;
     }
 }
