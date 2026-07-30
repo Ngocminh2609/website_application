@@ -15,16 +15,12 @@ public final class RecipientIdUtil {
         return RECIPIENT_USER_PREFIX + userId;
     }
 
-    public static String forAdmin() {
-        return RECIPIENT_ADMIN;
-    }
-
     /**
      * Admin dùng id cố định; user thường dùng prefix + id.
      */
     public static String forUserOrAdmin(Long userId, String role, String adminRole) {
         if (adminRole != null && adminRole.equals(role)) {
-            return forAdmin();
+            return RECIPIENT_ADMIN;
         }
         return forUser(userId);
     }

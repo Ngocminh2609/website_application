@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -138,7 +139,7 @@ public class GeminiAiService {
         return AiResult.fail(userFacing, lastError);
     }
 
-    private ParsedAiReply callGemini(String modelId, String userMessage) throws Exception {
+    private ParsedAiReply callGemini(String modelId, String userMessage) {
         String url = API_BASE_URL + modelId + GENERATE_CONTENT_SUFFIX;
         log.info(LOG_USING_MODEL, modelId);
 
@@ -159,11 +160,12 @@ public class GeminiAiService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-goog-api-key", apiKey);
 
-        ResponseEntity<Map> response = restTemplate.exchange(
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 url,
                 HttpMethod.POST,
                 new HttpEntity<>(body, headers),
-                Map.class
+                new ParameterizedTypeReference<>() {
+                }
         );
         String raw = extractText(response.getBody());
         return parseAiJson(raw);
@@ -224,7 +226,7 @@ public class GeminiAiService {
         if (!(candidatesObj instanceof List<?> candidates) || candidates.isEmpty()) {
             return null;
         }
-        Object first = candidates.get(0);
+        Object first = candidates.getFirst();
         if (!(first instanceof Map<?, ?> candidate)) {
             return null;
         }

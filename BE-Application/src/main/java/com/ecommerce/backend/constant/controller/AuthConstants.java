@@ -16,5 +16,5 @@ public final class AuthConstants {
     public static final String ERROR_EMAIL_EXISTS = "Email đã được sử dụng bởi tài khoản khác.";
     public static final String SUCCESS_REGISTER = "Đăng ký thành công! Bạn có thể đăng nhập ngay.";
 
-    public static final String RESPONSE_KEY_MESSAGE = "message";
+//    public static final String RESPONSE_KEY_MESSAGE = "message";
 }
