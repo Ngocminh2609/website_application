@@ -29,7 +29,7 @@ export const useReviewModerationState = () => {
     try {
       await reviewApi.approve(id);
       notification.success(REVIEW_STRINGS.messages.approveSuccess);
-      fetchAllReviews();
+      await fetchAllReviews();
     } catch {
       notification.error(REVIEW_STRINGS.messages.approveError);
     }
@@ -39,7 +39,9 @@ export const useReviewModerationState = () => {
     confirmDelete({
       title: REVIEW_STRINGS.messages.deleteTitle,
       content: REVIEW_STRINGS.messages.deleteContent,
-      onDelete: () => reviewApi.delete(id),
+      onDelete: async () => {
+        await reviewApi.delete(id);
+      },
       successMessage: REVIEW_STRINGS.messages.deleteSuccess,
       errorMessage: REVIEW_STRINGS.messages.deleteError,
       onSuccess: fetchAllReviews,

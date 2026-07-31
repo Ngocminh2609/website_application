@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { useProducts } from "../Product/useProducts";
-import type { Product } from "../../types/product";
-import type { Banner } from "../../types/banner";
-import { bannerApi } from "../../api/bannerApi";
-import { formatBrandsData, resolveBanners } from "../../pages/Home/helper";
+import {useEffect, useState} from "react";
+import {useProducts} from "../Product/useProducts";
+import type {Product} from "../../types/product";
+import type {Banner} from "../../types/banner";
+import {bannerApi} from "../../api/bannerApi";
+import {formatBrandsData, resolveBanners} from "../../pages/Home/helper";
 
 export const useHomePage = () => {
     const {
