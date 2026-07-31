@@ -18,17 +18,18 @@ import {
 } from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
 import {StarRating} from "../../components/common/ProductCard";
-import {useCart} from "../../hooks/Cart/useCart";
+import {useAddToCart} from "../../hooks/Cart/useAddToCart";
 import {handleImgError, parseSpecs} from "./helper";
 import {styles} from "./styles/compare-page.styles";
 import {PRODUCT_STRINGS} from "../../constants/Product/product";
 import {formatVnd} from "../../utils/format";
+import EmptyStateCard from "../../components/common/EmptyStateCard";
 
 const {Title, Text} = Typography;
 
 const ComparePage: React.FC = () => {
     const {compareItems, removeFromCompare, clearCompare} = useCompare();
-    const {refreshCart} = useCart();
+    const {addToCart} = useAddToCart();
     const navigate = useNavigate();
     const strings = PRODUCT_STRINGS.comparePage;
 
@@ -36,14 +37,15 @@ const ComparePage: React.FC = () => {
         return (
             <Layout style={styles.layout}>
                 <div style={styles.emptyContainer}>
-                    <Empty
-                        description={strings.empty}
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    >
-                        <Button type="primary" onClick={() => navigate("/products")}>
-                            {strings.continueShopping}
-                        </Button>
-                    </Empty>
+                    <EmptyStateCard
+                        icon={Empty.PRESENTED_IMAGE_SIMPLE}
+                        title={strings.empty}
+                        action={
+                            <Button type="primary" onClick={() => navigate("/products")}>
+                                {strings.continueShopping}
+                            </Button>
+                        }
+                    />
                 </div>
             </Layout>
         );
@@ -165,15 +167,12 @@ const ComparePage: React.FC = () => {
                                                     const target = e.currentTarget
                                                         .closest(".ant-card")
                                                         ?.querySelector("img");
-                                                    if (target) {
-                                                        const {flyToCart} =
-                                                            await import("../../utils/cartAnimation");
-                                                        flyToCart(target as HTMLImageElement);
-                                                    }
-                                                    const {cartApi} = await import("../../api/cartApi");
-                                                    await cartApi.addToCart(item.id, 1);
-                                                    await refreshCart(true);
-                                                    navigate("/cart");
+                                                    await addToCart(item.id, {
+                                                        imgElement: target as HTMLImageElement | null,
+                                                        checkAuth: false,
+                                                        notify: false,
+                                                        navigateTo: "/cart",
+                                                    });
                                                 }}
                                             >
                                                 {strings.addToCart}

@@ -1,38 +1,39 @@
 package com.ecommerce.backend.service;
 
+import com.ecommerce.backend.constant.domain.StatisticsPeriod;
 import com.ecommerce.backend.dto.OrderStatisticDTO;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.util.jdbc.JdbcValueUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class StatisticsService {
 
     private final OrderRepository orderRepository;
 
-    @Autowired
-    public StatisticsService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
-
     public List<OrderStatisticDTO> getDailyStats() {
-        return mapToDTO(orderRepository.getDailyStatisticsRaw());
+        return getStats(StatisticsPeriod.DAY);
     }
 
     public List<OrderStatisticDTO> getWeeklyStats() {
-        return mapToDTO(orderRepository.getWeeklyStatisticsRaw());
+        return getStats(StatisticsPeriod.WEEK);
     }
 
     public List<OrderStatisticDTO> getMonthlyStats() {
-        return mapToDTO(orderRepository.getMonthlyStatisticsRaw());
+        return getStats(StatisticsPeriod.MONTH);
     }
 
     public List<OrderStatisticDTO> getYearlyStats() {
-        return mapToDTO(orderRepository.getYearlyStatisticsRaw());
+        return getStats(StatisticsPeriod.YEAR);
+    }
+
+    public List<OrderStatisticDTO> getStats(StatisticsPeriod period) {
+        return mapToDTO(orderRepository.getStatisticsRaw(period));
     }
 
     private List<OrderStatisticDTO> mapToDTO(List<Object[]> rows) {

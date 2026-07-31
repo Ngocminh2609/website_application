@@ -1,50 +1,39 @@
-import {useState, useEffect} from "react";
+import {useState} from "react";
 import {Form} from "antd";
 import type {UploadFile} from "antd";
 import {bannerApi} from "../../api/bannerApi";
-import {fileApi} from "../../api/fileApi";
 import type {Banner} from "../../types/banner";
 import {notification} from "../../utils/notification";
 import {BANNER_STRINGS} from "../../constants/Admin/banner-management";
 import {getErrorMessage} from "../../utils/error";
+import {uploadImageIfNeeded} from "../../utils/upload";
 import {confirmDelete} from "../common/useConfirmDelete";
+import {useAsyncList} from "../common/useFetchOnMount";
 
 export const useBannerManagementState = () => {
-    const [banners, setBanners] = useState<Banner[]>([]);
-    const [loading, setLoading] = useState(false);
+    const {
+        data: banners,
+        loading,
+        setLoading,
+        refetch: fetchBanners,
+    } = useAsyncList(
+        () => bannerApi.getAll(),
+        BANNER_STRINGS.messages.loadError,
+        [] as Banner[],
+    );
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [form] = Form.useForm<Partial<Banner>>();
 
-    const fetchBanners = async () => {
-        setLoading(true);
-        try {
-            const data = await bannerApi.getAll();
-            setBanners(data);
-        } catch {
-            notification.error(BANNER_STRINGS.messages.loadError);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchBanners();
-    }, []);
-
     const handleCreateOrUpdate = async (values: Partial<Banner>) => {
         try {
             setLoading(true);
-            let imageUrl = values.imageUrl || "";
-
-            if (fileList.length > 0 && fileList[0].originFileObj) {
-                const uploadRes = await fileApi.uploadImage(
-                    fileList[0].originFileObj as File,
-                    "banner",
-                );
-                imageUrl = uploadRes.url;
-            }
+            const imageUrl = await uploadImageIfNeeded(
+                fileList,
+                "banner",
+                values.imageUrl || "",
+            );
 
             if (!imageUrl) {
                 notification.error(BANNER_STRINGS.messages.imageRequired);
@@ -101,8 +90,10 @@ export const useBannerManagementState = () => {
             await bannerApi.update(id, {...banner, isActive: active});
             notification.success(BANNER_STRINGS.messages.statusSuccess);
             fetchBanners();
-        } catch {
-            notification.error(BANNER_STRINGS.messages.statusError);
+        } catch (error: unknown) {
+            notification.error(
+                getErrorMessage(error, BANNER_STRINGS.messages.statusError),
+            );
         }
     };
 
@@ -113,7 +104,9 @@ export const useBannerManagementState = () => {
             onDelete: () => bannerApi.delete(id),
             successMessage: BANNER_STRINGS.messages.deleteSuccess,
             errorMessage: BANNER_STRINGS.messages.deleteError,
-            onSuccess: fetchBanners,
+            onSuccess: async () => {
+                await fetchBanners();
+            },
         });
     };
 

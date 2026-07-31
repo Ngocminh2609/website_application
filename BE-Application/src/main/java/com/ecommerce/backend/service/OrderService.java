@@ -2,7 +2,6 @@ package com.ecommerce.backend.service;
 
 import com.ecommerce.backend.entity.*;
 import com.ecommerce.backend.exception.BadRequestException;
-import com.ecommerce.backend.exception.ResourceNotFoundException;
 import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.repository.PaymentTransactionRepository;
@@ -170,9 +169,7 @@ public class OrderService {
 
     @Transactional
     public void deleteOrder(Long orderId) {
-        if (!orderRepository.existsById(orderId)) {
-            throw new ResourceNotFoundException(ERROR_ORDER_DELETE_NOT_FOUND);
-        }
+        EntityLookupUtil.require(orderRepository.findById(orderId), ERROR_ORDER_DELETE_NOT_FOUND);
         orderRepository.deleteById(orderId);
     }
 }

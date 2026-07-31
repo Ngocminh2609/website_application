@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import static com.ecommerce.backend.constant.dto.RegisterRequestConstants.*;
+import static com.ecommerce.backend.constant.validation.AuthValidationConstants.*;
 
 @Getter
 @Setter

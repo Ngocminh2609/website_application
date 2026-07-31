@@ -1,5 +1,5 @@
 import React from "react";
-import {Row, Col, Typography, Empty, Breadcrumb, Button} from "antd";
+import {Row, Col, Typography, Breadcrumb, Button} from "antd";
 import {HeartFilled, DeleteOutlined, HomeOutlined} from "@ant-design/icons";
 import {useWishlistPage} from "../../hooks/Wishlist/useWishlistPage";
 import type {Product} from "../../types/product";
@@ -7,6 +7,7 @@ import ProductCard from "../../components/common/ProductCard";
 import {Link} from "react-router-dom";
 import {styles} from "./styles/wishlist-page.styles";
 import {WISHLIST_STRINGS} from "../../constants/Wishlist/wishlist";
+import EmptyStateCard from "../../components/common/EmptyStateCard";
 
 const {Title, Text} = Typography;
 
@@ -49,31 +50,22 @@ const WishlistPage: React.FC = () => {
             </div>
 
             {wishlistItems.length === 0 ? (
-                <div style={styles.emptyCard}>
-                    <Empty
-                        image={Empty.PRESENTED_IMAGE_DEFAULT}
-                        description={
-                            <div style={styles.emptyDescriptionWrapper}>
-                                <Text style={styles.emptyTitle}>
-                                    {WISHLIST_STRINGS.emptyTitle}
-                                </Text>
-                                <Text style={styles.emptySubtitle}>
-                                    {WISHLIST_STRINGS.emptySubtitle}
-                                </Text>
-                            </div>
-                        }
-                    >
+                <EmptyStateCard
+                    style={styles.emptyCard}
+                    title={
+                        <div style={styles.emptyDescriptionWrapper}>
+                            <Text style={styles.emptyTitle}>{WISHLIST_STRINGS.emptyTitle}</Text>
+                            <Text style={styles.emptySubtitle}>{WISHLIST_STRINGS.emptySubtitle}</Text>
+                        </div>
+                    }
+                    action={
                         <Link to="/products">
-                            <Button
-                                type="primary"
-                                size="large"
-                                style={styles.continueShoppingBtn}
-                            >
+                            <Button type="primary" size="large" style={styles.continueShoppingBtn}>
                                 {WISHLIST_STRINGS.continueShopping}
                             </Button>
                         </Link>
-                    </Empty>
-                </div>
+                    }
+                />
             ) : (
                 <Row gutter={[32, 40]}>
                     {wishlistItems.map((product: Product) => (

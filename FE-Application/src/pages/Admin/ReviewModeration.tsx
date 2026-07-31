@@ -21,6 +21,8 @@ import {useReviewModerationState} from "../../hooks/Admin/useReviewModerationSta
 import {styles} from "./styles/review-moderation.styles";
 import {REVIEW_STRINGS} from "../../constants/Admin/review-moderation";
 import {formatDateDayjs} from "./helper";
+import {TABLE_PAGE_SIZE} from "../../constants/Common/pagination";
+import AdminSectionHeader from "../../components/common/AdminSectionHeader";
 
 const {Text} = Typography;
 
@@ -133,14 +135,11 @@ const ReviewModeration: React.FC = () => {
 
     return (
         <div style={styles.container}>
-            <div style={styles.header}>
-                <h3 style={styles.title}>
-                    {REVIEW_STRINGS.headerTitle}
-                </h3>
-                <p style={styles.subtitle}>
-                    {REVIEW_STRINGS.headerSubtitle}
-                </p>
-            </div>
+            <AdminSectionHeader
+                title={REVIEW_STRINGS.headerTitle}
+                subtitle={REVIEW_STRINGS.headerSubtitle}
+                styles={styles}
+            />
 
             <Table
                 columns={columns}
@@ -148,7 +147,7 @@ const ReviewModeration: React.FC = () => {
                 rowKey="id"
                 loading={loading}
                 className="glass-table"
-                pagination={{pageSize: 8}}
+                pagination={{pageSize: TABLE_PAGE_SIZE.admin}}
             />
         </div>
     );

@@ -5,7 +5,6 @@ import {
     Button,
     Steps,
     Card,
-    Spin,
     Typography,
     Space,
     Divider,
@@ -22,9 +21,10 @@ import {
     HistoryOutlined,
 } from "@ant-design/icons";
 import {usePaymentSuccess} from "../../hooks/Payment/usePaymentSuccess";
-import {formatCurrency} from "./helper";
+import {formatVnpayAmount} from "../../utils/format";
 import {styles} from "./styles/payment-success.styles";
 import {PAYMENT_STRINGS} from "../../constants/Payment/payment";
+import {PageLoading} from "../../components/common/PageLoading";
 
 const {Title, Text} = Typography;
 
@@ -38,12 +38,11 @@ const PaymentSuccessPage: React.FC = () => {
 
     if (status === "loading") {
         return (
-            <div style={styles.loadingContainer}>
-                <Spin
-                    indicator={<LoadingOutlined style={styles.loadingIcon} spin/>}
-                    description={PAYMENT_STRINGS.verifyLoading}
-                />
-            </div>
+            <PageLoading
+                tip={PAYMENT_STRINGS.verifyLoading}
+                style={styles.loadingContainer}
+                indicator={<LoadingOutlined style={styles.loadingIcon} spin/>}
+            />
         );
     }
 
@@ -80,7 +79,7 @@ const PaymentSuccessPage: React.FC = () => {
                                         <Text style={styles.textMain}>
                                             {PAYMENT_STRINGS.success.amountLabel}
                                             <b style={styles.textRedHighlight}>
-                                                {formatCurrency(amount)}
+                                                {formatVnpayAmount(amount)}
                                             </b>
                                         </Text>
                                     </Space>

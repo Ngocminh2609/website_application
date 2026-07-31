@@ -20,8 +20,12 @@ import type {ColumnsType} from "antd/es/table";
 import {useVoucherManagementState, type VoucherFormValues} from "../../hooks/Admin/useVoucherManagementState";
 import {styles} from "./styles/voucher-management.styles";
 import {VOUCHER_STRINGS} from "../../constants/Admin/voucher-management";
+import {TABLE_PAGE_SIZE} from "../../constants/Common/pagination";
+import {formatVnd} from "../../utils/format";
 
-import {formatCurrency, calculateUsagePercentage} from "./helper";
+import {calculateUsagePercentage} from "./helper";
+import ActiveStatusSelect from "../../components/common/ActiveStatusSelect";
+import AdminSectionHeader from "../../components/common/AdminSectionHeader";
 
 const VoucherManagement: React.FC = () => {
     const {
@@ -54,7 +58,7 @@ const VoucherManagement: React.FC = () => {
                 <span>
           {type === "PERCENT"
               ? `${VOUCHER_STRINGS.table.percentPrefix}${record.discountValue}%`
-              : `${VOUCHER_STRINGS.table.fixedPrefix}${formatCurrency(record.discountValue, false)}`}
+              : `${VOUCHER_STRINGS.table.fixedPrefix}${formatVnd(record.discountValue, false)}`}
         </span>
             ),
         },
@@ -62,7 +66,7 @@ const VoucherManagement: React.FC = () => {
             title: VOUCHER_STRINGS.table.minOrder,
             dataIndex: "minOrderAmount",
             key: "minOrderAmount",
-            render: (amt: number) => <span>{formatCurrency(amt)}</span>,
+            render: (amt: number) => <span>{formatVnd(amt)}</span>,
         },
         {
             title: VOUCHER_STRINGS.table.usage,
@@ -92,16 +96,12 @@ const VoucherManagement: React.FC = () => {
             title: VOUCHER_STRINGS.table.status,
             key: "status",
             render: (_, record: Coupon) => (
-                <Select
+                <ActiveStatusSelect
                     value={record.isActive}
                     onChange={(val) => handleStatusChange(record.id, val)}
-                    size="small"
                     style={styles.statusSelect}
-                    options={[
-                        {label: VOUCHER_STRINGS.table.active, value: true},
-                        {label: VOUCHER_STRINGS.table.inactive, value: false},
-                    ]}
-                    status={record.isActive ? undefined : "warning"}
+                    activeLabel={VOUCHER_STRINGS.table.active}
+                    inactiveLabel={VOUCHER_STRINGS.table.inactive}
                 />
             ),
         },
@@ -122,23 +122,20 @@ const VoucherManagement: React.FC = () => {
 
     return (
         <div style={styles.container}>
-            <div style={styles.header}>
-                <div>
-                    <h3 style={styles.headerTitle}>
-                        {VOUCHER_STRINGS.headerTitle}
-                    </h3>
-                    <p style={styles.headerSubtitle}>
-                        {VOUCHER_STRINGS.headerSubtitle}
-                    </p>
-                </div>
-                <BaseButton
-                    type="primary"
-                    icon={<PlusOutlined/>}
-                    onClick={() => setIsModalVisible(true)}
-                >
-                    {VOUCHER_STRINGS.createBtn}
-                </BaseButton>
-            </div>
+            <AdminSectionHeader
+                title={VOUCHER_STRINGS.headerTitle}
+                subtitle={VOUCHER_STRINGS.headerSubtitle}
+                styles={styles}
+                action={
+                    <BaseButton
+                        type="primary"
+                        icon={<PlusOutlined/>}
+                        onClick={() => setIsModalVisible(true)}
+                    >
+                        {VOUCHER_STRINGS.createBtn}
+                    </BaseButton>
+                }
+            />
 
             <Table
                 columns={columns}
@@ -146,7 +143,7 @@ const VoucherManagement: React.FC = () => {
                 rowKey="id"
                 loading={loading}
                 className="glass-table"
-                pagination={{pageSize: 8}}
+                pagination={{pageSize: TABLE_PAGE_SIZE.admin}}
             />
 
             <Modal

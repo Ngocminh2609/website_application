@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.ecommerce.backend.constant.service.CouponServiceConstants.SUCCESS_DELETE;
+import static com.ecommerce.backend.constant.service.CouponServiceConstants.SUCCESS_STATUS_UPDATE;
+
 @RestController
 @RequestMapping("/api/coupons")
 @RequiredArgsConstructor
@@ -50,7 +53,7 @@ public class CouponController {
     @PutMapping("/admin/{id}/status")
     public ResponseEntity<String> updateStatus(@PathVariable Long id, @RequestParam boolean active) {
         couponService.updateCouponStatus(id, active);
-        return ResponseEntity.ok("Cập nhật trạng thái thành công");
+        return ResponseEntity.ok(SUCCESS_STATUS_UPDATE);
     }
 
     /**
@@ -59,6 +62,6 @@ public class CouponController {
     @DeleteMapping("/admin/{id}")
     public ResponseEntity<String> deleteCoupon(@PathVariable Long id) {
         couponService.deleteCoupon(id);
-        return ResponseEntity.ok("Xóa mã giảm giá thành công");
+        return ResponseEntity.ok(SUCCESS_DELETE);
     }
 }

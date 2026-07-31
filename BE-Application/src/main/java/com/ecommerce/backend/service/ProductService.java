@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_CATEGORY_NOT_FOUND;
 import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_PRODUCT_NOT_FOUND;
@@ -45,6 +46,10 @@ public class ProductService {
 
     public Product requireProduct(Long id) {
         return EntityLookupUtil.require(productRepository.findById(id), ERROR_PRODUCT_NOT_FOUND);
+    }
+
+    public Optional<Product> findProduct(Long id) {
+        return productRepository.findById(id);
     }
 
     public List<Product> getProductsByCategory(Long categoryId) {

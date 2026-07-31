@@ -9,7 +9,6 @@ import {
     Card,
     Row,
     Col,
-    Empty,
     Tag,
     Modal,
     Form,
@@ -37,8 +36,9 @@ import PersonalizedRecommendations from "../../components/common/PersonalizedRec
 import {Radio, Divider, Select} from "antd";
 import {styles} from "./styles/cart-page.styles";
 import {CART_STRINGS} from "../../constants/Cart/cart-page";
-import {formatCartCurrency} from "./helper";
 import {phoneRules} from "../../utils/validationRules";
+import {formatVnd} from "../../utils/format";
+import EmptyStateCard from "../../components/common/EmptyStateCard";
 
 const {Content} = Layout;
 const {Title, Text} = Typography;
@@ -110,7 +110,7 @@ const CartPage: React.FC = () => {
                             {record.product.name}
                         </Text>
                         <Text type="secondary" style={{fontSize: "12px"}}>
-                            {formatCartCurrency(record.product.price)}
+                            {formatVnd(record.product.price, false)}
                         </Text>
                     </div>
                 </Space>
@@ -134,7 +134,7 @@ const CartPage: React.FC = () => {
             key: "subtotal",
             render: (_, record) => (
                 <Text strong style={{color: "var(--primary-color)"}}>
-                    {formatCartCurrency(record.product.price * record.quantity)}
+                    {formatVnd(record.product.price * record.quantity, false)}
                 </Text>
             ),
         },
@@ -169,30 +169,18 @@ const CartPage: React.FC = () => {
             </div>
 
             {!cart || cart.items.length === 0 ? (
-                <Card
-                    className="glass-effect"
+                <EmptyStateCard
+                    wrapper="card"
                     style={styles.emptyCartCard}
-                >
-                    <Empty
-                        image={
-                            <ShoppingCartOutlined
-                                style={styles.emptyCartIcon}
-                            />
-                        }
-                        description={
-                            <Text style={styles.emptyCartText}>
-                                {CART_STRINGS.empty.title}
-                            </Text>
-                        }
-                    >
-                        <BaseButton
-                            type="primary"
-                            onClick={() => (window.location.href = "/")}
-                        >
+                    icon={<ShoppingCartOutlined/>}
+                    iconStyle={styles.emptyCartIcon}
+                    title={<Text style={styles.emptyCartText}>{CART_STRINGS.empty.title}</Text>}
+                    action={
+                        <BaseButton type="primary" onClick={() => (window.location.href = "/")}>
                             {CART_STRINGS.empty.btn}
                         </BaseButton>
-                    </Empty>
-                </Card>
+                    }
+                />
             ) : (
                 <Row gutter={[24, 24]}>
                     <Col xs={24} xl={16}>
@@ -229,7 +217,7 @@ const CartPage: React.FC = () => {
                                 <div style={styles.spaceBetween}>
                                     <Text style={styles.billingLabel}>{CART_STRINGS.invoice.subtotal}</Text>
                                     <Text style={styles.billingValue}>
-                                        {formatCartCurrency(calculateTotal())}
+                                        {formatVnd(calculateTotal(), false)}
                                     </Text>
                                 </div>
 
@@ -249,7 +237,7 @@ const CartPage: React.FC = () => {
                                                         : ""}
                                                 </Text>
                                                 <Text style={styles.couponSuccessSubtext}>
-                                                    -{formatCartCurrency(couponResult.discountAmount)}
+                                                    -{formatVnd(couponResult.discountAmount, false)}
                                                     {couponResult.maxDiscountAmount &&
                                                         couponResult.discountAmount >=
                                                         couponResult.maxDiscountAmount && (
@@ -310,7 +298,7 @@ const CartPage: React.FC = () => {
                                             :
                                         </Text>
                                         <Text style={styles.discountValue}>
-                                            -{formatCartCurrency(couponResult.discountAmount)}
+                                            -{formatVnd(couponResult.discountAmount, false)}
                                         </Text>
                                     </div>
                                 )}
@@ -319,8 +307,9 @@ const CartPage: React.FC = () => {
                                         {CART_STRINGS.invoice.total}
                                     </Text>
                                     <Text strong style={styles.totalValue}>
-                                        {formatCartCurrency(
+                                        {formatVnd(
                                             couponResult ? couponResult.finalAmount : calculateTotal(),
+                                            false,
                                         )}
                                     </Text>
                                 </div>

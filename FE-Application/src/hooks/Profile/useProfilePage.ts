@@ -4,11 +4,11 @@ import type { UploadProps } from "antd";
 import { useLocation } from "react-router-dom";
 import type { User } from "../../types/auth";
 import { userApi } from "../../api/userApi";
-import { fileApi } from "../../api/fileApi";
 import { notification } from "../../utils/notification";
 import { PROFILE_STRINGS } from "../../constants/Profile/profile";
 import { updateStoredUser } from "../../utils/auth";
 import { getErrorMessage } from "../../utils/error";
+import { uploadImageFile } from "../../utils/upload";
 
 export const useProfilePage = (onUserUpdate: (updated: Partial<User>) => void) => {
   const [profileForm] = Form.useForm();
@@ -91,11 +91,11 @@ export const useProfilePage = (onUserUpdate: (updated: Partial<User>) => void) =
     beforeUpload: async (file) => {
       setUploadingAvatar(true);
       try {
-        const res = await fileApi.uploadImage(file, "user");
-        await userApi.updateProfile({ avatarUrl: res.url });
-        setAvatarUrl(res.url);
-        onUserUpdate({ avatarUrl: res.url });
-        updateStoredUser({ avatarUrl: res.url });
+        const url = await uploadImageFile(file, "user");
+        await userApi.updateProfile({ avatarUrl: url });
+        setAvatarUrl(url);
+        onUserUpdate({ avatarUrl: url });
+        updateStoredUser({ avatarUrl: url });
         notification.success(PROFILE_STRINGS.successAvatar);
       } catch {
         notification.error(PROFILE_STRINGS.errAvatar);

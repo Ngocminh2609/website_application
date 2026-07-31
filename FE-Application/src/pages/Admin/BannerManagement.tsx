@@ -8,7 +8,6 @@ import {
     Input,
     InputNumber,
     Select,
-    Tooltip,
     Row,
     Col,
     Upload,
@@ -16,8 +15,6 @@ import {
 } from "antd";
 import {
     PlusOutlined,
-    DeleteOutlined,
-    EditOutlined,
     UploadOutlined,
     PictureOutlined,
 } from "@ant-design/icons";
@@ -27,6 +24,11 @@ import type {ColumnsType} from "antd/es/table";
 import {useBannerManagementState} from "../../hooks/Admin/useBannerManagementState";
 import {styles} from "./styles/banner-management.styles";
 import {BANNER_STRINGS} from "../../constants/Admin/banner-management";
+import {TABLE_PAGE_SIZE} from "../../constants/Common/pagination";
+import {handleImgError} from "../../utils/image";
+import ActiveStatusSelect from "../../components/common/ActiveStatusSelect";
+import AdminEditDeleteActions from "../../components/common/AdminEditDeleteActions";
+import AdminSectionHeader from "../../components/common/AdminSectionHeader";
 
 const {Text} = Typography;
 
@@ -57,10 +59,7 @@ const BannerManagement: React.FC = () => {
                     src={record.imageUrl}
                     alt={record.title || "Banner"}
                     style={styles.bannerImage}
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                            "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=300";
-                    }}
+                    onError={handleImgError}
                 />
             ),
         },
@@ -95,16 +94,12 @@ const BannerManagement: React.FC = () => {
             key: "status",
             width: 150,
             render: (_, record: Banner) => (
-                <Select
+                <ActiveStatusSelect
                     value={record.isActive}
                     onChange={(val) => handleStatusChange(record.id, record, val)}
-                    size="small"
                     style={styles.statusSelect}
-                    options={[
-                        {label: BANNER_STRINGS.table.active, value: true},
-                        {label: BANNER_STRINGS.table.inactive, value: false},
-                    ]}
-                    status={record.isActive ? undefined : "warning"}
+                    activeLabel={BANNER_STRINGS.table.active}
+                    inactiveLabel={BANNER_STRINGS.table.inactive}
                 />
             ),
         },
@@ -114,46 +109,31 @@ const BannerManagement: React.FC = () => {
             align: "right",
             width: 120,
             render: (_, record: Banner) => (
-                <Space size="small">
-                    <Tooltip title="Chỉnh sửa">
-                        <BaseButton
-                            type="text"
-                            icon={<EditOutlined/>}
-                            onClick={() => handleEdit(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Xóa">
-                        <BaseButton
-                            type="text"
-                            icon={<DeleteOutlined/>}
-                            danger
-                            onClick={() => handleDelete(record.id)}
-                        />
-                    </Tooltip>
-                </Space>
+                <AdminEditDeleteActions
+                    showEdit
+                    onEdit={() => handleEdit(record)}
+                    onDelete={() => handleDelete(record.id)}
+                />
             ),
         },
     ];
 
     return (
         <div style={styles.container}>
-            <div style={styles.header}>
-                <div>
-                    <h3 style={styles.headerTitle}>
-                        {BANNER_STRINGS.headerTitle}
-                    </h3>
-                    <p style={styles.headerSubtitle}>
-                        {BANNER_STRINGS.headerSubtitle}
-                    </p>
-                </div>
-                <BaseButton
-                    type="primary"
-                    icon={<PlusOutlined/>}
-                    onClick={handleAddNew}
-                >
-                    {BANNER_STRINGS.addBtn}
-                </BaseButton>
-            </div>
+            <AdminSectionHeader
+                title={BANNER_STRINGS.headerTitle}
+                subtitle={BANNER_STRINGS.headerSubtitle}
+                styles={styles}
+                action={
+                    <BaseButton
+                        type="primary"
+                        icon={<PlusOutlined/>}
+                        onClick={handleAddNew}
+                    >
+                        {BANNER_STRINGS.addBtn}
+                    </BaseButton>
+                }
+            />
 
             <Table
                 columns={columns}
@@ -161,7 +141,7 @@ const BannerManagement: React.FC = () => {
                 rowKey="id"
                 loading={loading}
                 className="glass-table"
-                pagination={{pageSize: 5}}
+                pagination={{pageSize: TABLE_PAGE_SIZE.banner}}
             />
 
             <Modal

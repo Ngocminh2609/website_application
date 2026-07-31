@@ -9,8 +9,7 @@ import BaseButton from "../../components/common/BaseButton";
 import {useNotificationManagementState} from "../../hooks/Admin/useNotificationManagementState";
 import {styles} from "./styles/notification-management.styles";
 import {NOTIF_STRINGS} from "../../constants/Admin/notification-management";
-
-import {formatDateTime} from "./helper";
+import {formatDateTimeVi} from "../../utils/format";
 
 const {Title, Text} = Typography;
 
@@ -92,7 +91,7 @@ const NotificationManagement: React.FC = () => {
                                 />
                                 <div style={styles.historyTimeWrapper}>
                                     <Text style={styles.historyTime}>
-                                        {formatDateTime(item.createdAt)}
+                                        {formatDateTimeVi(item.createdAt)}
                                     </Text>
                                 </div>
                             </div>

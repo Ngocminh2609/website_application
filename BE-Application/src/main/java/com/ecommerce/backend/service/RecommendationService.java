@@ -5,7 +5,6 @@ import com.ecommerce.backend.entity.User;
 import com.ecommerce.backend.entity.UserProductView;
 import com.ecommerce.backend.repository.ProductRepository;
 import com.ecommerce.backend.repository.UserProductViewRepository;
-import com.ecommerce.backend.util.persistence.EntityLookupUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -15,18 +14,17 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_PRODUCT_NOT_FOUND;
-
 @Service
 @RequiredArgsConstructor
 public class RecommendationService {
 
     private final UserProductViewRepository viewRepository;
     private final ProductRepository productRepository;
+    private final ProductService productService;
 
     @Transactional
     public void trackProductView(User user, Long productId) {
-        Product product = EntityLookupUtil.require(productRepository.findById(productId), ERROR_PRODUCT_NOT_FOUND);
+        Product product = productService.requireProduct(productId);
 
         UserProductView view = viewRepository.findByUserAndProduct(user, product)
                 .orElseGet(() -> UserProductView.builder()

@@ -4,7 +4,6 @@ import {
     BrowserRouter as Router,
     Routes,
     Route,
-    Navigate,
 } from "react-router-dom";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
@@ -35,11 +34,13 @@ import CompareBar from "./components/common/CompareBar";
 import ComparePage from "./pages/Product/ComparePage";
 import ReloadPrompt from "./components/pwa/ReloadPrompt";
 import ScrollToTop from "./components/common/ScrollToTop";
+import RequireAuth from "./components/common/RequireAuth";
 import {ROLES, THEMES} from "./components/common/Commons";
 import {
     clearAuthSession,
     getAuthToken,
     getAuthUser,
+    mergeAndStoreUser,
     setStoredUser,
     storeAuthSession,
     updateStoredUser,
@@ -73,10 +74,7 @@ const App: React.FC = () => {
         userApi
             .getProfile()
             .then((profile) => {
-                const baseUser = getAuthUser() ?? ({} as User);
-                const mergedUser = {...baseUser, ...profile};
-                setStoredUser(mergedUser);
-                setUser(mergedUser);
+                setUser(mergeAndStoreUser(profile));
             })
             .catch((err) => {
                 console.error("Lỗi khi đồng bộ profile khi tải trang:", err);
@@ -126,9 +124,7 @@ const App: React.FC = () => {
                         userApi
                             .getProfile()
                             .then((profile) => {
-                                const mergedUser = {...newUser, ...profile};
-                                setStoredUser(mergedUser);
-                                setUser(mergedUser);
+                                setUser(mergeAndStoreUser(profile, newUser));
                             })
                             .catch((err) => {
                                 console.error("Lỗi khi đồng bộ profile sau Google Login:", err);
@@ -203,10 +199,7 @@ const App: React.FC = () => {
     const handleLoginSuccess = async () => {
         try {
             const profile = await userApi.getProfile();
-            const baseUser = getAuthUser() ?? ({} as User);
-            const mergedUser = {...baseUser, ...profile};
-            setStoredUser(mergedUser);
-            setUser(mergedUser);
+            setUser(mergeAndStoreUser(profile));
         } catch (err) {
             console.error("Lỗi khi tải thông tin chi tiết user sau login:", err);
             const savedUser = getAuthUser();
@@ -287,35 +280,35 @@ const App: React.FC = () => {
                                                         <Route
                                                             path="/cart"
                                                             element={
-                                                                user ? <CartPage/> : <Navigate to="/login"/>
+                                                                <RequireAuth user={user}>
+                                                                    <CartPage/>
+                                                                </RequireAuth>
                                                             }
                                                         />
                                                         <Route
                                                             path="/wishlist"
                                                             element={
-                                                                user ? (
+                                                                <RequireAuth user={user}>
                                                                     <WishlistPage/>
-                                                                ) : (
-                                                                    <Navigate to="/login"/>
-                                                                )
+                                                                </RequireAuth>
                                                             }
                                                         />
                                                         <Route
                                                             path="/orders"
                                                             element={
-                                                                user ? <OrdersPage/> : <Navigate to="/login"/>
+                                                                <RequireAuth user={user}>
+                                                                    <OrdersPage/>
+                                                                </RequireAuth>
                                                             }
                                                         />
                                                         <Route
                                                             path="/profile"
                                                             element={
-                                                                user ? (
+                                                                <RequireAuth user={user}>
                                                                     <ProfilePage
                                                                         onUserUpdate={handleUserUpdate}
                                                                     />
-                                                                ) : (
-                                                                    <Navigate to="/login"/>
-                                                                )
+                                                                </RequireAuth>
                                                             }
                                                         />
                                                         <Route
@@ -327,11 +320,12 @@ const App: React.FC = () => {
                                                         <Route
                                                             path="/admin"
                                                             element={
-                                                                user?.role === ROLES.ADMIN ? (
+                                                                <RequireAuth
+                                                                    user={user}
+                                                                    roles={[ROLES.ADMIN]}
+                                                                >
                                                                     <AdminDashboard/>
-                                                                ) : (
-                                                                    <Navigate to="/" replace/>
-                                                                )
+                                                                </RequireAuth>
                                                             }
                                                         />
                                                     </Routes>

@@ -14,7 +14,8 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import static com.ecommerce.backend.constant.entity.ProductConstants.*;
+import static com.ecommerce.backend.constant.entity.ProductConstants.ERROR_PRICE_REQUIRED;
+import static com.ecommerce.backend.constant.validation.ProductValidationConstants.*;
 
 @Entity
 @Table(name = "products")

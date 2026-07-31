@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+import static com.ecommerce.backend.constant.domain.RoleConstants.ROLE_PREFIX;
 import static com.ecommerce.backend.constant.entity.UserConstants.*;
+import static com.ecommerce.backend.constant.validation.AuthValidationConstants.*;
 
 @Entity
 @Table(name = "users")

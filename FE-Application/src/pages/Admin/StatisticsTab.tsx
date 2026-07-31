@@ -15,6 +15,7 @@ import {useStatisticsTabState} from "../../hooks/Admin/useStatisticsTabState";
 import {styles} from "./styles/statistics-tab.styles";
 import {STATS_STRINGS} from "../../constants/Admin/statistics-tab";
 import {PageLoading} from "../../components/common/PageLoading";
+import {formatVnd} from "../../utils/format";
 
 const {Title, Text} = Typography;
 
@@ -108,10 +109,7 @@ const StatisticsTab: React.FC = () => {
                                             contentStyle={styles.tooltip}
                                             itemStyle={styles.tooltipItemRevenue}
                                             formatter={(value: number | string | undefined) => [
-                                                new Intl.NumberFormat("vi-VN", {
-                                                    style: "currency",
-                                                    currency: "VND",
-                                                }).format(Number(value || 0)),
+                                                formatVnd(Number(value || 0)),
                                                 STATS_STRINGS.revenueLabel,
                                             ]}
                                         />

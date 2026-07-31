@@ -1,8 +1,6 @@
 import type {Product} from "../../../types/product";
-// import {FALLBACK_IMAGE} from "../../../styles/commonStyles";
 
 export {handleImgError} from "../../../utils/image";
-// export const fallbackImage = FALLBACK_IMAGE;
 
 // Hàm giải mã thông số kỹ thuật (hỗ trợ cả JSON và chuỗi định dạng Key: Value; Key2: Value)
 export const parseSpecs = (

@@ -35,10 +35,10 @@ public class GeminiAiService {
     @Value("${gemini.api-key:}")
     private String apiKey;
 
-    @Value("${gemini.model:" + DEFAULT_MODEL + "}")
+    @Value("${gemini.model}")
     private String model;
 
-    @Value("${gemini.fallback-model:" + FALLBACK_MODEL + "}")
+    @Value("${gemini.fallback-model}")
     private String fallbackModel;
 
     private final RestTemplate restTemplate;

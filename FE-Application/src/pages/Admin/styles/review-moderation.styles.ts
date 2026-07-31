@@ -1,6 +1,8 @@
 import type {CSSProperties} from "react";
+import {ADMIN_PAGE_HEADER_STYLES} from "../../../styles/commonStyles";
 
 export const styles = {
+    ...ADMIN_PAGE_HEADER_STYLES,
     avatar: {
         border: "1px solid rgba(255,255,255,0.1)",
     } as CSSProperties,
@@ -43,21 +45,9 @@ export const styles = {
         borderRadius: 4,
     } as CSSProperties,
 
-    container: {
-        padding: "10px 0",
-    } as CSSProperties,
-
     header: {
-        marginBottom: 24,
-    } as CSSProperties,
-
-    title: {
-        color: "var(--text-main)",
-        margin: 0,
-    } as CSSProperties,
-
-    subtitle: {
-        color: "var(--text-muted)",
-        fontSize: 12,
+        ...ADMIN_PAGE_HEADER_STYLES.header,
+        justifyContent: undefined,
+        display: undefined,
     } as CSSProperties,
 };

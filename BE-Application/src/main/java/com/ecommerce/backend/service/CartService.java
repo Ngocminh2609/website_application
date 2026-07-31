@@ -6,15 +6,12 @@ import com.ecommerce.backend.entity.Product;
 import com.ecommerce.backend.entity.User;
 import com.ecommerce.backend.exception.BadRequestException;
 import com.ecommerce.backend.repository.CartRepository;
-import com.ecommerce.backend.repository.ProductRepository;
-import com.ecommerce.backend.util.persistence.EntityLookupUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_PRODUCT_NOT_FOUND;
 import static com.ecommerce.backend.constant.service.CartServiceConstants.ERROR_ITEM_NOT_IN_CART_REMOVE;
 import static com.ecommerce.backend.constant.service.CartServiceConstants.ERROR_ITEM_NOT_IN_CART_UPDATE;
 
@@ -26,7 +23,7 @@ import static com.ecommerce.backend.constant.service.CartServiceConstants.ERROR_
 public class CartService {
 
     private final CartRepository cartRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
 
     public Cart getCartByUser(User user) {
         return cartRepository.findByUser(user)
@@ -40,7 +37,7 @@ public class CartService {
     @Transactional
     public Cart addItemToCart(User user, Long productId, Integer quantity) {
         Cart cart = getCartByUser(user);
-        Product product = EntityLookupUtil.require(productRepository.findById(productId), ERROR_PRODUCT_NOT_FOUND);
+        Product product = productService.requireProduct(productId);
 
         Optional<CartItem> existingItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))

@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import static com.ecommerce.backend.constant.domain.OrderStatusConstants.SQL_IN_COMPLETED_STATUSES;
+
 @Repository
 public interface ProductReviewRepository extends JpaRepository<ProductReview, Long> {
 
@@ -31,13 +33,13 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, Lo
     // Đếm số lượng review đã duyệt để cập nhật lại reviewCount của Product
     long countByProductIdAndIsApprovedTrue(Long productId);
 
-    // Kiểm tra user đã mua sản phẩm này chưa (xác nhận đơn hàng PAID) để cấp nhãn verified
-    @Query(value = """
-            SELECT COUNT(oi.id) > 0 FROM order_items oi
-            JOIN orders o ON oi.order_id = o.id
-            WHERE oi.product_id = :productId
-            AND o.user_id = :userId
-            AND o.status IN ('PAID', 'SHIPPING', 'DELIVERED')
-            """, nativeQuery = true)
+    // Kiểm tra user đã mua sản phẩm này chưa (đơn hàng đã thanh toán / đang giao / đã giao)
+    @Query(value =
+            "SELECT COUNT(oi.id) > 0 FROM order_items oi "
+                    + "JOIN orders o ON oi.order_id = o.id "
+                    + "WHERE oi.product_id = :productId "
+                    + "AND o.user_id = :userId "
+                    + "AND o.status IN (" + SQL_IN_COMPLETED_STATUSES + ")",
+            nativeQuery = true)
     boolean hasUserPurchasedProduct(@Param("productId") Long productId, @Param("userId") Long userId);
 }

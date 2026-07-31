@@ -73,6 +73,20 @@ export const setStoredUser = (user: User): void => {
 };
 
 /**
+ * Merge profile (hoặc partial) với base user, lưu localStorage và trả về user đã merge.
+ * Nếu không truyền base, lấy từ localStorage (fallback object rỗng).
+ */
+export const mergeAndStoreUser = (
+    profile: Partial<User>,
+    base?: User | null,
+): User => {
+    const baseUser = base ?? getAuthUser() ?? ({} as User);
+    const mergedUser = {...baseUser, ...profile} as User;
+    setStoredUser(mergedUser);
+    return mergedUser;
+};
+
+/**
  * Xóa thông tin phiên đăng nhập khỏi localStorage (Đăng xuất)
  */
 export const clearAuthSession = (): void => {

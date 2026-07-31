@@ -18,9 +18,6 @@ public final class GeminiAiServiceConstants {
     public static final int RETRY_MAX_ATTEMPTS = 2;
     public static final long RETRY_DELAY_MS = 800;
 
-    public static final String DEFAULT_MODEL = "gemini-3.1-flash-lite";
-    public static final String FALLBACK_MODEL = "gemini-3.5-flash";
-
     public static final String SYSTEM_PROMPT = """
             Bạn là NovaBot — trợ lý hỗ trợ khách hàng của Tech Nova (Laptop, Gaming Gear, linh kiện PC).
 

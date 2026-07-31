@@ -4,7 +4,6 @@ import {
     Typography,
     Table,
     Card,
-    Empty,
     Button,
 } from "antd";
 import {ShoppingOutlined} from "@ant-design/icons";
@@ -13,6 +12,8 @@ import {getOrderTableColumns} from "./helper";
 import {styles} from "./styles/orders-page.styles";
 import {ORDER_STRINGS} from "../../constants/Order/orders";
 import {PageLoading} from "../../components/common/PageLoading";
+import {TABLE_PAGE_SIZE} from "../../constants/Common/pagination";
+import EmptyStateCard from "../../components/common/EmptyStateCard";
 
 const {Content} = Layout;
 const {Title, Text} = Typography;
@@ -38,37 +39,25 @@ const OrdersPage: React.FC = () => {
             {loading ? (
                 <PageLoading style={styles.loadingContainer}/>
             ) : orders.length === 0 ? (
-                <Card
-                    className="glass-effect"
+                <EmptyStateCard
+                    wrapper="card"
                     style={styles.emptyCard}
-                >
-                    <Empty
-                        image={
-                            <ShoppingOutlined
-                                style={styles.emptyIcon}
-                            />
-                        }
-                        description={
-                            <Text style={styles.emptyText}>
-                                {ORDER_STRINGS.emptyDescription}
-                            </Text>
-                        }
-                    >
-                        <Button
-                            type="primary"
-                            onClick={() => (window.location.href = "/products")}
-                        >
+                    icon={<ShoppingOutlined/>}
+                    iconStyle={styles.emptyIcon}
+                    title={<Text style={styles.emptyText}>{ORDER_STRINGS.emptyDescription}</Text>}
+                    action={
+                        <Button type="primary" onClick={() => (window.location.href = "/products")}>
                             {ORDER_STRINGS.shopNow}
                         </Button>
-                    </Empty>
-                </Card>
+                    }
+                />
             ) : (
                 <Card className="glass-effect" styles={{body: {padding: 0}}}>
                     <Table
                         columns={columns}
                         dataSource={orders}
                         rowKey="id"
-                        pagination={{pageSize: 5}}
+                        pagination={{pageSize: TABLE_PAGE_SIZE.orders}}
                         scroll={{x: 800}}
                     />
                 </Card>

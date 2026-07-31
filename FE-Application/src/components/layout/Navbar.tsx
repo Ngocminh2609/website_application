@@ -51,7 +51,7 @@ import {styles} from "./styles/Navbar.styles";
 import {LAYOUT_STRINGS} from "../../constants/Layout/layout";
 import {ROLES} from "../common/Commons";
 import {handleImgError} from "../../utils/image";
-import {formatDateTimeVi} from "../../utils/format";
+import {formatDateTimeVi, formatVnd} from "../../utils/format";
 
 const {navbar: nvStrings} = LAYOUT_STRINGS;
 
@@ -315,7 +315,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                 {product.name}
                             </div>
                             <div style={styles.searchOptionPrice}>
-                                {product.price.toLocaleString()}đ
+                                {formatVnd(product.price, false)}
                                 {!searchValue && (
                                     <FireOutlined style={styles.searchOptionFireIcon}/>
                                 )}

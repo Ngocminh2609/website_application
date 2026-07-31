@@ -12,9 +12,7 @@ import {
 import {Link} from "react-router-dom";
 import type {Product} from "../../types/product";
 import BaseButton from "../common/BaseButton";
-import {notification} from "../../utils/notification";
-import {cartApi} from "../../api/cartApi";
-import {useCart} from "../../hooks/Cart/useCart";
+import {useAddToCart} from "../../hooks/Cart/useAddToCart";
 import {useWishlist} from "../../hooks/Wishlist/useWishlist";
 import {useCompare} from "../../hooks/Product/useCompare";
 
@@ -27,9 +25,9 @@ import {
 } from "../../styles/commonStyles";
 import {styles} from "./styles/ProductCard.styles";
 import {COMMON_STRINGS} from "../../constants/Common/common";
-import {requireAuth} from "../../utils/auth";
 import {handleImgError} from "../../utils/image";
 import {formatVnd} from "../../utils/format";
+import {getDiscountPercent} from "../../pages/Product/helper";
 
 const {productCard: pcStrings} = COMMON_STRINGS;
 
@@ -71,7 +69,7 @@ export const StarRating: React.FC<{ value: number; size?: number }> = ({
  * Hỗ trợ hiển thị Rating, Flash Sale, Brand và giá gốc gạch ngang.
  */
 const ProductCard: React.FC<ProductCardProps> = ({product}) => {
-    const {refreshCart} = useCart();
+    const {addToCart} = useAddToCart();
     const {isInWishlist, addToWishlist, removeFromWishlist} = useWishlist();
     const {addToCompare, removeFromCompare, isComparing} = useCompare();
 
@@ -79,35 +77,19 @@ const ProductCard: React.FC<ProductCardProps> = ({product}) => {
     const isComp = isComparing(product.id);
 
     // Sử dụng % giảm giá từ DB hoặc tự tính toán nếu chưa có
-    const discountPercent =
-        product.discountPercent ||
-        (product.originalPrice && product.price
-            ? Math.round(
-                ((product.originalPrice - product.price) / product.originalPrice) *
-                100,
-            )
-            : 0);
+    const discountPercent = getDiscountPercent(
+        product.discountPercent,
+        product.originalPrice,
+        product.price,
+    );
 
     const imgRef = React.useRef<HTMLImageElement>(null);
 
     const handleAddToCart = async () => {
-        if (!requireAuth()) return;
-
-        try {
-            // Thực hiện hiệu ứng bay ngay lập tức để tạo cảm giác phản hồi nhanh
-            if (imgRef.current) {
-                const {flyToCart} = await import("../../utils/cartAnimation");
-                flyToCart(imgRef.current);
-            }
-
-            await cartApi.addToCart(product.id, 1);
-            await refreshCart(true);
-            // Có thể bỏ qua notification nếu hiệu ứng bay đã đủ rõ ràng,
-            // hoặc giữ lại để xác nhận thành công
-            notification.product.addCartSuccess();
-        } catch {
-            notification.error(pcStrings.addCartError);
-        }
+        await addToCart(product.id, {
+            imgElement: imgRef.current,
+            errorMessage: pcStrings.addCartError,
+        });
     };
 
     const toggleWishlist = async (e: React.MouseEvent) => {

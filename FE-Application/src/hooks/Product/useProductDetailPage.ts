@@ -1,20 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { productApi } from "../../api/productApi";
-import { cartApi } from "../../api/cartApi";
 import { reviewApi } from "../../api/reviewApi";
-import { useCart } from "../Cart/useCart";
+import { useAddToCart } from "../Cart/useAddToCart";
 import type { Product } from "../../types/product";
 import type { ProductReview } from "../../types/review";
 import { notification } from "../../utils/notification";
 import { getAuthUser, requireAuth } from "../../utils/auth";
 import { getErrorMessage } from "../../utils/error";
-import { COMMON_STRINGS } from "../../constants/Common/common";
 import { PRODUCT_STRINGS } from "../../constants/Product/product";
 
 export const useProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { refreshCart } = useCart();
+  const { addToCart } = useAddToCart();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -69,23 +67,11 @@ export const useProductDetailPage = () => {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    if (!requireAuth()) return;
 
-    try {
-      if (imageContainerRef.current) {
-        const imgElement = imageContainerRef.current.querySelector("img");
-        if (imgElement) {
-          const { flyToCart } = await import("../../utils/cartAnimation");
-          flyToCart(imgElement);
-        }
-      }
-
-      await cartApi.addToCart(product.id, 1);
-      await refreshCart(true);
-      notification.product.addCartSuccess();
-    } catch {
-      notification.error(COMMON_STRINGS.productCard.addCartError);
-    }
+    const imgElement = imageContainerRef.current?.querySelector("img") ?? null;
+    await addToCart(product.id, {
+      imgElement: imgElement as HTMLImageElement | null,
+    });
   };
 
   const handleSubmitReview = async () => {

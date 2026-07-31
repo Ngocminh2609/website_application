@@ -1,5 +1,5 @@
 import React from "react";
-import {Typography, Row, Col, Space, Divider, Spin, Carousel} from "antd";
+import {Typography, Row, Col, Space, Divider, Carousel} from "antd";
 import {
     ThunderboltFilled,
     ArrowRightOutlined,
@@ -14,6 +14,7 @@ import {styles} from "./styles/home-page.styles";
 import {HOME_STRINGS} from "../../constants/Home/home-page";
 
 import {useHomePage} from "../../hooks/Home/useHomePage";
+import {PageLoading} from "../../components/common/PageLoading";
 
 const {Title, Text, Paragraph} = Typography;
 
@@ -37,18 +38,8 @@ const HomePage: React.FC = () => {
     const displayBestSellers = getDisplayProducts(bestSellers, "Bán Chạy", 5);
 
     if (productLoading || loadingBrands) {
-        return (
-            <div style={styles.loadingContainer}>
-                <Spin
-                    size="large"
-                    description={
-                        <Text style={styles.loadingText}>
-                            {HOME_STRINGS.loading}
-                        </Text>
-                    }
-                />
-            </div>
-        );
+        return <PageLoading tip={<Text style={styles.loadingText}>{HOME_STRINGS.loading}</Text>}
+                            style={styles.loadingContainer}/>;
     }
 
     return (

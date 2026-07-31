@@ -21,8 +21,6 @@ import {
     TeamOutlined,
     ShoppingOutlined,
     DollarOutlined,
-    EditOutlined,
-    DeleteOutlined,
     PlusOutlined,
     UploadOutlined,
     TruckOutlined,
@@ -37,10 +35,12 @@ import {
     StarOutlined,
     PictureOutlined,
     FireFilled,
+    DeleteOutlined,
 } from "@ant-design/icons";
 import type {Product} from "../../types/product";
 import type {Order} from "../../types/order";
 import BaseButton from "../../components/common/BaseButton";
+import AdminEditDeleteActions from "../../components/common/AdminEditDeleteActions";
 import type {ColumnsType} from "antd/es/table";
 import StatisticsTab from "./StatisticsTab";
 import NotificationManagement from "./NotificationManagement";
@@ -49,8 +49,11 @@ import ReviewModeration from "./ReviewModeration";
 import BannerManagement from "./BannerManagement";
 import {useAdminDashboardState} from "../../hooks/Admin/useAdminDashboardState";
 import {styles} from "./styles/admin-dashboard.styles";
-import {calculateTotalRevenue, getStatusTag, formatCurrency} from "./helper";
+import {calculateTotalRevenue, getStatusTag} from "./helper";
 import {ADMIN_STRINGS} from "../../constants/Admin/admin-dashboard";
+import {TABLE_PAGE_SIZE} from "../../constants/Common/pagination";
+import {formatVnd} from "../../utils/format";
+import {handleImgError} from "../../utils/image";
 
 const {Content} = Layout;
 const {Title, Text} = Typography;
@@ -92,10 +95,7 @@ const AdminDashboard: React.FC = () => {
                         <img
                             src={record.imageUrl}
                             alt={record.name}
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=200";
-                            }}
+                            onError={handleImgError}
                             style={styles.productImage}
                         />
                         {record.isBestSeller && (
@@ -124,11 +124,11 @@ const AdminDashboard: React.FC = () => {
             render: (_, record: Product) => (
                 <div>
                     <Text strong style={styles.productPrice}>
-                        {formatCurrency(record.price)}
+                        {formatVnd(record.price)}
                     </Text>
                     {record.discountPercent && record.discountPercent > 0 ? (
                         <Text delete type="secondary" style={styles.originalPrice}>
-                            {formatCurrency(record.originalPrice || 0)}
+                            {formatVnd(record.originalPrice || 0)}
                         </Text>
                     ) : null}
                     {!record.isActive && (
@@ -152,23 +152,11 @@ const AdminDashboard: React.FC = () => {
             key: "action",
             align: "right",
             render: (_, record: Product) => (
-                <Space size="small">
-                    <Tooltip title="Chỉnh sửa">
-                        <BaseButton
-                            type="text"
-                            icon={<EditOutlined/>}
-                            onClick={() => handleEdit(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Xóa">
-                        <BaseButton
-                            type="text"
-                            icon={<DeleteOutlined/>}
-                            danger
-                            onClick={() => handleDelete(record.id)}
-                        />
-                    </Tooltip>
-                </Space>
+                <AdminEditDeleteActions
+                    showEdit
+                    onEdit={() => handleEdit(record)}
+                    onDelete={() => handleDelete(record.id)}
+                />
             ),
         },
     ];
@@ -198,7 +186,7 @@ const AdminDashboard: React.FC = () => {
             key: "totalAmount",
             render: (amt: number) => (
                 <Text strong style={styles.orderTotalAmount}>
-                    {formatCurrency(amt, false)}
+                    {formatVnd(amt, false)}
                 </Text>
             ),
         },
@@ -330,7 +318,7 @@ const AdminDashboard: React.FC = () => {
                                 {ADMIN_STRINGS.cards.revenue}
                             </Text>
                             <Title level={2} style={styles.cardTitleRevenueValue}>
-                                {formatCurrency(calculateTotalRevenue(orders), false)}
+                                {formatVnd(calculateTotalRevenue(orders), false)}
                             </Title>
                         </Space>
                     </Card>
@@ -366,7 +354,7 @@ const AdminDashboard: React.FC = () => {
                                         dataSource={products}
                                         rowKey="id"
                                         loading={loading}
-                                        pagination={{pageSize: 8}}
+                                        pagination={{pageSize: TABLE_PAGE_SIZE.admin}}
                                         scroll={{x: 800}}
                                     />
                                 </div>
@@ -385,7 +373,7 @@ const AdminDashboard: React.FC = () => {
                                     dataSource={orders}
                                     rowKey="id"
                                     loading={loading}
-                                    pagination={{pageSize: 8}}
+                                    pagination={{pageSize: TABLE_PAGE_SIZE.admin}}
                                     scroll={{x: 800}}
                                 />
                             ),
@@ -512,7 +500,7 @@ const AdminDashboard: React.FC = () => {
                                     {ADMIN_STRINGS.modal.discountPriceLabel}
                                 </Text>
                                 <Text strong style={styles.discountPrice}>
-                                    {formatCurrency(livePrice)}
+                                    {formatVnd(livePrice)}
                                 </Text>
                             </div>
                         </Col>

@@ -8,6 +8,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 import static com.ecommerce.backend.constant.dto.ProductRequestConstants.*;
+import static com.ecommerce.backend.constant.validation.ProductValidationConstants.*;
 
 @Data
 public class ProductRequest {

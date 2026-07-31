@@ -1,6 +1,8 @@
 import type {CSSProperties} from "react";
+import {ADMIN_PAGE_HEADER_STYLES} from "../../../styles/commonStyles";
 
 export const styles = {
+    ...ADMIN_PAGE_HEADER_STYLES,
     bannerImage: {
         width: "150px",
         height: "50px",
@@ -15,31 +17,6 @@ export const styles = {
 
     linkText: {
         color: "var(--text-muted)",
-    } as CSSProperties,
-
-    statusSelect: {
-        width: 110,
-    } as CSSProperties,
-
-    container: {
-        padding: "10px 0",
-    } as CSSProperties,
-
-    header: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 24,
-    } as CSSProperties,
-
-    headerTitle: {
-        color: "var(--text-main)",
-        margin: 0,
-    } as CSSProperties,
-
-    headerSubtitle: {
-        color: "var(--text-muted)",
-        fontSize: 12,
     } as CSSProperties,
 
     inputNumberWidth: {

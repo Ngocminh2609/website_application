@@ -4,7 +4,6 @@ import type {UploadFile} from "antd";
 import {useLocation} from "react-router-dom";
 import {productApi} from "../../api/productApi";
 import {categoryApi} from "../../api/categoryApi";
-import {fileApi} from "../../api/fileApi";
 import {orderApi} from "../../api/orderApi";
 import type {Order} from "../../types/order";
 import type {Product, ProductRequest} from "../../types/product";
@@ -12,6 +11,7 @@ import type {Category} from "../../types/category";
 import {notification} from "../../utils/notification";
 import {ADMIN_STRINGS} from "../../constants/Admin/admin-dashboard";
 import {getErrorMessage} from "../../utils/error";
+import {uploadImageIfNeeded} from "../../utils/upload";
 import {confirmDelete} from "../common/useConfirmDelete";
 
 export const useAdminDashboardState = () => {
@@ -47,9 +47,11 @@ export const useAdminDashboardState = () => {
             setProducts(productData);
             setCategories(categoryData);
             setOrders(orderData);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Lỗi tải dữ liệu quản trị:", error);
-            notification.error(ADMIN_STRINGS.error.loadDataError);
+            notification.error(
+                getErrorMessage(error, ADMIN_STRINGS.error.loadDataError),
+            );
         } finally {
             setLoading(false);
         }
@@ -94,15 +96,11 @@ export const useAdminDashboardState = () => {
     const onFinish = async (values: ProductRequest) => {
         try {
             setLoading(true);
-            let imageUrl = values.imageUrl;
-
-            if (fileList.length > 0 && fileList[0].originFileObj) {
-                const uploadRes = await fileApi.uploadImage(
-                    fileList[0].originFileObj as File,
-                    "product",
-                );
-                imageUrl = uploadRes.url;
-            }
+            const imageUrl = await uploadImageIfNeeded(
+                fileList,
+                "product",
+                values.imageUrl || "",
+            );
 
             if (editingId) {
                 await productApi.updateProduct(editingId, {...values, imageUrl});

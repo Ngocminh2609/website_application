@@ -4,7 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
-import static com.ecommerce.backend.constant.dto.LoginRequestConstants.*;
+import static com.ecommerce.backend.constant.validation.AuthValidationConstants.ERROR_PASSWORD_REQUIRED;
+import static com.ecommerce.backend.constant.validation.AuthValidationConstants.ERROR_USERNAME_REQUIRED;
 
 @Getter
 @Setter

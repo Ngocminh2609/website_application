@@ -2,8 +2,6 @@ import type {Order} from "../../../types/order";
 import dayjs from "dayjs";
 import {OrderStatusTag} from "../../../components/common/OrderStatusTag";
 
-export {formatVnd as formatCurrency, formatDateTimeVi as formatDateTime} from "../../../utils/format";
-
 /** Wrapper tương thích gọi dạng getStatusTag(status) */
 export const getStatusTag = (status: string) => (
     <OrderStatusTag status={status}/>

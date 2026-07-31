@@ -49,35 +49,53 @@ export const BASE_SELECT_DROPDOWN_STYLE: CSSProperties = {
     backgroundColor: "#1e293b",
 };
 
+export const GLASS_CARD_STYLE: CSSProperties = {
+    background: "var(--glass-bg)",
+    border: "1px solid var(--glass-border)",
+    borderRadius: "24px",
+    backdropFilter: "blur(10px)",
+};
+
+export const LOADING_CONTAINER_STYLE: CSSProperties = {
+    textAlign: "center",
+    padding: "100px",
+};
+
+export const ADMIN_PAGE_HEADER_STYLES = {
+    container: {padding: "10px 0"} as CSSProperties,
+    header: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 24,
+    } as CSSProperties,
+    headerTitle: {color: "var(--text-main)", margin: 0} as CSSProperties,
+    headerSubtitle: {color: "var(--text-muted)", fontSize: 12} as CSSProperties,
+    statusSelect: {width: 110} as CSSProperties,
+};
+
 /** Style container card của trang Login */
 export const LOGIN_CARD_STYLE: CSSProperties = {
+    ...GLASS_CARD_STYLE,
     maxWidth: "400px",
     margin: "140px auto",
     padding: "40px",
-    background: "var(--glass-bg)",
-    borderRadius: "24px",
-    border: "1px solid var(--glass-border)",
     backdropFilter: "blur(15px)",
 };
 
 /** Style container card của trang Register */
 export const REGISTER_CARD_STYLE: CSSProperties = {
+    ...GLASS_CARD_STYLE,
     maxWidth: "450px",
     margin: "80px auto",
     padding: "40px",
-    background: "var(--glass-bg)",
     borderRadius: "16px",
-    border: "1px solid var(--glass-border)",
-    backdropFilter: "blur(10px)",
 };
 
 /** Style card thông tin trong ProfilePage */
 export const PROFILE_CARD_STYLE: CSSProperties = {
-    background: "var(--glass-bg)",
-    border: "1px solid var(--glass-border)",
-    borderRadius: "24px",
+    ...GLASS_CARD_STYLE,
     padding: "40px",
-    backdropFilter: "blur(10px)",
 };
 
 /** Style các trường input trong ProfilePage */
@@ -88,9 +106,7 @@ export const PROFILE_INPUT_STYLE: CSSProperties = {
 
 /** Style cho container Empty của trang Wishlist */
 export const WISHLIST_EMPTY_CARD_STYLE: CSSProperties = {
-    background: "var(--glass-bg)",
-    border: "1px solid var(--glass-border)",
-    borderRadius: "24px",
+    ...GLASS_CARD_STYLE,
     padding: "100px 60px",
     textAlign: "center",
 };
@@ -121,14 +137,12 @@ export const COMPARE_BAR_CONTENT_STYLE: CSSProperties = {
 
 /** Style ngoài cùng cho thẻ ProductCard */
 export const PRODUCT_CARD_STYLE: CSSProperties = {
+    ...GLASS_CARD_STYLE,
     borderRadius: "20px",
     overflow: "hidden",
     height: "100%",
     display: "flex",
     flexDirection: "column",
-    background: "var(--glass-bg)",
-    border: "1px solid var(--glass-border)",
-    backdropFilter: "blur(10px)",
 };
 
 /** Style body cho thẻ ProductCard */

@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_PRODUCT_NOT_FOUND;
 import static com.ecommerce.backend.constant.domain.ErrorMessageConstants.ERROR_USER_NOT_FOUND;
 import static com.ecommerce.backend.constant.domain.RoleConstants.ROLE_ADMIN;
 import static com.ecommerce.backend.constant.service.ReviewServiceConstants.ERROR_ALREADY_REVIEWED;
@@ -30,6 +29,7 @@ public class ReviewService {
     private final ProductReviewRepository reviewRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final ProductService productService;
 
     public List<ProductReview> getApprovedReviews(Long productId) {
         return reviewRepository.findByProductIdAndIsApprovedTrueOrderByCreatedAtDesc(productId);
@@ -41,7 +41,7 @@ public class ReviewService {
             throw new BadRequestException(ERROR_ALREADY_REVIEWED);
         });
 
-        Product product = EntityLookupUtil.require(productRepository.findById(productId), ERROR_PRODUCT_NOT_FOUND);
+        Product product = productService.requireProduct(productId);
         User user = EntityLookupUtil.require(userRepository.findById(userId), ERROR_USER_NOT_FOUND);
 
         boolean isVerified = reviewRepository.hasUserPurchasedProduct(productId, userId);
@@ -71,7 +71,7 @@ public class ReviewService {
         Long productId = review.getProduct().getId();
         reviewRepository.delete(review);
 
-        productRepository.findById(productId).ifPresent(product ->
+        productService.findProduct(productId).ifPresent(product ->
                 updateProductRatingStats(productId, product)
         );
     }

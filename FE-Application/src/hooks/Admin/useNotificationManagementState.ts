@@ -1,8 +1,8 @@
 import {useState} from "react";
 import {Form} from "antd";
 import {notificationApi} from "../../api/notificationApi";
-import {notification} from "../../utils/notification";
 import {NOTIF_STRINGS} from "../../constants/Admin/notification-management";
+import {useAsyncAction} from "../common/useAsyncAction";
 
 export interface NotificationHistoryItem {
     id: number;
@@ -13,30 +13,29 @@ export interface NotificationHistoryItem {
 }
 
 export const useNotificationManagementState = () => {
-    const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
     const [history, setHistory] = useState<NotificationHistoryItem[]>([]);
+    const {loading, run} = useAsyncAction();
 
     const handleBroadcast = async (values: { message: string }) => {
-        setLoading(true);
-        try {
-            await notificationApi.broadcast(values.message);
-            notification.success(NOTIF_STRINGS.messages.sendSuccess);
-            form.resetFields();
-            const newLog: NotificationHistoryItem = {
-                id: Date.now(),
-                message: values.message,
-                type: "SYSTEM",
-                createdAt: new Date().toISOString(),
-                recipientCount: NOTIF_STRINGS.recipientCountText,
-            };
-            setHistory((prev) => [newLog, ...prev]);
-        } catch (error) {
-            console.error("Lỗi gửi thông báo:", error);
-            notification.error(NOTIF_STRINGS.messages.sendError);
-        } finally {
-            setLoading(false);
-        }
+        await run(
+            () => notificationApi.broadcast(values.message),
+            {
+                successMessage: NOTIF_STRINGS.messages.sendSuccess,
+                errorMessage: NOTIF_STRINGS.messages.sendError,
+                onSuccess: () => {
+                    form.resetFields();
+                    const newLog: NotificationHistoryItem = {
+                        id: Date.now(),
+                        message: values.message,
+                        type: "SYSTEM",
+                        createdAt: new Date().toISOString(),
+                        recipientCount: NOTIF_STRINGS.recipientCountText,
+                    };
+                    setHistory((prev) => [newLog, ...prev]);
+                },
+            },
+        );
     };
 
     return {

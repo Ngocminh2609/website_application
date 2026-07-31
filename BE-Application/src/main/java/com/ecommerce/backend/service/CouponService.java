@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.ecommerce.backend.constant.entity.CouponConstants.DISCOUNT_TYPE_PERCENT;
 import static com.ecommerce.backend.constant.service.CouponServiceConstants.*;
 
 @Service

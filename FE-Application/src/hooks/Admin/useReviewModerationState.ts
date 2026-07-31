@@ -1,37 +1,31 @@
-import { useState, useEffect } from "react";
 import { reviewApi } from "../../api/reviewApi";
 import type { ProductReview } from "../../types/review";
 import { notification } from "../../utils/notification";
 import { REVIEW_STRINGS } from "../../constants/Admin/review-moderation";
 import { confirmDelete } from "../common/useConfirmDelete";
+import { getErrorMessage } from "../../utils/error";
+import { useAsyncList } from "../common/useFetchOnMount";
 
 export const useReviewModerationState = () => {
-  const [reviews, setReviews] = useState<ProductReview[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchAllReviews = async () => {
-    setLoading(true);
-    try {
-      const data = await reviewApi.getAllAdmin();
-      setReviews(data);
-    } catch {
-      notification.error(REVIEW_STRINGS.messages.loadError);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAllReviews();
-  }, []);
+  const {
+    data: reviews,
+    loading,
+    refetch: fetchAllReviews,
+  } = useAsyncList(
+    () => reviewApi.getAllAdmin(),
+    REVIEW_STRINGS.messages.loadError,
+    [] as ProductReview[],
+  );
 
   const handleApprove = async (id: number) => {
     try {
       await reviewApi.approve(id);
       notification.success(REVIEW_STRINGS.messages.approveSuccess);
       await fetchAllReviews();
-    } catch {
-      notification.error(REVIEW_STRINGS.messages.approveError);
+  } catch (error: unknown) {
+      notification.error(
+        getErrorMessage(error, REVIEW_STRINGS.messages.approveError),
+      );
     }
   };
 
@@ -44,7 +38,9 @@ export const useReviewModerationState = () => {
       },
       successMessage: REVIEW_STRINGS.messages.deleteSuccess,
       errorMessage: REVIEW_STRINGS.messages.deleteError,
-      onSuccess: fetchAllReviews,
+      onSuccess: async () => {
+        await fetchAllReviews();
+      },
     });
   };
 

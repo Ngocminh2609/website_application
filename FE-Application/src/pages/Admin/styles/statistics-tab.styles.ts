@@ -1,30 +1,27 @@
 import type {CSSProperties} from "react";
+import {
+    ADMIN_PAGE_HEADER_STYLES,
+    LOADING_CONTAINER_STYLE,
+} from "../../../styles/commonStyles";
 
 export const styles = {
     container: {
+        ...ADMIN_PAGE_HEADER_STYLES.container,
         marginTop: 20,
     } as CSSProperties,
 
     header: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
+        ...ADMIN_PAGE_HEADER_STYLES.header,
         marginBottom: 30,
     } as CSSProperties,
 
-    headerTitle: {
-        color: "var(--text-main)",
-        margin: 0,
-    } as CSSProperties,
+    headerTitle: ADMIN_PAGE_HEADER_STYLES.headerTitle,
 
     select: {
         width: 200,
     } as CSSProperties,
 
-    spinnerContainer: {
-        textAlign: "center",
-        padding: "100px",
-    } as CSSProperties,
+    spinnerContainer: LOADING_CONTAINER_STYLE,
 
     emptyText: {
         color: "var(--text-muted)",

@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import static com.ecommerce.backend.constant.security.KeycloakRoleConverterConstants.ROLE_PREFIX;
+import static com.ecommerce.backend.constant.domain.RoleConstants.ROLE_PREFIX;
 
 public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
 
