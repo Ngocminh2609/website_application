@@ -1,21 +1,21 @@
 import React from "react";
-import { Typography, Row, Col, Space, Divider, Spin, Carousel } from "antd";
+import {Typography, Row, Col, Space, Divider, Spin, Carousel} from "antd";
 import {
     ThunderboltFilled,
     ArrowRightOutlined,
     StarFilled,
 } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import ProductCard from "../../components/common/ProductCard";
 import BaseButton from "../../components/common/BaseButton";
 import PersonalizedRecommendations from "../../components/common/PersonalizedRecommendations";
-import { getDisplayProducts } from "./helper";
-import { styles } from "./styles/home-page.styles";
-import { HOME_STRINGS } from "../../constants/Home/home-page";
+import {getDisplayProducts} from "./helper";
+import {styles} from "./styles/home-page.styles";
+import {HOME_STRINGS} from "../../constants/Home/home-page";
 
-import { useHomePage } from "../../hooks/Home/useHomePage";
+import {useHomePage} from "../../hooks/Home/useHomePage";
 
-const { Title, Text, Paragraph } = Typography;
+const {Title, Text, Paragraph} = Typography;
 
 /**
  * Trang chủ Tech Nova - Phiên bản nâng cấp tối ưu tương phản và thân thiện người dùng.
@@ -41,7 +41,7 @@ const HomePage: React.FC = () => {
             <div style={styles.loadingContainer}>
                 <Spin
                     size="large"
-                    tip={
+                    description={
                         <Text style={styles.loadingText}>
                             {HOME_STRINGS.loading}
                         </Text>
@@ -59,7 +59,7 @@ const HomePage: React.FC = () => {
                     <Row gutter={[48, 48]} align="middle">
                         <Col xs={24} lg={13}>
                             <Title className="hero-title" style={styles.heroTitle}>
-                                {HOME_STRINGS.hero.titleLine1} <br />
+                                {HOME_STRINGS.hero.titleLine1} <br/>
                                 <span style={styles.primaryColorText}>{HOME_STRINGS.hero.titleHighlight} </span>
                                 {HOME_STRINGS.hero.titleLine2}
                             </Title>
@@ -91,7 +91,7 @@ const HomePage: React.FC = () => {
                                     </Title>
                                     <Text style={styles.statsLabel}>{HOME_STRINGS.stats.customersLabel}</Text>
                                 </div>
-                                <Divider type="vertical" style={styles.statsDivider} />
+                                <Divider orientation="vertical" style={styles.statsDivider}/>
                                 <div>
                                     <Title level={3} style={styles.statsNumber}>
                                         {HOME_STRINGS.stats.brandsCount}
@@ -155,7 +155,7 @@ const HomePage: React.FC = () => {
                 </div>
 
                 {/* GỢI Ý CÁ NHÂN HÓA - Kỹ thuật tạo khác biệt */}
-                <PersonalizedRecommendations title={HOME_STRINGS.recommendations.title} limit={5} />
+                <PersonalizedRecommendations title={HOME_STRINGS.recommendations.title} limit={5}/>
 
                 {/* FLASH SALE - Chữ sáng, nền nhấn đỏ */}
                 {displayFlashSales.length > 0 && (
@@ -163,7 +163,7 @@ const HomePage: React.FC = () => {
                         <div style={styles.sectionHeader}>
                             <div style={styles.sectionTitleWrapper}>
                                 <div style={styles.flashIconWrapper}>
-                                    <ThunderboltFilled style={styles.flashIcon} />
+                                    <ThunderboltFilled style={styles.flashIcon}/>
                                 </div>
                                 <div>
                                     <Title level={2} style={styles.sectionTitle}>
@@ -179,13 +179,13 @@ const HomePage: React.FC = () => {
                                 onClick={() => navigate("/products")}
                                 style={styles.viewAllButton}
                             >
-                                {HOME_STRINGS.flashSale.viewAll} <ArrowRightOutlined />
+                                {HOME_STRINGS.flashSale.viewAll} <ArrowRightOutlined/>
                             </BaseButton>
                         </div>
                         <Row gutter={[32, 32]}>
                             {displayFlashSales.slice(0, 4).map((product) => (
                                 <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
-                                    <ProductCard product={product} />
+                                    <ProductCard product={product}/>
                                 </Col>
                             ))}
                         </Row>
@@ -196,9 +196,9 @@ const HomePage: React.FC = () => {
                 <section className="glass-effect" style={styles.bestSellerSection}>
                     <div style={styles.bestSellerHeader}>
                         <Space style={styles.ratingSpace}>
-                            <StarFilled style={styles.starIcon} />
+                            <StarFilled style={styles.starIcon}/>
                             <Text style={styles.ratingText}>{HOME_STRINGS.bestSeller.topRated}</Text>
-                            <StarFilled style={styles.starIcon} />
+                            <StarFilled style={styles.starIcon}/>
                         </Space>
                         <Title level={2} style={styles.bestSellerTitle}>
                             {HOME_STRINGS.bestSeller.title}
@@ -215,7 +215,7 @@ const HomePage: React.FC = () => {
                                 className="premium-hover"
                                 style={styles.bestSellerItem}
                             >
-                                <ProductCard product={product} />
+                                <ProductCard product={product}/>
                             </div>
                         ))}
                     </div>
@@ -240,7 +240,7 @@ const HomePage: React.FC = () => {
                         <Row gutter={[32, 32]}>
                             {brand.products.map((product) => (
                                 <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
-                                    <ProductCard product={product} />
+                                    <ProductCard product={product}/>
                                 </Col>
                             ))}
                         </Row>

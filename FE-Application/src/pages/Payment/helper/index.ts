@@ -1,1 +1,1 @@
-export { formatVnpayAmount as formatCurrency } from "../../../utils/format";
+export {formatVnpayAmount as formatCurrency} from "../../../utils/format";
