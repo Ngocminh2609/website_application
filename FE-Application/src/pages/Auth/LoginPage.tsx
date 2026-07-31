@@ -14,7 +14,7 @@ import { useLoginState } from "../../hooks/Auth/useLoginState";
 const { Title, Text } = Typography;
 
 interface LoginPageProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: () => void | Promise<void>;
 }
 
 /**

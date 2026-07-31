@@ -7,15 +7,19 @@ import { storeAuthSession } from "../../pages/Auth/helper";
 import { LOGIN_STRINGS } from "../../constants/Auth/auth";
 import type { FormInstance } from "antd";
 
-export const useLoginState = (onLoginSuccess: () => void, form?: FormInstance) => {
+export const useLoginState = (
+  onLoginSuccess: () => void | Promise<void>,
+  form?: FormInstance,
+) => {
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  const handleAuthResponse = (response: AuthResponse) => {
+  const handleAuthResponse = async (response: AuthResponse) => {
     if (response.token) {
       storeAuthSession(response);
       notification.auth.loginSuccess();
-      onLoginSuccess();
+      // Chờ merge profile (avatarUrl) trước khi vào Home — tránh Navbar thiếu avatar
+      await onLoginSuccess();
       navigate("/");
     }
   };
@@ -24,7 +28,7 @@ export const useLoginState = (onLoginSuccess: () => void, form?: FormInstance) =
     setLoading(true);
     try {
       const response = await authApi.login(values, !!values.remember);
-      handleAuthResponse(response);
+      await handleAuthResponse(response);
     } catch {
       notification.auth.loginError();
     } finally {

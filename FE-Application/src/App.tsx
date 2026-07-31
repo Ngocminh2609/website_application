@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { ConfigProvider, theme, Layout, App as AntdApp } from "antd";
+import React, {useState, useEffect} from "react";
+import {ConfigProvider, theme, Layout, App as AntdApp} from "antd";
 import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
+    BrowserRouter as Router,
+    Routes,
+    Route,
+    Navigate,
 } from "react-router-dom";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
@@ -20,342 +20,343 @@ import PaymentSuccessPage from "./pages/Payment/PaymentSuccessPage";
 import OrdersPage from "./pages/Order/OrdersPage";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import SearchPage from "./pages/Product/SearchPage";
-import type { User } from "./types/auth";
-import { notification } from "./utils/notification";
-import { CartProvider } from "./context/CartContext";
-import { ProductProvider } from "./context/ProductContext";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import type {User} from "./types/auth";
+import {notification} from "./utils/notification";
+import {CartProvider} from "./context/CartContext";
+import {ProductProvider} from "./context/ProductContext";
+import {GoogleOAuthProvider} from "@react-oauth/google";
 import ChatWidget from "./components/common/ChatWidget";
-import { NotificationProvider } from "./context/NotificationContext";
-import { AdminChatProvider } from "./context/AdminChatContext";
-import { WishlistProvider } from "./context/WishlistContext";
-import { CompareProvider } from "./context/CompareContext";
-import { userApi } from "./api/userApi";
+import {NotificationProvider} from "./context/NotificationContext";
+import {AdminChatProvider} from "./context/AdminChatContext";
+import {WishlistProvider} from "./context/WishlistContext";
+import {CompareProvider} from "./context/CompareContext";
+import {userApi} from "./api/userApi";
 import CompareBar from "./components/common/CompareBar";
 import ComparePage from "./pages/Product/ComparePage";
 import ReloadPrompt from "./components/pwa/ReloadPrompt";
 import ScrollToTop from "./components/common/ScrollToTop";
-import { ROLES, THEMES } from "./components/common/Commons";
+import {ROLES, THEMES} from "./components/common/Commons";
 import {
-  clearAuthSession,
-  getAuthUser,
-  setStoredUser,
-  storeAuthSession,
-  updateStoredUser,
+    clearAuthSession,
+    getAuthToken,
+    getAuthUser,
+    setStoredUser,
+    storeAuthSession,
+    updateStoredUser,
 } from "./utils/auth";
-import { KEYCLOAK_CONFIG } from "./constants/Auth/keycloak";
+import {buildUserFromJwtPayload, decodeJwtPayload} from "./utils/jwt";
+import {KEYCLOAK_CONFIG} from "./constants/Auth/keycloak";
 
 // Thay thế bằng Client ID của bạn từ Google Cloud Console
 const GOOGLE_CLIENT_ID =
-  "1051116450325-qneacpielnd6acgajc3kftfpk9nkjkqj.apps.googleusercontent.com";
+    "1051116450325-qneacpielnd6acgajc3kftfpk9nkjkqj.apps.googleusercontent.com";
 
 /**
  * App Component - Quản lý Routing, Auth State và Theme.
  */
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(() => getAuthUser());
+    const [user, setUser] = useState<User | null>(() => getAuthUser());
 
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    // Ưu tiên tùy chọn của người dùng nếu đã đăng nhập, nếu không dùng localStorage hoặc default light
-    if (user?.themePreference) return user.themePreference === THEMES.DARK;
-    const savedTheme = localStorage.getItem("theme");
-    return savedTheme ? savedTheme === THEMES.DARK : false; // Mặc định light
-  });
+    const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+        // Ưu tiên tùy chọn của người dùng nếu đã đăng nhập, nếu không dùng localStorage hoặc default light
+        if (user?.themePreference) return user.themePreference === THEMES.DARK;
+        const savedTheme = localStorage.getItem("theme");
+        return savedTheme ? savedTheme === THEMES.DARK : false; // Mặc định light
+    });
 
-  // Xử lý OAuth2 redirect code từ Keycloak (cho Google Login hoặc User Registration)
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-    if (code) {
-      const exchangeCode = async () => {
-        try {
-          const params = new URLSearchParams();
-          params.append("grant_type", "authorization_code");
-          params.append("client_id", KEYCLOAK_CONFIG.clientId);
-          params.append("client_secret", KEYCLOAK_CONFIG.clientSecret);
-          params.append("code", code);
-          params.append("redirect_uri", KEYCLOAK_CONFIG.redirectUri);
+    // Đồng bộ profile từ BE khi reload trang (localStorage có thể thiếu avatarUrl)
+    useEffect(() => {
+        const token = getAuthToken();
+        const hasOAuthCode = new URLSearchParams(window.location.search).has("code");
+        if (!token || hasOAuthCode) return;
 
-          const response = await fetch(KEYCLOAK_CONFIG.tokenUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: params.toString(),
-          });
-
-          if (response.ok) {
-            const tokenData = await response.json();
-            const accessToken = tokenData.access_token;
-            const refreshToken = tokenData.refresh_token;
-
-            // Giải mã token để lấy thông tin User (hỗ trợ UTF-8 tiếng Việt)
-            const base64Url = accessToken.split(".")[1];
-            const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-            const utf8String = decodeURIComponent(
-              window
-                .atob(base64)
-                .split("")
-                .map(
-                  (c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2),
-                )
-                .join(""),
-            );
-            const payload = JSON.parse(utf8String);
-
-            const isAdmin =
-              payload.realm_access?.roles?.includes("ADMIN") || false;
-            const newUser: User = {
-              id: 1,
-              username: payload.preferred_username || payload.sub,
-              email: payload.email || "",
-              fullName: payload.name || payload.preferred_username || "User",
-              role: isAdmin ? "ADMIN" : "USER",
-            };
-
-            storeAuthSession({
-              message: "Đăng nhập thành công",
-              token: accessToken,
-              refreshToken: refreshToken,
-              user: newUser,
-            });
-            localStorage.removeItem("remember_me_oauth");
-
-            // Gọi API lấy thông tin profile đầy đủ (bao gồm avatarUrl) từ database của backend
-            userApi.getProfile()
-              .then((profile) => {
-                const mergedUser = { ...newUser, ...profile };
+        userApi
+            .getProfile()
+            .then((profile) => {
+                const baseUser = getAuthUser() ?? ({} as User);
+                const mergedUser = {...baseUser, ...profile};
                 setStoredUser(mergedUser);
                 setUser(mergedUser);
-              })
-              .catch((err) => {
-                console.error("Lỗi khi đồng bộ profile sau Google Login:", err);
-                setUser(newUser);
-              });
+            })
+            .catch((err) => {
+                console.error("Lỗi khi đồng bộ profile khi tải trang:", err);
+            });
+    }, []);
 
-            notification.auth.loginSuccess();
+    // Xử lý OAuth2 redirect code từ Keycloak (cho Google Login hoặc User Registration)
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get("code");
+        if (code) {
+            const exchangeCode = async () => {
+                try {
+                    const params = new URLSearchParams();
+                    params.append("grant_type", "authorization_code");
+                    params.append("client_id", KEYCLOAK_CONFIG.clientId);
+                    params.append("client_secret", KEYCLOAK_CONFIG.clientSecret);
+                    params.append("code", code);
+                    params.append("redirect_uri", KEYCLOAK_CONFIG.redirectUri);
 
-            // Xóa query parameters trên thanh địa chỉ mà không reload trang
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname,
-            );
-          }
-        } catch (err) {
-          console.error("Lỗi khi đổi code lấy token từ Keycloak:", err);
+                    const response = await fetch(KEYCLOAK_CONFIG.tokenUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        body: params.toString(),
+                    });
+
+                    if (response.ok) {
+                        const tokenData = await response.json();
+                        const accessToken = tokenData.access_token;
+                        const refreshToken = tokenData.refresh_token;
+                        const newUser = buildUserFromJwtPayload(
+                            decodeJwtPayload(accessToken),
+                        );
+
+                        storeAuthSession({
+                            message: "Đăng nhập thành công",
+                            token: accessToken,
+                            refreshToken: refreshToken,
+                            user: newUser,
+                        });
+                        setUser(newUser);
+                        localStorage.removeItem("remember_me_oauth");
+
+                        // Gọi API lấy thông tin profile đầy đủ (bao gồm avatarUrl) từ database của backend
+                        userApi
+                            .getProfile()
+                            .then((profile) => {
+                                const mergedUser = {...newUser, ...profile};
+                                setStoredUser(mergedUser);
+                                setUser(mergedUser);
+                            })
+                            .catch((err) => {
+                                console.error("Lỗi khi đồng bộ profile sau Google Login:", err);
+                            });
+
+                        notification.auth.loginSuccess();
+
+                        // Xóa query parameters trên thanh địa chỉ mà không reload trang
+                        window.history.replaceState(
+                            {},
+                            document.title,
+                            window.location.pathname,
+                        );
+                    }
+                } catch (err) {
+                    console.error("Lỗi khi đổi code lấy token từ Keycloak:", err);
+                }
+            };
+            exchangeCode();
         }
-      };
-      exchangeCode();
-    }
-  }, []);
+    }, []);
 
-  // Đồng bộ theme khi thông tin người dùng được tải lần đầu hoặc khi đăng nhập
-  useEffect(() => {
-    if (user?.themePreference) {
-      const userThemeIsDark = user.themePreference === "dark";
-      // Sử dụng setTimeout(0) để tránh cảnh báo cascading render đồng bộ
-      const timer = setTimeout(() => {
-        setIsDarkMode(userThemeIsDark);
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]); // Chỉ chạy khi User ID thay đổi (Đăng nhập/Đăng xuất)
+    // Đồng bộ theme khi thông tin người dùng được tải lần đầu hoặc khi đăng nhập
+    useEffect(() => {
+        if (user?.themePreference) {
+            const userThemeIsDark = user.themePreference === "dark";
+            // Sử dụng setTimeout(0) để tránh cảnh báo cascading render đồng bộ
+            const timer = setTimeout(() => {
+                setIsDarkMode(userThemeIsDark);
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]); // Chỉ chạy khi User ID thay đổi (Đăng nhập/Đăng xuất)
 
-  // Áp dụng data-theme vào thẻ root để kích hoạt CSS variables
-  useEffect(() => {
-    document.documentElement.setAttribute(
-      "data-theme",
-      isDarkMode ? "dark" : "light",
+    // Áp dụng data-theme vào thẻ root để kích hoạt CSS variables
+    useEffect(() => {
+        document.documentElement.setAttribute(
+            "data-theme",
+            isDarkMode ? "dark" : "light",
+        );
+    }, [isDarkMode]);
+
+    const toggleTheme = async () => {
+        const newMode = !isDarkMode;
+        setIsDarkMode(newMode);
+        const themeStr = newMode ? "dark" : "light";
+        localStorage.setItem("theme", themeStr);
+
+        // Nếu đã đăng nhập, đồng bộ lên server
+        if (user) {
+            try {
+                await userApi.updateTheme(themeStr);
+                // Cập nhật local user state
+                const updatedUser = {
+                    ...user,
+                    themePreference: themeStr as "light" | "dark",
+                };
+                setUser(updatedUser);
+                setStoredUser(updatedUser);
+            } catch (error) {
+                console.error("Không thể đồng bộ giao diện lên server:", error);
+            }
+        }
+    };
+
+    const getNotificationUserId = () => {
+        if (user?.role === ROLES.ADMIN) return "admin";
+        return user ? `user-${user.id}` : null;
+    };
+
+    const handleLoginSuccess = async () => {
+        try {
+            const profile = await userApi.getProfile();
+            const baseUser = getAuthUser() ?? ({} as User);
+            const mergedUser = {...baseUser, ...profile};
+            setStoredUser(mergedUser);
+            setUser(mergedUser);
+        } catch (err) {
+            console.error("Lỗi khi tải thông tin chi tiết user sau login:", err);
+            const savedUser = getAuthUser();
+            if (savedUser) {
+                setUser(savedUser);
+            }
+        }
+    };
+
+    const handleLogout = () => {
+        clearAuthSession();
+        setUser(null);
+        notification.auth.logoutSuccess();
+    };
+
+    const handleUserUpdate = (updated: Partial<User>) => {
+        updateStoredUser(updated);
+        setUser((prev) => (prev ? {...prev, ...updated} : prev));
+    };
+
+    return (
+        <ConfigProvider
+            theme={{
+                algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+                token: {
+                    colorPrimary: "#6366f1",
+                    borderRadius: 8,
+                    fontFamily: "Inter, sans-serif",
+                },
+            }}
+        >
+            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                <AntdApp>
+                    <Router>
+                        <ScrollToTop/>
+                        <ProductProvider>
+                            <CartProvider>
+                                <WishlistProvider isLoggedIn={!!user}>
+                                    <CompareProvider>
+                                        <NotificationProvider userId={getNotificationUserId()}>
+                                            <AdminChatProvider isAdmin={user?.role === ROLES.ADMIN}>
+                                                <Layout
+                                                    style={{
+                                                        minHeight: "100vh",
+                                                        background: "transparent",
+                                                    }}
+                                                >
+                                                    <Navbar
+                                                        user={user}
+                                                        onLogout={handleLogout}
+                                                        isDarkMode={isDarkMode}
+                                                        onToggleTheme={toggleTheme}
+                                                    />
+
+                                                    <Routes>
+                                                        <Route path="/" element={<HomePage/>}/>
+                                                        <Route
+                                                            path="/products"
+                                                            element={<ProductsPage/>}
+                                                        />
+                                                        <Route path="/search" element={<SearchPage/>}/>
+                                                        <Route
+                                                            path="/product/:id"
+                                                            element={<ProductDetailPage/>}
+                                                        />
+                                                        <Route
+                                                            path="/login"
+                                                            element={
+                                                                <LoginPage
+                                                                    onLoginSuccess={handleLoginSuccess}
+                                                                />
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/register"
+                                                            element={<RegisterPage/>}
+                                                        />
+                                                        <Route
+                                                            path="/cart"
+                                                            element={
+                                                                user ? <CartPage/> : <Navigate to="/login"/>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/wishlist"
+                                                            element={
+                                                                user ? (
+                                                                    <WishlistPage/>
+                                                                ) : (
+                                                                    <Navigate to="/login"/>
+                                                                )
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/orders"
+                                                            element={
+                                                                user ? <OrdersPage/> : <Navigate to="/login"/>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/profile"
+                                                            element={
+                                                                user ? (
+                                                                    <ProfilePage
+                                                                        onUserUpdate={handleUserUpdate}
+                                                                    />
+                                                                ) : (
+                                                                    <Navigate to="/login"/>
+                                                                )
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/payment-success"
+                                                            element={<PaymentSuccessPage/>}
+                                                        />
+                                                        <Route path="/compare" element={<ComparePage/>}/>
+
+                                                        <Route
+                                                            path="/admin"
+                                                            element={
+                                                                user?.role === ROLES.ADMIN ? (
+                                                                    <AdminDashboard/>
+                                                                ) : (
+                                                                    <Navigate to="/" replace/>
+                                                                )
+                                                            }
+                                                        />
+                                                    </Routes>
+
+                                                    <Footer/>
+                                                    {user?.role !== ROLES.ADMIN && (
+                                                        <ChatWidget
+                                                            key={user ? String(user.id) : "guest"}
+                                                            user={user}
+                                                        />
+                                                    )}
+                                                    <CompareBar/>
+                                                    <ReloadPrompt/>
+                                                </Layout>
+                                            </AdminChatProvider>
+                                        </NotificationProvider>
+                                    </CompareProvider>
+                                </WishlistProvider>
+                            </CartProvider>
+                        </ProductProvider>
+                    </Router>
+                </AntdApp>
+            </GoogleOAuthProvider>
+        </ConfigProvider>
     );
-  }, [isDarkMode]);
-
-  const toggleTheme = async () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    const themeStr = newMode ? "dark" : "light";
-    localStorage.setItem("theme", themeStr);
-
-    // Nếu đã đăng nhập, đồng bộ lên server
-    if (user) {
-      try {
-        await userApi.updateTheme(themeStr);
-        // Cập nhật local user state
-        const updatedUser = {
-          ...user,
-          themePreference: themeStr as "light" | "dark",
-        };
-        setUser(updatedUser);
-        setStoredUser(updatedUser);
-      } catch (error) {
-        console.error("Không thể đồng bộ giao diện lên server:", error);
-      }
-    }
-  };
-
-  const getNotificationUserId = () => {
-    if (user?.role === ROLES.ADMIN) return "admin";
-    return user ? `user-${user.id}` : null;
-  };
-
-  const handleLoginSuccess = async () => {
-    try {
-      const profile = await userApi.getProfile();
-      const baseUser = getAuthUser() ?? ({} as User);
-      const mergedUser = { ...baseUser, ...profile };
-      setStoredUser(mergedUser);
-      setUser(mergedUser);
-    } catch (err) {
-      console.error("Lỗi khi tải thông tin chi tiết user sau login:", err);
-      const savedUser = getAuthUser();
-      if (savedUser) {
-        setUser(savedUser);
-      }
-    }
-  };
-
-  const handleLogout = () => {
-    clearAuthSession();
-    setUser(null);
-    notification.auth.logoutSuccess();
-  };
-
-  const handleUserUpdate = (updated: Partial<User>) => {
-    updateStoredUser(updated);
-    setUser((prev) => (prev ? { ...prev, ...updated } : prev));
-  };
-
-  return (
-    <ConfigProvider
-      theme={{
-        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
-        token: {
-          colorPrimary: "#6366f1",
-          borderRadius: 8,
-          fontFamily: "Inter, sans-serif",
-        },
-      }}
-    >
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <AntdApp>
-          <Router>
-            <ScrollToTop />
-            <ProductProvider>
-              <CartProvider>
-                <WishlistProvider isLoggedIn={!!user}>
-                  <CompareProvider>
-                    <NotificationProvider userId={getNotificationUserId()}>
-                      <AdminChatProvider isAdmin={user?.role === ROLES.ADMIN}>
-                        <Layout
-                          style={{
-                            minHeight: "100vh",
-                            background: "transparent",
-                          }}
-                        >
-                          <Navbar
-                            user={user}
-                            onLogout={handleLogout}
-                            isDarkMode={isDarkMode}
-                            onToggleTheme={toggleTheme}
-                          />
-
-                          <Routes>
-                            <Route path="/" element={<HomePage />} />
-                            <Route
-                              path="/products"
-                              element={<ProductsPage />}
-                            />
-                            <Route path="/search" element={<SearchPage />} />
-                            <Route
-                              path="/product/:id"
-                              element={<ProductDetailPage />}
-                            />
-                            <Route
-                              path="/login"
-                              element={
-                                <LoginPage
-                                  onLoginSuccess={handleLoginSuccess}
-                                />
-                              }
-                            />
-                            <Route
-                              path="/register"
-                              element={<RegisterPage />}
-                            />
-                            <Route
-                              path="/cart"
-                              element={
-                                user ? <CartPage /> : <Navigate to="/login" />
-                              }
-                            />
-                            <Route
-                              path="/wishlist"
-                              element={
-                                user ? (
-                                  <WishlistPage />
-                                ) : (
-                                  <Navigate to="/login" />
-                                )
-                              }
-                            />
-                            <Route
-                              path="/orders"
-                              element={
-                                user ? <OrdersPage /> : <Navigate to="/login" />
-                              }
-                            />
-                            <Route
-                              path="/profile"
-                              element={
-                                user ? (
-                                  <ProfilePage
-                                    onUserUpdate={handleUserUpdate}
-                                  />
-                                ) : (
-                                  <Navigate to="/login" />
-                                )
-                              }
-                            />
-                            <Route
-                              path="/payment-success"
-                              element={<PaymentSuccessPage />}
-                            />
-                            <Route path="/compare" element={<ComparePage />} />
-
-                            <Route
-                              path="/admin"
-                              element={
-                                user?.role === ROLES.ADMIN ? (
-                                  <AdminDashboard />
-                                ) : (
-                                  <Navigate to="/" replace />
-                                )
-                              }
-                            />
-                          </Routes>
-
-                          <Footer />
-                          {user?.role !== ROLES.ADMIN && (
-                            <ChatWidget
-                              key={user ? String(user.id) : "guest"}
-                              user={user}
-                            />
-                          )}
-                          <CompareBar />
-                          <ReloadPrompt />
-                        </Layout>
-                      </AdminChatProvider>
-                    </NotificationProvider>
-                  </CompareProvider>
-                </WishlistProvider>
-              </CartProvider>
-            </ProductProvider>
-          </Router>
-        </AntdApp>
-      </GoogleOAuthProvider>
-    </ConfigProvider>
-  );
 };
 
 export default App;
