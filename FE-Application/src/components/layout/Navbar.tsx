@@ -39,10 +39,6 @@ import {useNotifications} from "../../context/NotificationContext";
 import {useAdminChat} from "../../context/useAdminChat";
 import {useWishlist} from "../../hooks/Wishlist/useWishlist";
 import AdminChatDrawer from "../common/AdminChatDrawer";
-
-const {Header} = Layout;
-const {Text} = Typography;
-
 import {
     ICON_WRAPPER_STYLE,
     themeBorder,
@@ -53,6 +49,8 @@ import {ROLES} from "../common/Commons";
 import {handleImgError} from "../../utils/image";
 import {formatDateTimeVi, formatVnd} from "../../utils/format";
 
+const {Header} = Layout;
+const {Text} = Typography;
 const {navbar: nvStrings} = LAYOUT_STRINGS;
 
 // ─── NavIconBadge Sub-component ──────────────────────────────────────────────

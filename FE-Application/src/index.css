@@ -558,9 +558,7 @@ body {
     background-color: #fff !important;
 }
 
-[data-theme="light"]
-.premium-search-input.ant-select-focused
-.ant-select-selector {
+[data-theme="light"] .premium-search-input.ant-select-focused .ant-select-selector {
     border-color: #1677ff !important;
     box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2) !important;
 }
