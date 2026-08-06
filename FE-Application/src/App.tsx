@@ -143,7 +143,7 @@ const App: React.FC = () => {
                     console.error("Lỗi khi đổi code lấy token từ Keycloak:", err);
                 }
             };
-            exchangeCode();
+            void exchangeCode();
         }
     }, []);
 

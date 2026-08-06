@@ -12,7 +12,6 @@ import PersonalizedRecommendations from "../../components/common/PersonalizedRec
 import {getDisplayProducts} from "./helper";
 import {styles} from "./styles/home-page.styles";
 import {HOME_STRINGS} from "../../constants/Home/home-page";
-
 import {useHomePage} from "../../hooks/Home/useHomePage";
 import {PageLoading} from "../../components/common/PageLoading";
 
